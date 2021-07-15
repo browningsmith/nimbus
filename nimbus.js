@@ -1,13 +1,11 @@
 /**
- *               Filename: gallidys.js
+ *               Filename: nimbus.js
  * 
  *                 Author: Browning Keith Smith
- *           Date Created: April 24, 2020
- *          Date Modified: July 31, 2020
+ *           Date Created: July 14, 2021
+ *          Date Modified: July 14, 2021
  * 
- *            Description: Gallidys is an open world MMO war game, where you aid your faction in attempting to
- *                         conquer the alien world of Gallidys. The game blends aspects of RTS and FPS for a truly
- *                         unique gaming experience. Command your troops from the air, or join them on the ground!
+ *            Description: 
  * 
  * Execution Requirements: Google Chrome. Program not currently supported in other browsers.
  *                         Browser must support HTML5 <canvas> element and WebGL context.
@@ -16,8 +14,8 @@
  *                         and one with the id "hud"
  * 
  *           Dependencies: gl-matrix.js https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js
- *                         gallidys_objLibrary.js
- *                         gallidys_methodLibrary.js
+ *                         nimbus_objLibrary.js
+ *                         nimbus_methodLibrary.js
  * 
  * Copyright (c) 2020, Browning Keith Smith. All rights reserved.
  */
@@ -94,23 +92,6 @@ function main() {
         models[model].buffers = initBuffers(ctx, model);
 	}
 
-    //Initialize buffers for chunks
-    for (chunk in chunks) {
-
-        initChunkBuffers(ctx, chunk);
-    };
-
-    //Completely load central chunks
-    editVoxels(ctx, "cx0z0", 140000);
-    editVoxels(ctx, "cxn1zn1", 140000);
-    editVoxels(ctx, "cx0zn1", 140000);
-    editVoxels(ctx, "cx1zn1", 140000);
-    editVoxels(ctx, "cxn1z0", 140000);
-    editVoxels(ctx, "cx1z0", 140000);
-    editVoxels(ctx, "cxn1z1", 140000);
-    editVoxels(ctx, "cx0z1", 140000);
-    editVoxels(ctx, "cx1z1", 140000);
-
     //Initialize previousTimestamp
     var previousTimeStamp = 0;
 
@@ -141,11 +122,6 @@ function main() {
         updateRoll(deltaT);
         updatePosition(deltaT, ctx);
 
-        for (chunk in chunks) {
-      
-            editVoxels(ctx, chunk, 1000);
-		}
-
         drawScene(ctx, shaderProgramData);
         drawHUD(hudCtx);
 
@@ -153,9 +129,6 @@ function main() {
     }
 
     requestAnimationFrame(newFrame);
-
-    //Display controls when window loads
-    alert("Controls:\nW - Move Forward\nS - Move Backward\nA - Move Left\nD - Move Right\nSPACE - Move Up\nLEFT SHIFT - Move Down\nQ - Roll Left\nE - Roll Right\nMove the mouse to change the direction you are facing.");
 }
 
 window.onload = main;
