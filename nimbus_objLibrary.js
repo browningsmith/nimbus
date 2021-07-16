@@ -117,16 +117,6 @@ const keys = {
         code: "KeyD",
         down: false,
     },
-    Q: {
-
-        code: "KeyQ",
-        down: false,
-    },
-    E: {
-
-        code: "KeyE",
-        down: false,
-    },
     Space: {
 
         code: "Space",
@@ -402,7 +392,7 @@ let objects = {
  * Attributes: Double x, y, z,
  *             vec3 rightVec, upVec, forwardVec,
  *             mat4 rotationMatrix,
- *             Double speed, rightSpeed, upSpeed, forwardSpeed, rollSpeed
+ *             Double speed, rightSpeed, upSpeed, forwardSpeed
  */
 let camera = {
 
@@ -419,7 +409,7 @@ let camera = {
     upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    //Camera rotation matrix, needs to be recomputed on each roll, pitch, or yaw update
+    //Camera rotation matrix, needs to be recomputed on each pitch or yaw update
     rotationMatrix: mat4.create(),
 
     speed: 25.0,
@@ -427,7 +417,6 @@ let camera = {
     rightSpeed: 0.0,
     upSpeed: 0.0,
     forwardSpeed: 0.0,
-    rollSpeed: 0.0,
 };
 
 /**

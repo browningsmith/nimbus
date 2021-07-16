@@ -118,8 +118,7 @@ function main() {
         deltaT = now - previousTimeStamp;
         previousTimeStamp = now;
 
-        //Update camera roll
-        updateRoll(deltaT);
+        //Update camera position
         updatePosition(deltaT, ctx);
 
         drawScene(ctx, shaderProgramData);

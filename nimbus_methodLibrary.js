@@ -505,51 +505,6 @@ function updateCameraSpeed() {
             //console.log("Camera up speed set to " + camera.upSpeed);
         }
     }
-
-    //If both Q and E are down, or if neither of them are down
-    if ((keys.Q.down && keys.E.down) || !(keys.Q.down || keys.E.down)) {
-
-        //Set roll speed to 0.0
-        camera.rollSpeed = 0.0;
-
-        //console.log("Camera roll speed set to " + camera.rollSpeed);
-    }
-    else {
-
-        //If Q is the key that is down
-        if (keys.Q.down) {
-
-            //Set roll speed
-            camera.rollSpeed = -2.0;
-
-            //console.log("Camera roll speed set to " + camera.rollSpeed);
-        }
-        else {
-
-            //Set roll speed
-            camera.rollSpeed = 2.0;
-
-            //console.log("Camera roll speed set to " + camera.rollSpeed);
-        }
-    }
-}
-
-/**
- * Function: updateRoll
- * 
- * Input: Double deltaT
- * Output: None
- * 
- * Description: Updates the camera roll by camera.rollSpeed and deltaT
- *              as long as the rollSpeed is greater than zero
- */
-function updateRoll(deltaT) {
-
-    //If roll speed is not zero
-    if (!(camera.rollSpeed == 0.0)) {
-
-        rollRight(camera.rollSpeed * deltaT); //Roll the camera by speed * change in time from last frame
-    }
 }
 
 /**
@@ -591,40 +546,6 @@ function updatePosition(deltaT,ctx) {
 
         moveRight(camera.rightSpeed * deltaT); //Move camera forward by rightSpeed * change in time from last frame
     }
-}
-
-/**
- * Function: rollRight
- * 
- * Input: Double angle
- * Output: None
- * 
- * Description: Rotates the camera around it's local z vector by the given angle
- */
-//Function to roll the camera around it's local z vector
-function rollRight(angle) {
-
-    //Create a quaternion representing rotation around forwardVec by negative angle
-    const rollQuat = quat.create();
-    quat.setAxisAngle(rollQuat, camera.forwardVec, angle * -1.0);
-
-    //Create a new rotation matrix with roll quaternion and no translation
-    const rollMatrix = mat4.create();
-    mat4.fromRotationTranslation(rollMatrix, rollQuat, [0.0, 0.0, 0.0]);
-
-    //Apply this matrix to the camera's view matrix
-    mat4.multiply(camera.rotationMatrix, camera.rotationMatrix, rollMatrix);
-
-    //Now set the quaternion using the positive angle
-    quat.setAxisAngle(rollQuat, camera.forwardVec, angle);
-
-    //Apply this rotation to camera's rightVec and upVec
-    vec3.transformQuat(camera.rightVec, camera.rightVec, rollQuat);
-    vec3.transformQuat(camera.upVec, camera.upVec, rollQuat);
-
-    //Normalize camera's rightVec and upVec
-    vec3.normalize(camera.rightVec, camera.rightVec);
-    vec3.normalize(camera.upVec, camera.upVec);
 }
 
 /**
