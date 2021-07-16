@@ -93,10 +93,10 @@ function main() {
 	}
 
     //Initialize previousTimestamp
-    var previousTimeStamp = 0;
+    let previousTimeStamp = 0;
 
     //Initialize deltaT
-    var deltaT = 0.0;
+    let deltaT = 0.0;
 
     /**
      * Function: newFrame

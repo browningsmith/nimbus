@@ -74,7 +74,7 @@ const normalMatrix = mat4.create();
 const projectionMatrix = mat4.create();
 
 //Void color
-var voidColor = [102.0 / 256.0, 204.0 / 256.0, 255.0 / 256.0]; //sky blue
+let voidColor = [0.0 / 256.0, 0.0 / 256.0, 0.0 / 256.0]; //sky blue
 
 //Chunk dimensions
 const chunkLength = 255.0; //With the way model is rendering currently, this is the maximum
@@ -145,7 +145,7 @@ const keys = {
  * Description: A collection of model objects
  */
 
-var models = {
+let models = {
 
     /**
      * Object: model
@@ -319,7 +319,7 @@ var models = {
  * Description: a collection of 3D objects for the program to render
  */
 
-var objects = {
+let objects = {
 
     /**
      * Object: object
@@ -404,7 +404,7 @@ var objects = {
  *             mat4 rotationMatrix,
  *             Double speed, rightSpeed, upSpeed, forwardSpeed, rollSpeed
  */
-var camera = {
+let camera = {
 
     x: 0.0, //Camera initialized 6 units above origin
     y: 6.0,
@@ -422,7 +422,7 @@ var camera = {
     //Camera rotation matrix, needs to be recomputed on each roll, pitch, or yaw update
     rotationMatrix: mat4.create(),
 
-    speed: 50.0,
+    speed: 25.0,
 
     rightSpeed: 0.0,
     upSpeed: 0.0,
@@ -439,7 +439,7 @@ var camera = {
  *             Double x, y,
  * 
  */
-var lastMousePosition = {
+let lastMousePosition = {
 
     inWindow: false,
     x: 0,

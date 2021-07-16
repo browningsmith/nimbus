@@ -101,7 +101,7 @@ function loadShader(ctx, type, code) {
 function initBuffers(ctx, model) {
 
     //Create pointer to a new buffer
-    var vertexBuffer = ctx.createBuffer();
+    let vertexBuffer = ctx.createBuffer();
 
     //Bind buffer to array buffer
     ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
@@ -110,7 +110,7 @@ function initBuffers(ctx, model) {
     ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].vertexValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
-    var colorBuffer = ctx.createBuffer();
+    let colorBuffer = ctx.createBuffer();
 
     //Bind buffer to array buffer
     ctx.bindBuffer(ctx.ARRAY_BUFFER, colorBuffer);
@@ -119,7 +119,7 @@ function initBuffers(ctx, model) {
     ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].colorValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
-    var normalBuffer = ctx.createBuffer();
+    let normalBuffer = ctx.createBuffer();
 
     //Bind the buffer to array buffer
     ctx.bindBuffer(ctx.ARRAY_BUFFER, normalBuffer);
@@ -128,7 +128,7 @@ function initBuffers(ctx, model) {
     ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].normalValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
-    var drawPointBuffer = ctx.createBuffer();
+    let drawPointBuffer = ctx.createBuffer();
 
     //Bind the buffer to element buffer
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, drawPointBuffer);
@@ -304,8 +304,8 @@ function updateMouse(event) {
 	}
 
     //Record change in x and y
-    var deltaX = event.offsetX - lastMousePosition.x;
-    var deltaY = event.offsetY - lastMousePosition.y;
+    let deltaX = event.offsetX - lastMousePosition.x;
+    let deltaY = event.offsetY - lastMousePosition.y;
 
     //Update mouse position
     lastMousePosition.x = event.offsetX;
@@ -346,7 +346,7 @@ function mouseLeave(event) {
  */
 function parseDownKey(event) {
 
-    var code = event.code;  //Edge does not recognize this apparently
+    let code = event.code;  //Edge does not recognize this apparently
 
     //console.log("Key Down: " + code);
 
@@ -387,7 +387,7 @@ function parseDownKey(event) {
  */
 function parseUpKey(event) {
 
-    var code = event.code; //Edge does not recognize this apparently
+    let code = event.code; //Edge does not recognize this apparently
 
     //console.log("Key Up: " + code);
 
