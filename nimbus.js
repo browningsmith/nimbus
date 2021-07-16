@@ -37,6 +37,9 @@
  *              link the shader programs, retrieve attribute locations from the compiled programs, calls
  *              functions to initialize buffer data, and begins the loop of calling animation frames.
  */
+
+const piOver2 = Math.PI / 2.0;
+
 function main() {
 
     //Get canvas element

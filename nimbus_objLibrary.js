@@ -403,14 +403,13 @@ let camera = {
     lastx: 0.0,
     lastz: chunkLength * 1.0 + 1.0, //Set the last z to be at least a chunk behind
 
+    yawAngle: 0.0, // Angle of roration around y axis
+    pitchAngle: 0.0, // Angle of rotation around x axis
+
     //Normal vectors representing right, left, and forward for the camera.
     //Camera is initialized facing negative Z
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
-    upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
-
-    //Camera rotation matrix, needs to be recomputed on each pitch or yaw update
-    rotationMatrix: mat4.create(),
 
     speed: 25.0,
 

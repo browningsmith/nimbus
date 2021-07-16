@@ -214,7 +214,9 @@ function drawScene(ctx, shaderProgramData) {
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
     //Compute worldViewMatrix based on opposite coordinates of camera position and camera rotation
-    mat4.copy(worldViewMatrix, camera.rotationMatrix); //Second transform, rotate whole world around camera (in the opposite direction the camera is facing)
+    mat4.identity(worldViewMatrix);
+    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.pitchAngle * -1.0, [1, 0, 0]); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
 
     //Set worldview and projection uniforms
@@ -559,27 +561,18 @@ function updatePosition(deltaT,ctx) {
 //Function to pitch the camera around it's local x vector
 function pitchUp(angle) {
 
-    //Create a quaternion representing rotation around rightVec by negative angle
-    const pitchQuat = quat.create();
-    quat.setAxisAngle(pitchQuat, camera.rightVec, angle * -1.0);
+    // Update camera pitchAngle
+    camera.pitchAngle += angle;
 
-    //Create a new rotation matrix with roll quaternion and no translation
-    const pitchMatrix = mat4.create();
-    mat4.fromRotationTranslation(pitchMatrix, pitchQuat, [0.0, 0.0, 0.0]);
+    if (camera.pitchAngle > piOver2)
+    {
+        camera.pitchAngle = piOver2;
+    }
 
-    //Apply this matrix to the camera's view matrix
-    mat4.multiply(camera.rotationMatrix, camera.rotationMatrix, pitchMatrix);
-
-    //Now set the quaternion using the positive angle
-    quat.setAxisAngle(pitchQuat, camera.rightVec, angle);
-
-    //Apply this rotation to camera's upVec and forwardVec
-    vec3.transformQuat(camera.upVec, camera.upVec, pitchQuat);
-    vec3.transformQuat(camera.forwardVec, camera.forwardVec, pitchQuat);
-
-    //Normalize camera's upVec and forwardVec
-    vec3.normalize(camera.upVec, camera.upVec);
-    vec3.normalize(camera.forwardVec, camera.forwardVec);
+    if (camera.pitchAngle < piOver2 * -1.0)
+    {
+        camera.pitchAngle = piOver2 * -1.0;
+    }
 }
 
 /**
@@ -593,19 +586,14 @@ function pitchUp(angle) {
 //Function to yaw the camera around it's local y vector
 function yawRight(angle) {
 
-    //Create a quaternion representing rotation around upVec by negative angle
+    // Update camera yawAngle
+    camera.yawAngle += angle
+    
+    //Create a quaternion representing rotation around upVec
     const yawQuat = quat.create();
-    quat.setAxisAngle(yawQuat, camera.upVec, angle * -1.0);
-
-    //Create a new rotation matrix with roll quaternion and no translation
-    const yawMatrix = mat4.create();
-    mat4.fromRotationTranslation(yawMatrix, yawQuat, [0.0, 0.0, 0.0]);
-
-    //Apply this matrix to the camera's view matrix
-    mat4.multiply(camera.rotationMatrix, camera.rotationMatrix, yawMatrix);
 
     //Now set the quaternion using the positive angle
-    quat.setAxisAngle(yawQuat, camera.upVec, angle);
+    quat.setAxisAngle(yawQuat, vec3.fromValues(0.0, 1.0, 0.0), angle);
 
     //Apply this rotation to camera's rightVec and forwardVec
     vec3.transformQuat(camera.rightVec, camera.rightVec, yawQuat);
@@ -628,7 +616,6 @@ function yawRight(angle) {
 function moveForward(amount) {
 
     camera.x += camera.forwardVec[0] * amount;
-    camera.y += camera.forwardVec[1] * amount;
     camera.z += camera.forwardVec[2] * amount;
 }
 
@@ -644,7 +631,6 @@ function moveForward(amount) {
 function moveRight(amount) {
 
     camera.x += camera.rightVec[0] * amount;
-    camera.y += camera.rightVec[1] * amount;
     camera.z += camera.rightVec[2] * amount;
 }
 
@@ -660,7 +646,5 @@ function moveRight(amount) {
 //Function to move up based on camera directional vectors
 function moveUp(amount) {
 
-    camera.x += camera.upVec[0] * amount;
-    camera.y += camera.upVec[1] * amount;
-    camera.z += camera.upVec[2] * amount;
+    camera.y += amount;
 }
