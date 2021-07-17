@@ -648,3 +648,38 @@ function moveUp(amount) {
 
     camera.y += amount;
 }
+
+/**
+ * Function: updateObjectRotation
+ * 
+ * Input: object, deltaT
+ * Output: None
+ * 
+ * Description: Updates the roll pitch and yaw of
+ * an object based on it's speeds and deltaT
+ */
+function updateObjectRotation(object, deltaT) {
+
+    objects[object].roll += objects[object].rollSpeed * deltaT;
+    objects[object].pitch += objects[object].pitchSpeed * deltaT;
+    objects[object].yaw += objects[object].yawSpeed * deltaT;
+}
+
+/**
+ * Function: randomizeRotations
+ * 
+ * Input: objects
+ * Output: None
+ * 
+ * Description: Sets a random rotation speed for each object
+ * in objects
+ */
+function randomizeRotations(objects)
+{
+    for (object in objects)
+    {
+        objects[object].rollSpeed = Math.random() * 5.0;
+        objects[object].pitchSpeed = Math.random() * 5.0;
+        objects[object].yawSpeed = Math.random() * 5.0;
+    }
+}

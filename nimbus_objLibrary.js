@@ -44,7 +44,7 @@ const vertexShaderCode = `
 
         highp vec3 lightDirection = normalize(vec3(0.5, 1.0, 1.0)); //Set light direction vector
 
-        highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object rotation
+        highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object
 
         highp float directional = max(dot(transformedNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
 
@@ -309,7 +309,7 @@ let models = {
  * Description: a collection of 3D objects for the program to render
  */
 
-let objects = {
+let objects = [
 
     /**
      * Object: object
@@ -322,66 +322,25 @@ let objects = {
      *             model model
      */
 
-    cube1: {
+    {
     
         x: 0.0,
         y: 6.0,
         z: -6.0,
 
         roll: 0.0,
-        pitch: 0.9,
-        yaw: 0.3,
-
-        scale: 1.0,
-
-        model: models.cube,
-    },
-
-    cube2: {
-    
-        x: 0.0,
-        y: 3.0,
-        z: -12.0,
-
-        roll: 0.0,
         pitch: 0.0,
         yaw: 0.0,
 
-        scale: 1.0,
-
-        model: models.cube,
-    },
-
-    cube3: {
-    
-        x: 0.0,
-        y: 6.0,
-        z: -18.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
+        rollSpeed: 3.0,
+        pitchSpeed: 5.0,
+        yawSpeed: 9.0,
 
         scale: 1.0,
 
         model: models.cube,
     },
-
-    cube4: {
-    
-        x: 0.0,
-        y: 6.0,
-        z: -24.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
-
-        scale: 1.0,
-
-        model: models.cube,
-    },
-};
+];
 
 /**
  * Object: camera
