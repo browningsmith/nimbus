@@ -74,7 +74,7 @@ const normalMatrix = mat4.create();
 const projectionMatrix = mat4.create();
 
 //Void color
-let voidColor = [204.0 / 256.0, 129.0 / 256.0, 24.0 / 256.0]; //sky blue
+let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
 
 //Chunk dimensions
 const chunkLength = 255.0; //With the way model is rendering currently, this is the maximum
