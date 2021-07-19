@@ -96,7 +96,7 @@ function main() {
 	}
 
     // Create more cubes in random places
-    for (let i=0; i<1000; i++)
+    for (let i=0; i<10; i++)
     {
         let newCube = {
 
@@ -121,7 +121,7 @@ function main() {
     }
 
     // Randomize rotation speeds of each object
-    randomizeRotations(objects);
+    //randomizeRotations(objects);
 
     //Initialize previousTimestamp
     let previousTimeStamp = 0;

@@ -301,6 +301,27 @@ let models = {
 
         drawPointCount: 36,
     },
+
+    shipInterior: {
+
+        vertexValues: [
+            
+        ],
+
+        normalValues: [
+
+        ],
+
+        colorValues: [
+
+        ],
+
+        drawPointIndices: [
+
+        ],
+
+        drawPointCount: 0,
+    },
 };
 
 /**
@@ -332,13 +353,13 @@ let objects = [
         pitch: 0.0,
         yaw: 0.0,
 
-        rollSpeed: 3.0,
-        pitchSpeed: 5.0,
-        yawSpeed: 9.0,
+        rollSpeed: 0.0,
+        pitchSpeed: 0.0,
+        yawSpeed: 0.0,
 
         scale: 1.0,
 
-        model: models.cube,
+        model: models.shipInterior,
     },
 ];
 
