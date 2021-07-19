@@ -2,73 +2,77 @@
 #include <stdio.h>
 #include <stdlib.h>
 void yyerror(char *);
+#include "y.tab.h"
+int lineno = 0;
 %}
 
 %%
 
-ply\n   printf("PLY");
+ply\n   return PLY;
 
-end_header  printf("END_HEADER");
+end_header  return END_HEADER;
 
-format[ \t]+ascii[ \t]1\.0  printf("VALID_FORMAT");
+format[ \t]+ascii[ \t]1\.0  return VALID_FORMAT;
 
-comment[^\n]*\n     printf("COMMENT");
+comment[^\n]*\n     return COMMENT;
 
-element printf("ELEMENT");
+element return ELEMENT;
 
-property    printf("PROPERTY");
+property    return PROPERTY;
 
-char printf("CHAR");
+char return CHAR;
 
-uchar printf("UCHAR");
+uchar return UCHAR;
 
-short printf("SHORT");
+short return SHORT;
 
-ushort printf("USHORT");
+ushort return USHORT;
 
-int printf("INT");
+int return INT;
 
-uint    printf("UINT");
+uint    return UINT;
 
-float   printf("FLOAT");
+float   return FLOAT;
 
-double  printf("DOUBLE");
+double  return DOUBLE;
 
-list    printf("LIST");
+list    return LIST;
 
-vertex  printf("VERTEX");
+vertex  return VERTEX;
 
-face    printf("FACE");
+face    return FACE;
 
-vertex_index|vertex_indices printf("VERTEX_INDICES");
+vertex_index|vertex_indices return VERTEX_INDICES;
 
-x printf("X");
+x return X;
 
-y printf("Y");
+y return Y;
 
-z printf("Z");
+z return Z;
 
-nx printf("NX");
+nx return NX;
 
-ny printf("NY");
+ny return NY;
 
-nz printf("NZ");
+nz return NZ;
 
-red printf("RED");
+red return RED;
 
-green printf("GREEN");
+green return GREEN;
 
-blue printf("BLUE");
+blue return BLUE;
 
-alpha printf("ALPHA");
+alpha return ALPHA;
 
-s printf("S");
+s return S;
 
-t printf("T");
+t return T;
 
-([+-]?[1-9][0-9]*)|0    printf("INT_LITERAL");
+([+-]?[1-9][0-9]*)|0    return INT_LITERAL;
 
-[+-]?[0-9]*\.[0-9]* printf("FLOAT_LITERAL");
+[+-]?[0-9]*\.[0-9]* return FLOAT_LITERAL;
+
+[ \t\n]+    ;
 
 %%
 
@@ -77,7 +81,3 @@ int yywrap(void)
     return 1;
 }
 
-void yyerror(char *s) {
-
-    fprintf(stderr, "%s\n", s);
-}
