@@ -48,6 +48,7 @@ header: PLY VALID_FORMAT header_contents END_HEADER
 
 header_contents:    header_contents header_statement
                 |   header_statement
+                |
                 ;
 
 header_statement:   COMMENT
@@ -62,7 +63,7 @@ element_type:   VERTEX
             |   FACE
             ;
 
-element_number: UCHAR | USHORT | UINT
+element_number: INT_LITERAL
             ;
 
 property_statement: PROPERTY list_type_property
@@ -95,6 +96,7 @@ list_count: UCHAR | USHORT | UINT
 
 elementList:    elementList number
             |   number
+            |
             ;
 
 number: INT_LITERAL | FLOAT_LITERAL
@@ -104,7 +106,7 @@ number: INT_LITERAL | FLOAT_LITERAL
 
 void yyerror(char *s)
 {
-    fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "%s: Line: \n", s);
 }
 
 int main(void)
