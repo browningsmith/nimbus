@@ -56,14 +56,11 @@ header_statement:   COMMENT
                 |   property_statement
                 ;
 
-element_statement:  ELEMENT element_type element_number
+element_statement:  ELEMENT VERTEX element_number { printf("Total vertices: %i\n", $3); }
+                |   ELEMENT FACE element_number { printf("Total indices: %i\n", $3); }
                 ;
 
-element_type:   VERTEX
-            |   FACE
-            ;
-
-element_number: INT_LITERAL
+element_number: INT_LITERAL { $$ = $1; }
             ;
 
 property_statement: PROPERTY list_type_property

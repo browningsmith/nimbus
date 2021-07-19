@@ -68,7 +68,11 @@ s return S;
 
 t return T;
 
-([+-]?[1-9][0-9]*)|0    return INT_LITERAL;
+([+-]?[1-9][0-9]*)|0    {
+
+    yylval = atoi(yytext);
+    return INT_LITERAL;
+}
 
 [+-]?[0-9]*\.[0-9]* return FLOAT_LITERAL;
 
