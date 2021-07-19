@@ -1,0 +1,6 @@
+It appears that the coordinate systems translate as follows
+
+blender -> WebGL
+x       -> x
+y       -> -z
+z       -> y
