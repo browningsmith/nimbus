@@ -217,6 +217,13 @@ int main(void)
         fprintf(stderr, "%lu: %s\n", i, valuesArray[i]);
     }*/
 
+    // Error checking
+    if (nx < 0 || ny < 0 || nz < 0)
+    {
+        fprintf(stderr, "Error, input does not contain values for vertex normals\n");
+        return -1;
+    }
+
     // Begin outputing js file
     printf("{\n");
 
@@ -234,6 +241,27 @@ int main(void)
         index = v * vertexPropertiesNo + y;
         printf("%s, ", valuesArray[index]);
         index = v * vertexPropertiesNo + z;
+        printf("%s, ", valuesArray[index]);
+
+        printf("\n");
+    }
+
+    printf("    ],\n");
+
+    // Print normal values
+    printf("    normalValues: [\n");
+
+    for (size_t v = 0; v < vertexNo; v++) // For each vertex
+    {
+        printf("        ");
+
+        size_t index;
+
+        index = v * vertexPropertiesNo + nx;
+        printf("%s, ", valuesArray[index]);
+        index = v * vertexPropertiesNo + ny;
+        printf("%s, ", valuesArray[index]);
+        index = v * vertexPropertiesNo + nz;
         printf("%s, ", valuesArray[index]);
 
         printf("\n");
