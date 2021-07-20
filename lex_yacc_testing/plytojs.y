@@ -6,6 +6,19 @@ int vertexNo = 0;
 int faceNo = 0;
 int vertexPropertiesNo = 0;
 
+int x = -1;
+int y = -1;
+int z = -1;
+int nx = -1;
+int ny = -1;
+int nz = -1;
+int red = -1;
+int green = -1;
+int blue = -1;
+int alpha = -1;
+int s = -1;
+int t = -1;
+
 int yylex(void);
 void yyerror(char *);
 %}
@@ -75,18 +88,18 @@ vertex_properties:  vertex_properties vertex_property
                 |
                 ;
 
-vertex_property:    PROPERTY number_type X
-                |   PROPERTY number_type Y
-                |   PROPERTY number_type Z
-                |   PROPERTY number_type NX
-                |   PROPERTY number_type NY
-                |   PROPERTY number_type NZ
-                |   PROPERTY number_type S
-                |   PROPERTY number_type T
-                |   PROPERTY number_type RED
-                |   PROPERTY number_type GREEN
-                |   PROPERTY number_type BLUE
-                |   PROPERTY number_type ALPHA
+vertex_property:    PROPERTY number_type X      { x = vertexPropertiesNo++; }
+                |   PROPERTY number_type Y      { y = vertexPropertiesNo++; }
+                |   PROPERTY number_type Z      { z = vertexPropertiesNo++; }
+                |   PROPERTY number_type NX     { nx = vertexPropertiesNo++; }
+                |   PROPERTY number_type NY     { ny = vertexPropertiesNo++; }
+                |   PROPERTY number_type NZ     { nz = vertexPropertiesNo++; }
+                |   PROPERTY number_type S      { s = vertexPropertiesNo++; }
+                |   PROPERTY number_type T      { t = vertexPropertiesNo++; }
+                |   PROPERTY number_type RED    { red = vertexPropertiesNo++; }
+                |   PROPERTY number_type GREEN  { green = vertexPropertiesNo++; }
+                |   PROPERTY number_type BLUE   { blue = vertexPropertiesNo++; }
+                |   PROPERTY number_type ALPHA  { alpha = vertexPropertiesNo++; }
                 ;
 
 face_definition:    ELEMENT FACE INT_LITERAL face_property {
@@ -124,8 +137,22 @@ int main(void)
 {
     yyparse();
 
-    printf("Number of vertices: %i\n", vertexNo);
-    printf("Number of faces: %i\n", faceNo);
+    fprintf(stderr, "Number of vertices: %i\n", vertexNo);
+    fprintf(stderr, "Number of properties per vertex: %i\n", vertexPropertiesNo);
+    fprintf(stderr, "Number of faces: %i\n", faceNo);
+
+    fprintf(stderr, "Order of x property: %i\n", x);
+    fprintf(stderr, "Order of y property: %i\n", y);
+    fprintf(stderr, "Order of z property: %i\n", z);
+    fprintf(stderr, "Order of nx property: %i\n", nx);
+    fprintf(stderr, "Order of ny property: %i\n", ny);
+    fprintf(stderr, "Order of nz property: %i\n", nz);
+    fprintf(stderr, "Order of s property: %i\n", s);
+    fprintf(stderr, "Order of t property: %i\n", t);
+    fprintf(stderr, "Order of red property: %i\n", red);
+    fprintf(stderr, "Order of green property: %i\n", green);
+    fprintf(stderr, "Order of blue property: %i\n", blue);
+    fprintf(stderr, "Order of alpha property: %i\n", alpha);
 
     return 0;
 }
