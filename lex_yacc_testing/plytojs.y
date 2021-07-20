@@ -336,6 +336,7 @@ int main(void)
         for (int i=index; i < index + indexCount - 2; i++)
         {
             printf("%s, %s, %s, ", valuesArray[centralVertex], valuesArray[i - 1], valuesArray[i]);
+            drawPointCount += 3;
         }
 
         // Update lastIndex
@@ -345,6 +346,9 @@ int main(void)
     }
 
     printf("    ],\n");
+
+    // Print drawPointCount
+    printf("    drawPointCount: %i,\n", drawPointCount);
 
     printf("}");
 
