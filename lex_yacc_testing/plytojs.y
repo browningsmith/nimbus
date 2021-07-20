@@ -269,6 +269,83 @@ int main(void)
 
     printf("    ],\n");
 
+    // Print colors
+    printf("    colorValues: [\n");
+
+    for (size_t v = 0; v < vertexNo; v++) // For each vertex
+    {
+        printf("        ");
+
+        // If no rgb specified, print white
+        if (red < 0 || green < 0 || blue < 0)
+        {
+            printf("1.0, 1.0, 1.0, ");
+        }
+        else
+        {
+            size_t index;
+
+            index = v * vertexPropertiesNo + red;
+            printf("%s.0/256.0, ", valuesArray[index]);
+            index = v * vertexPropertiesNo + green;
+            printf("%s.0/256.0, ", valuesArray[index]);
+            index = v * vertexPropertiesNo + blue;
+            printf("%s.0/256.0, ", valuesArray[index]);
+        }
+
+        // If no alpha specified, print 1.0
+        if (alpha < 0)
+        {
+            printf("1.0");
+        }
+        else
+        {
+            size_t index;
+
+            index = v * vertexPropertiesNo + alpha;
+            printf("%s.0/256.0, ", valuesArray[index]);
+        }
+
+        printf("\n");
+    }
+
+    printf("    ],\n");
+
+    // Print index lists
+    printf("    drawPointIndices: [\n");
+
+    size_t lastIndex = vertexNo * vertexPropertiesNo - 1;
+    for (size_t f = 0; f < faceNo; f++)
+    {
+        printf("        ");
+
+        size_t index;
+
+        // Get index count
+        index = lastIndex + 1;
+        int indexCount = atoi(valuesArray[index]);
+        //fprintf(stderr, "Index count: %i\n", indexCount);
+
+        // Get index of central vertex
+        index++;
+        int centralVertex = index;
+        //fprintf(stderr, "Central index: %s\n", valuesArray[index]);
+
+        // Begin printing
+        index += 2;
+        for (int i=index; i < index + indexCount - 2; i++)
+        {
+            printf("%s, %s, %s, ", valuesArray[centralVertex], valuesArray[i - 1], valuesArray[i]);
+        }
+
+        // Update lastIndex
+        lastIndex += indexCount + 1;
+
+        printf("\n");
+    }
+
+    printf("    ],\n");
+
     printf("}");
 
     free(valuesArray);
