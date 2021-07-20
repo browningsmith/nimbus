@@ -296,7 +296,7 @@ int main(void)
         // If no alpha specified, print 1.0
         if (alpha < 0)
         {
-            printf("1.0");
+            printf("1.0,");
         }
         else
         {
