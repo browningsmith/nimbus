@@ -1,6 +1,11 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+
+int vertexNo = 0;
+int faceNo = 0;
+int vertexPropertiesNo = 0;
+
 int yylex(void);
 void yyerror(char *);
 %}
@@ -52,44 +57,53 @@ header_contents:    header_contents header_statement
                 ;
 
 header_statement:   COMMENT
-                |   element_statement
-                |   property_statement
+                |   element_definition
                 ;
 
-element_statement:  ELEMENT VERTEX element_number { printf("Total vertices: %i\n", $3); }
-                |   ELEMENT FACE element_number { printf("Total indices: %i\n", $3); }
+element_definition: vertex_definition
+                |   face_definition
                 ;
 
-element_number: INT_LITERAL { $$ = $1; }
+vertex_definition:  ELEMENT VERTEX INT_LITERAL vertex_properties {
+
+    vertexNo = $3;
+}
+                ;
+
+vertex_properties:  vertex_properties vertex_property
+                |   vertex_property
+                |
+                ;
+
+vertex_property:    PROPERTY number_type X
+                |   PROPERTY number_type Y
+                |   PROPERTY number_type Z
+                |   PROPERTY number_type NX
+                |   PROPERTY number_type NY
+                |   PROPERTY number_type NZ
+                |   PROPERTY number_type S
+                |   PROPERTY number_type T
+                |   PROPERTY number_type RED
+                |   PROPERTY number_type GREEN
+                |   PROPERTY number_type BLUE
+                |   PROPERTY number_type ALPHA
+                ;
+
+face_definition:    ELEMENT FACE INT_LITERAL face_property {
+
+    faceNo = $3;
+}
+                ;
+
+face_property:  PROPERTY LIST unsigned_type number_type VERTEX_INDICES
+            |
             ;
-
-property_statement: PROPERTY list_type_property
-                |   PROPERTY number_type property_id
-                ;
-
-list_type_property: LIST list_count number_type property_id
-                ;
 
 number_type:    CHAR | UCHAR | SHORT | USHORT | INT | UINT | FLOAT | DOUBLE
             ;
 
-property_id:    X
-            |   Y
-            |   Z
-            |   NX
-            |   NY
-            |   NZ
-            |   RED
-            |   GREEN
-            |   BLUE
-            |   ALPHA
-            |   S
-            |   T
-            |   VERTEX_INDICES
+unsigned_type:  UCHAR | USHORT | UINT
             ;
-
-list_count: UCHAR | USHORT | UINT
-        ;
 
 elementList:    elementList number
             |   number
@@ -109,5 +123,9 @@ void yyerror(char *s)
 int main(void)
 {
     yyparse();
+
+    printf("Number of vertices: %i\n", vertexNo);
+    printf("Number of faces: %i\n", faceNo);
+
     return 0;
 }
