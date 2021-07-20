@@ -1,9 +1,13 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "plytojs.h"
+
 void yyerror(char *);
+
 #include "y.tab.h"
-int lineno = 0;
+
 %}
 
 %%
@@ -70,11 +74,20 @@ t return T;
 
 ([+-]?[1-9][0-9]*)|0    {
 
+    // Copy text value of number to valueBuffer
+    strcpy(valueBuffer, yytext);
+    
     yylval = atoi(yytext);
     return INT_LITERAL;
 }
 
-[+-]?[0-9]*\.[0-9]* return FLOAT_LITERAL;
+[+-]?[0-9]*\.[0-9]* {
+    
+    // Copy text value of number to valueBuffer
+    strcpy(valueBuffer, yytext);
+    
+    return FLOAT_LITERAL;
+}
 
 [ \t\n]+    ;
 

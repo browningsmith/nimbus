@@ -1,10 +1,13 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "plytojs.h"
 
 int vertexNo = 0;
 int faceNo = 0;
 int vertexPropertiesNo = 0;
+int drawPointCount = 0;
 
 int x = -1;
 int y = -1;
@@ -19,8 +22,13 @@ int alpha = -1;
 int s = -1;
 int t = -1;
 
+char** valuesArray = NULL;
+size_t valuesArrayCap = 0;
+size_t valuesArrayI = 0;
+
 int yylex(void);
 void yyerror(char *);
+void increaseCap( void );
 %}
 
 %token PLY
@@ -58,7 +66,10 @@ void yyerror(char *);
 
 %%
 
-file:   header elementList
+file:   header elementList {
+
+    fprintf(stderr, "Full file read\n");
+}
     ;
 
 header: PLY VALID_FORMAT header_contents END_HEADER
@@ -118,10 +129,29 @@ number_type:    CHAR | UCHAR | SHORT | USHORT | INT | UINT | FLOAT | DOUBLE
 unsigned_type:  UCHAR | USHORT | UINT
             ;
 
-elementList:    elementList number
-            |   number
+elementList:    elementList number_add_to_values_array
+            |   number_add_to_values_array
             |
             ;
+
+number_add_to_values_array: number  {
+
+    // Increase array capacity
+    while (valuesArrayI >= valuesArrayCap)
+    {
+        increaseCap();
+    }
+    // Allocate space for the new value
+    valuesArray[valuesArrayI] = malloc(strlen(valueBuffer) + 1);
+    if (valuesArray[valuesArrayI] == NULL)
+    {
+        yyerror("Unable to allocate space to add new value to values array");
+        exit(-1);
+    }
+    strcpy(valuesArray[valuesArrayI], valueBuffer);
+    valuesArrayI++;
+}
+                        ;
 
 number: INT_LITERAL | FLOAT_LITERAL
     ;
@@ -133,9 +163,37 @@ void yyerror(char *s)
     fprintf(stderr, "%s: Line: \n", s);
 }
 
+// Increases the capacity of the valuesArray
+void increaseCap( void )
+{
+    char** newValuesArray = malloc((valuesArrayCap + 100) * sizeof(char*));
+    if (newValuesArray == NULL)
+    {
+        perror("Failed to increase size of values array when needed");
+        exit(-1);
+    }
+    memcpy((void*) newValuesArray, (void*) valuesArray, valuesArrayCap * sizeof(char*));
+    free(valuesArray);
+    valuesArray = newValuesArray;
+    valuesArrayCap += 100;
+}
+
 int main(void)
 {
+    // Allocate space for the values array
+    valuesArray = malloc(sizeof(char*) * 100);
+    if (valuesArray == NULL)
+    {
+        perror("Unable to initially allocate space for values array");
+        return -1;
+    }
+    valuesArrayCap = 100;
+    
     yyparse();
+
+    //fprintf(stderr, "Values array i final value: %lu\n", valuesArrayI);
+
+    //fprintf(stderr, "Values array capacity: %lu\n", valuesArrayCap);
 
     fprintf(stderr, "Number of vertices: %i\n", vertexNo);
     fprintf(stderr, "Number of properties per vertex: %i\n", vertexPropertiesNo);
@@ -153,6 +211,39 @@ int main(void)
     fprintf(stderr, "Order of green property: %i\n", green);
     fprintf(stderr, "Order of blue property: %i\n", blue);
     fprintf(stderr, "Order of alpha property: %i\n", alpha);
+
+    /*for (size_t i = 0; i < valuesArrayI; i++)
+    {
+        fprintf(stderr, "%lu: %s\n", i, valuesArray[i]);
+    }*/
+
+    // Begin outputing js file
+    printf("{\n");
+
+    // Print vertex values
+    printf("    vertexValues: [\n");
+
+    for (size_t v = 0; v < vertexNo; v++) // For each vertex
+    {
+        printf("        ");
+
+        size_t index;
+
+        index = v * vertexPropertiesNo + x;
+        printf("%s, ", valuesArray[index]);
+        index = v * vertexPropertiesNo + y;
+        printf("%s, ", valuesArray[index]);
+        index = v * vertexPropertiesNo + z;
+        printf("%s, ", valuesArray[index]);
+
+        printf("\n");
+    }
+
+    printf("    ],\n");
+
+    printf("}");
+
+    free(valuesArray);
 
     return 0;
 }
