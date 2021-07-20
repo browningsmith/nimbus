@@ -8,4 +8,4 @@ lex.yy.c: plytojs.l
 	lex plytojs.l
 
 clean:
-	rm -f *.h *.c plytojs
+	rm -f y.tab.h *.c plytojs
