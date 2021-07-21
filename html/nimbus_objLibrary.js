@@ -44,7 +44,7 @@ const vertexShaderCode = `
 
         highp vec3 lightDirection = normalize(vec3(0.5, 1.0, 1.0)); //Set light direction vector
 
-        highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object rotation
+        highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object
 
         highp float directional = max(dot(transformedNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
 
@@ -74,7 +74,7 @@ const normalMatrix = mat4.create();
 const projectionMatrix = mat4.create();
 
 //Void color
-let voidColor = [204.0 / 256.0, 129.0 / 256.0, 24.0 / 256.0]; //sky blue
+let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
 
 //Chunk dimensions
 const chunkLength = 255.0; //With the way model is rendering currently, this is the maximum
@@ -130,186 +130,12 @@ const keys = {
 };
 
 /**
- * Object: models
- * 
- * Description: A collection of model objects
- */
-
-let models = {
-
-    /**
-     * Object: model
-     * 
-     * Description: A collection of data representing a 3D model
-     *              Contains data about the model's vertex locations,
-     *              normal values of vertices, color values of vertices,
-     *              and total count of vertices.
-     * 
-     * Attributes: Float32Array vertexValues,
-     *             Float32Array normalValues,
-     *             Float32Array colorValues,
-     *             Integer vertexCount
-     */
-
-    cube: {
-
-        vertexValues: [
-
-            // Front face
-            -1.0,  1.0, 1.0,
-             1.0,  1.0, 1.0,
-             1.0, -1.0, 1.0,
-            -1.0, -1.0, 1.0,
-
-            // Back face
-            -1.0,  1.0, -1.0,
-             1.0,  1.0, -1.0,
-             1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0,
-
-            // Left face
-            -1.0,  1.0,  1.0,
-            -1.0,  1.0, -1.0,
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0,
-
-            // Right face
-            1.0,  1.0,  1.0,
-            1.0,  1.0, -1.0,
-            1.0, -1.0, -1.0,
-            1.0, -1.0,  1.0,
-
-            // Top face
-            -1.0, 1.0,  1.0,
-             1.0, 1.0,  1.0,
-             1.0, 1.0, -1.0,
-            -1.0, 1.0, -1.0,
-
-            // bottom face
-            -1.0, -1.0,  1.0,
-             1.0, -1.0,  1.0,
-             1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0,
-
-        ],
-
-        normalValues: [
-
-            // Front
-            0.0,  0.0, 1.0,
-            0.0,  0.0, 1.0,
-            0.0,  0.0, 1.0,
-            0.0,  0.0, 1.0,
-
-            // Back
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-            0.0,  0.0, -1.0,
-
-            // left
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0,
-
-            // right
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-            1.0, 0.0, 0.0,
-
-            // Top
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 1.0, 0.0,
-
-            // Bottom
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-            0.0, -1.0, 0.0,
-        ],
-
-        colorValues: [
-
-            //Front white
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            //Back red
-            1.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 0.0, 1.0,
-
-            //Left green
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-
-            //Right blue
-            0.0, 0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-
-            //Top purple
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-
-            //Bottom yellow
-            1.0, 1.0, 0.0, 1.0,
-            1.0, 1.0, 0.0, 1.0,
-            1.0, 1.0, 0.0, 1.0,
-            1.0, 1.0, 0.0, 1.0,
-
-        ],
-
-        drawPointIndices: [
-        
-            //Front
-            2, 1, 0,
-            3, 2, 0,
-
-            //Back
-            4, 5, 6,
-            4, 6, 7,
-
-            //Left
-            8, 9, 10,
-            8, 10, 11,
-
-            //right
-            14, 13, 12,
-            15, 14, 12,
-
-            //Top
-            16, 17, 18,
-            16, 18, 19,
-
-            //Bottom
-            22, 21, 20,
-            23, 22, 20,
-		],
-
-        drawPointCount: 36,
-    },
-};
-
-/**
  * Object: objects
  * 
  * Description: a collection of 3D objects for the program to render
  */
 
-let objects = {
+let objects = [
 
     /**
      * Object: object
@@ -322,66 +148,25 @@ let objects = {
      *             model model
      */
 
-    cube1: {
+    {
     
         x: 0.0,
         y: 6.0,
         z: -6.0,
 
         roll: 0.0,
-        pitch: 0.9,
-        yaw: 0.3,
-
-        scale: 1.0,
-
-        model: models.cube,
-    },
-
-    cube2: {
-    
-        x: 0.0,
-        y: 3.0,
-        z: -12.0,
-
-        roll: 0.0,
         pitch: 0.0,
         yaw: 0.0,
 
-        scale: 1.0,
-
-        model: models.cube,
-    },
-
-    cube3: {
-    
-        x: 0.0,
-        y: 6.0,
-        z: -18.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
+        rollSpeed: 0.0,
+        pitchSpeed: 0.0,
+        yawSpeed: 0.0,
 
         scale: 1.0,
 
-        model: models.cube,
+        model: models.monkey,
     },
-
-    cube4: {
-    
-        x: 0.0,
-        y: 6.0,
-        z: -24.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
-
-        scale: 1.0,
-
-        model: models.cube,
-    },
-};
+];
 
 /**
  * Object: camera
@@ -411,7 +196,7 @@ let camera = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 25.0,
+    speed: 10.0,
 
     rightSpeed: 0.0,
     upSpeed: 0.0,

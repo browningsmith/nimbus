@@ -95,6 +95,39 @@ function main() {
         models[model].buffers = initBuffers(ctx, model);
 	}
 
+    // Create more cubes in random places
+    for (let i=0; i<1000; i++)
+    {
+        let newCube = {
+
+            x: Math.random() * 200.0 - 100.0,
+            y: Math.random() * 200.0 - 100.0,
+            z: Math.random() * 200.0 - 100.0,
+
+            roll: 0.0,
+            pitch: 0.0,
+            yaw: 0.0,
+
+            rollSpeed: 0.0,
+            pitchSpeed: 0.0,
+            yawSpeed: 0.0,
+
+            scale: 1.0,
+
+            model: models.cube
+        };
+
+        objects.push(newCube);
+    }
+
+    // Randomize rotation speeds of each object
+    randomizeRotations(objects);
+
+    objects[0].rollSpeed = 0.0;
+    objects[0].pitchSpeed = 0.0;
+    objects[0].yawSpeed = 4.0;
+    
+
     //Initialize previousTimestamp
     let previousTimeStamp = 0;
 
@@ -121,11 +154,17 @@ function main() {
         deltaT = now - previousTimeStamp;
         previousTimeStamp = now;
 
+        // Update object rotations
+        for (object in objects)
+        {
+            updateObjectRotation(object, deltaT);
+        }
+
         //Update camera position
         updatePosition(deltaT, ctx);
 
         drawScene(ctx, shaderProgramData);
-        drawHUD(hudCtx);
+        //drawHUD(hudCtx);
 
         requestAnimationFrame(newFrame);
     }
