@@ -114,7 +114,7 @@ function main() {
 
             scale: 1.0,
 
-            model: models.cube,
+            model: models.cube
         };
 
         objects.push(newCube);
