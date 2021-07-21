@@ -225,72 +225,72 @@ int main(void)
     }
 
     // Begin outputing js file
-    printf("{\n");
+    printf("{");
 
     // Print vertex values
-    printf("    vertexValues: [\n");
+    printf("vertexValues:[");
 
     for (size_t v = 0; v < vertexNo; v++) // For each vertex
     {
-        printf("        ");
+        //printf("        ");
 
         size_t index;
 
         index = v * vertexPropertiesNo + x;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
         index = v * vertexPropertiesNo + y;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
         index = v * vertexPropertiesNo + z;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
 
-        printf("\n");
+        //printf("\n");
     }
 
-    printf("    ],\n");
+    printf("],");
 
     // Print normal values
-    printf("    normalValues: [\n");
+    printf("normalValues:[");
 
     for (size_t v = 0; v < vertexNo; v++) // For each vertex
     {
-        printf("        ");
+        //printf("        ");
 
         size_t index;
 
         index = v * vertexPropertiesNo + nx;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
         index = v * vertexPropertiesNo + ny;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
         index = v * vertexPropertiesNo + nz;
-        printf("%s, ", valuesArray[index]);
+        printf("%s,", valuesArray[index]);
 
-        printf("\n");
+        //printf("\n");
     }
 
-    printf("    ],\n");
+    printf("],");
 
     // Print colors
-    printf("    colorValues: [\n");
+    printf("colorValues:[");
 
     for (size_t v = 0; v < vertexNo; v++) // For each vertex
     {
-        printf("        ");
+        //printf("        ");
 
         // If no rgb specified, print white
         if (red < 0 || green < 0 || blue < 0)
         {
-            printf("1.0, 1.0, 1.0, ");
+            printf("1.0,1.0,1.0,");
         }
         else
         {
             size_t index;
 
             index = v * vertexPropertiesNo + red;
-            printf("%s.0/256.0, ", valuesArray[index]);
+            printf("%s.0/256.0,", valuesArray[index]);
             index = v * vertexPropertiesNo + green;
-            printf("%s.0/256.0, ", valuesArray[index]);
+            printf("%s.0/256.0,", valuesArray[index]);
             index = v * vertexPropertiesNo + blue;
-            printf("%s.0/256.0, ", valuesArray[index]);
+            printf("%s.0/256.0,", valuesArray[index]);
         }
 
         // If no alpha specified, print 1.0
@@ -303,21 +303,21 @@ int main(void)
             size_t index;
 
             index = v * vertexPropertiesNo + alpha;
-            printf("%s.0/256.0, ", valuesArray[index]);
+            printf("%s.0/256.0,", valuesArray[index]);
         }
 
-        printf("\n");
+        //printf("\n");
     }
 
-    printf("    ],\n");
+    printf("],");
 
     // Print index lists
-    printf("    drawPointIndices: [\n");
+    printf("drawPointIndices:[");
 
     size_t lastIndex = vertexNo * vertexPropertiesNo - 1;
     for (size_t f = 0; f < faceNo; f++)
     {
-        printf("        ");
+        //printf("        ");
 
         size_t index;
 
@@ -335,20 +335,20 @@ int main(void)
         index += 2;
         for (int i=index; i < index + indexCount - 2; i++)
         {
-            printf("%s, %s, %s, ", valuesArray[centralVertex], valuesArray[i - 1], valuesArray[i]);
+            printf("%s,%s,%s,", valuesArray[centralVertex], valuesArray[i - 1], valuesArray[i]);
             drawPointCount += 3;
         }
 
         // Update lastIndex
         lastIndex += indexCount + 1;
 
-        printf("\n");
+        //printf("\n");
     }
 
-    printf("    ],\n");
+    printf("],");
 
     // Print drawPointCount
-    printf("    drawPointCount: %i,\n", drawPointCount);
+    printf("drawPointCount:%i,", drawPointCount);
 
     printf("}");
 
