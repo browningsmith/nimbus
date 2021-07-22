@@ -52,6 +52,10 @@ function createShaderProgram(ctx) {
         return null;
     }
 
+    // Delete shaders now they are no longer needed
+    ctx.deleteShader(vertexShader);
+    ctx.deleteShader(fragmentShader);
+
     return newShaderProgram;
 }
 
