@@ -52,6 +52,10 @@ function createShaderProgram(ctx) {
         return null;
     }
 
+    // Delete shaders now they are no longer needed
+    ctx.deleteShader(vertexShader);
+    ctx.deleteShader(fragmentShader);
+
     return newShaderProgram;
 }
 
@@ -589,19 +593,14 @@ function yawRight(angle) {
     // Update camera yawAngle
     camera.yawAngle += angle
     
-    //Create a quaternion representing rotation around upVec
-    const yawQuat = quat.create();
+    // Reset camera rightVec and forwardVec
+    vec3.set(camera.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(camera.forwardVec, 0.0, 0.0, -1.0);
 
-    //Now set the quaternion using the positive angle
-    quat.setAxisAngle(yawQuat, vec3.fromValues(0.0, 1.0, 0.0), angle);
-
-    //Apply this rotation to camera's rightVec and forwardVec
-    vec3.transformQuat(camera.rightVec, camera.rightVec, yawQuat);
-    vec3.transformQuat(camera.forwardVec, camera.forwardVec, yawQuat);
-
-    //Normalize camera's rightVec and forwardVec
-    vec3.normalize(camera.rightVec, camera.rightVec);
-    vec3.normalize(camera.forwardVec, camera.forwardVec);
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateY(camera.rightVec, camera.rightVec, [0.0, 0.0, 0.0], camera.yawAngle);
+    vec3.rotateY(camera.forwardVec, camera.forwardVec, [0.0, 0.0, 0.0], camera.yawAngle);
+    
 }
 
 /**
@@ -647,6 +646,11 @@ function moveRight(amount) {
 function moveUp(amount) {
 
     camera.y += amount;
+
+    if (camera.y < 0.0)
+    {
+        camera.y = 0.0;
+    }
 }
 
 /**

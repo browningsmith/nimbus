@@ -151,8 +151,8 @@ let objects = [
     {
     
         x: 0.0,
-        y: 6.0,
-        z: -6.0,
+        y: 0.0,
+        z: 0.0,
 
         roll: 0.0,
         pitch: 0.0,
@@ -164,7 +164,7 @@ let objects = [
 
         scale: 1.0,
 
-        model: models.monkey,
+        model: models.shipInterior,
     },
 ];
 
@@ -182,13 +182,13 @@ let objects = [
 let camera = {
 
     x: 0.0, //Camera initialized 6 units above origin
-    y: 6.0,
+    y: 0.0,
     z: 0.0,
 
     lastx: 0.0,
-    lastz: chunkLength * 1.0 + 1.0, //Set the last z to be at least a chunk behind
+    lastz: 0.0,
 
-    yawAngle: 0.0, // Angle of roration around y axis
+    yawAngle: 0.0, // Angle of rotation around y axis
     pitchAngle: 0.0, // Angle of rotation around x axis
 
     //Normal vectors representing right, left, and forward for the camera.
@@ -196,7 +196,7 @@ let camera = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 10.0,
+    speed: 3.0,
 
     rightSpeed: 0.0,
     upSpeed: 0.0,
