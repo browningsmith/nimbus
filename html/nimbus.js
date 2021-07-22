@@ -114,7 +114,7 @@ function main() {
 
             scale: 1.0,
 
-            model: models.cube,
+            model: models.cube
         };
 
         objects.push(newCube);
@@ -122,6 +122,11 @@ function main() {
 
     // Randomize rotation speeds of each object
     randomizeRotations(objects);
+
+    objects[0].rollSpeed = 0.0;
+    objects[0].pitchSpeed = 0.0;
+    objects[0].yawSpeed = 4.0;
+    
 
     //Initialize previousTimestamp
     let previousTimeStamp = 0;
@@ -159,7 +164,7 @@ function main() {
         updatePosition(deltaT, ctx);
 
         drawScene(ctx, shaderProgramData);
-        drawHUD(hudCtx);
+        //drawHUD(hudCtx);
 
         requestAnimationFrame(newFrame);
     }
