@@ -646,6 +646,11 @@ function moveRight(amount) {
 function moveUp(amount) {
 
     camera.y += amount;
+
+    if (camera.y < 0.0)
+    {
+        camera.y = 0.0;
+    }
 }
 
 /**

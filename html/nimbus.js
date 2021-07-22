@@ -125,7 +125,7 @@ function main() {
 
     objects[0].rollSpeed = 0.0;
     objects[0].pitchSpeed = 0.0;
-    objects[0].yawSpeed = 4.0;
+    objects[0].yawSpeed = 0.0;
 
     //Initialize previousTimestamp
     let previousTimeStamp = 0;

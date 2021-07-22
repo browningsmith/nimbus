@@ -164,7 +164,7 @@ let objects = [
 
         scale: 1.0,
 
-        model: models.monkey,
+        model: models.shipInterior,
     },
 ];
 
@@ -183,7 +183,7 @@ let camera = {
 
     x: 0.0, //Camera initialized 6 units above origin
     y: 0.0,
-    z: 15.0,
+    z: 0.0,
 
     lastx: 0.0,
     lastz: 0.0,
@@ -196,7 +196,7 @@ let camera = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 10.0,
+    speed: 3.0,
 
     rightSpeed: 0.0,
     upSpeed: 0.0,
