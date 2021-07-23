@@ -89,7 +89,7 @@ const keys = {
  * Description: a collection of 3D objects for the program to render
  */
 
-let objects = [
+let interiorObjects = [
 
     /**
      * Object: object
@@ -101,7 +101,7 @@ let objects = [
      *             Double scale,
      *             model model
      */
-
+    
     {
     
         x: 0.0,
@@ -120,6 +120,20 @@ let objects = [
 
         model: models.shipInterior,
     },
+]
+
+let exteriorObjects = [
+
+    /**
+     * Object: object
+     * 
+     * Description: A 3D object for the program to render, not to be confused with a JavaScript "Object"
+     * 
+     * Attributes: Double x, y, z
+     *             Double roll, pitch, yaw,
+     *             Double scale,
+     *             model model
+     */
 ];
 
 /**

@@ -99,15 +99,11 @@ function main() {
             model: models.cube
         };
 
-        objects.push(newCube);
+        exteriorObjects.push(newCube);
     }
 
     // Randomize rotation speeds of each object
-    randomizeRotations(objects);
-
-    objects[0].rollSpeed = 0.0;
-    objects[0].pitchSpeed = 0.0;
-    objects[0].yawSpeed = 0.0;
+    randomizeRotations(exteriorObjects);
 
     //Initialize previousTimestamp
     let previousTimeStamp = 0;
@@ -136,7 +132,7 @@ function main() {
         previousTimeStamp = now;
 
         // Update object rotations
-        for (object in objects)
+        for (object in exteriorObjects)
         {
             updateObjectRotation(object, deltaT);
         }

@@ -214,9 +214,6 @@ function drawScene(ctx, shaderProgram) {
     ctx.enable(ctx.CULL_FACE);
     ctx.cullFace(ctx.BACK);
 
-    //Tell WebGL to use the shader program
-    ctx.useProgram(shaderProgram.program);
-
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
@@ -226,14 +223,18 @@ function drawScene(ctx, shaderProgram) {
     mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
 
-    //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
+    //Render all exterior objects
+    for (object in exteriorObjects) {
 
-    //Render all objects
-    for (object in objects) {
+        drawExteriorObject(ctx, shipExteriorShader, exteriorObjects, object);
+    }
 
-        drawObject(ctx, shaderProgram, object);
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
+
+    //Render all interior objects
+    for (object in interiorObjects) {
+
+        drawInteriorObject(ctx, shipInteriorShader, interiorObjects, object);
     }
 }
 
@@ -246,8 +247,66 @@ function drawScene(ctx, shaderProgram) {
  * Description: Handles drawing a specific object in the frame
  */
 
- function drawObject(ctx, shaderProgram, object) {
+ function drawExteriorObject(ctx, shaderProgram, objects, object) {
  
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shaderProgram.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
+    
+    //Compute new model view matrix
+    mat4.identity(modelViewMatrix);
+
+    mat4.translate(modelViewMatrix, modelViewMatrix, [objects[object].x, objects[object].y, objects[object].z]);  //Fifth transform: move back from origin based on position
+    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
+    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
+    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
+
+    //Compute new normals matrix
+    //Do it before the scaling is applied, because otherwise the lighting doesn't work for some reason, not sure why yet :/
+    mat4.identity(normalMatrix);
+    mat4.invert(normalMatrix, modelViewMatrix);
+    mat4.transpose(normalMatrix, normalMatrix);
+
+    mat4.scale(modelViewMatrix, modelViewMatrix, [objects[object].scale, objects[object].scale, objects[object].scale]); //First transform: scale object based on object scale
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.vertex);
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out colors
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.color);
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexColor); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out normals
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.normal);
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexNormal); //Enable the pointer to the buffer
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, objects[object].model.buffers.drawPoint);
+
+    //Set the uniforms
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.normalMatrix, false, normalMatrix);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, objects[object].model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
+
+ function drawInteriorObject(ctx, shaderProgram, objects, object) {
+ 
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shaderProgram.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
+    
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
 
@@ -667,9 +726,9 @@ function moveUp(amount) {
  */
 function updateObjectRotation(object, deltaT) {
 
-    objects[object].roll += objects[object].rollSpeed * deltaT;
-    objects[object].pitch += objects[object].pitchSpeed * deltaT;
-    objects[object].yaw += objects[object].yawSpeed * deltaT;
+    exteriorObjects[object].roll += exteriorObjects[object].rollSpeed * deltaT;
+    exteriorObjects[object].pitch += exteriorObjects[object].pitchSpeed * deltaT;
+    exteriorObjects[object].yaw += exteriorObjects[object].yawSpeed * deltaT;
 }
 
 /**
