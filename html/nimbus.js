@@ -67,8 +67,9 @@ function main() {
     //Get hud context
     const hudCtx = hud.getContext("2d");
 
-    //Create the shader program
+    //Create the shader programs
     createShaderProgram(ctx, shipInteriorShader);
+    createShaderProgram(ctx, shipExteriorShader);
 
     //Create and fill buffers, attach them to their respective models
     for (model in models) {
