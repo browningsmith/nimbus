@@ -261,6 +261,14 @@ function drawScene(ctx, shaderProgram) {
     mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
 
+    // Render the skybox
+    for (panel in skyBoxModels)
+    {
+        drawSkyBoxPanel(ctx, panel);
+    }
+
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
+
     //Render all exterior objects
     for (object in exteriorObjects) {
 
@@ -275,6 +283,45 @@ function drawScene(ctx, shaderProgram) {
         drawInteriorObject(ctx, shipInteriorShader, interiorObjects, object);
     }
 }
+
+/**
+ * Function: drawSkyboxPanel
+ * 
+ * Input: WebGLRenderingContext ctx, Object panel
+ * Output: None
+ * 
+ * Description: Handles drawing a specific object in the frame
+ */
+
+ function drawSkyBoxPanel(ctx, panel) {
+ 
+    //Tell WebGL to use the shader program
+    ctx.useProgram(skyBoxShader.program);
+
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.pitchAngle * -1.0, [1, 0, 0]); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
+    ctx.vertexAttribPointer(skyBoxShader.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(skyBoxShader.data.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.drawPoint);
+
+    //Set the uniforms
+    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.normalMatrix, false, normalMatrix);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, skyBoxModels[panel].drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
 
 /**
  * Function: drawObject

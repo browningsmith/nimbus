@@ -22,6 +22,7 @@
 const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();
 const normalMatrix = mat4.create();
+const skyBoxRotationMatrix = mat4.create();
 
 //Projection matrix
 const projectionMatrix = mat4.create();
