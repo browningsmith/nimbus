@@ -71,6 +71,12 @@ function main() {
     createShaderProgram(ctx, shipInteriorShader);
     createShaderProgram(ctx, shipExteriorShader);
 
+    //Create and fill buffers for skybox panels
+    for (model in skyBoxModels)
+    {
+        skyBoxModels[model].buffers = initSkyBoxBuffers(ctx, model);
+    }
+
     //Create and fill buffers, attach them to their respective models
     for (model in models) {
 

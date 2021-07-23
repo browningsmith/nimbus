@@ -4,6 +4,32 @@
  * Description: A collection of model objects
  */
 
+let skyBoxModels = {
+
+    negZplane: {
+
+        vertexValues: [
+
+            1.0, -1.0, -1.0,
+            1.0, 1.0, -1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, -1.0, -1.0,
+        ],
+        uvValues: [
+
+
+        ],
+        drawPointIndices: [
+
+            0, 1, 2,
+            0, 2, 3,
+        ],
+
+        drawPointCount: 6,
+
+    },
+};
+
  let models = {
 
     /**

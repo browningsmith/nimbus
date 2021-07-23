@@ -153,6 +153,44 @@ function initBuffers(ctx, model) {
 }
 
 /**
+ * Function: initSkyBoxBuffers
+ * 
+ * Input: WebGLRenderingContext ctx, model model,
+ * Output: Collection of WebGLRenderingContext buffer data
+ * 
+ * Description: This function takes the given model, and creates buffers for them
+ *              and places the appropriate data in these buffers. It creates a buffer
+ *              for vertex position data, a buffer for vertex normals, a buffer for
+ *              vertex colors, and a buffer for vertex indices.
+ */
+ function initSkyBoxBuffers(ctx, model) {
+
+    //Create pointer to a new buffer
+    let vertexBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+
+    //Pass in the vertex data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(skyBoxModels[model].vertexValues), ctx.STATIC_DRAW);
+
+    //Create pointer to a new buffer
+    let drawPointBuffer = ctx.createBuffer();
+
+    //Bind the buffer to element buffer
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, drawPointBuffer);
+
+    //Pass in element index data
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(skyBoxModels[model].drawPointIndices), ctx.STATIC_DRAW);
+
+    return {
+
+        vertex: vertexBuffer,
+        drawPoint: drawPointBuffer,
+    };
+}
+
+/**
  * Function: drawHUD
  * 
  * Input: CanvasRenderingContext2D hudCtx
