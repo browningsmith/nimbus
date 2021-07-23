@@ -57,6 +57,9 @@ function createShaderProgram(ctx, shaderProgram) {
     ctx.deleteShader(fragmentShader);
 
     shaderProgram.program = newShaderProgram;
+
+    // Pull out attribute and uniform locations based on custom tieLocations function
+    shaderProgram.tieLocations(ctx);
 }
 
 /**

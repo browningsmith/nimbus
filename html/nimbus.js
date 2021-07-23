@@ -70,24 +70,6 @@ function main() {
     //Create the shader program
     createShaderProgram(ctx, shipInteriorShader);
 
-    //Get location of attributes and uniforms, store in shaderProgramData object
-    shipInteriorShader.data = {
-
-        attributes: {
-
-            vertexPosition: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexPosition"),
-            vertexColor: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexColor"),
-            vertexNormal: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexNormal"),
-        },
-        uniforms: {
-
-            projectionMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_projectionMatrix"),
-            modelViewMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_modelViewMatrix"),
-            worldViewMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_worldViewMatrix"),
-            normalMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_normalMatrix"),
-        },
-    };
-
     //Create and fill buffers, attach them to their respective models
     for (model in models) {
 

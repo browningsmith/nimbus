@@ -18,59 +18,6 @@
  * Copyright (c) 2021, Browning Keith Smith. All rights reserved.
  */
 
- //Vertex Shader source code
-
-const vertexShaderCode = `
-
-    attribute vec4 a_vertexPosition;
-    attribute vec3 a_vertexNormal;
-    attribute vec4 a_vertexColor;
-    
-    uniform mat4 u_projectionMatrix;
-    uniform mat4 u_modelViewMatrix;
-    uniform mat4 u_normalMatrix;
-    uniform mat4 u_worldViewMatrix;
-
-    varying lowp vec4 v_currentColor;
-    varying highp vec4 v_currentPosition;
-    varying highp vec4 v_currentNormal;
-
-    void main(void) {
-
-        v_currentPosition = u_modelViewMatrix * a_vertexPosition; // Calculate vertex position in the world
-        
-        gl_Position = u_projectionMatrix * u_worldViewMatrix * v_currentPosition; //Compute final vertex position based on model, worldview, and projection
-        v_currentColor = a_vertexColor; //Color to be passed to fragment shader
-
-        v_currentNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object
-    }
-`;
-
-//Fragment Shader source code
-
-const fragmentShaderCode = `
-
-    varying lowp vec4 v_currentColor;
-    varying highp vec4 v_currentPosition;
-    varying highp vec4 v_currentNormal;
-
-    void main(void) {
-
-        highp vec3 ambientLight = vec3(0.3, 0.3, 0.3); //Set ambientLight to 0.3 rgb
-        highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0); //Set directional light color to white
-
-        highp vec3 lightPosition = vec3(0.0, 2.4, 0.0);
-
-        highp vec3 lightDirection = normalize(lightPosition - v_currentPosition.xyz); //Set light direction vector
-
-        highp float directional = max(dot(v_currentNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
-
-        highp vec3 currentLighting = ambientLight + (directionalLightColor * directional); //Compute lighting of current vertex as ambient light plus directional light times the directional
-        
-        gl_FragColor = vec4(v_currentColor.rgb * currentLighting, 1.0); //Each fragment is the color multiplied by the light level
-    }
-`;
-
 //View Matrices
 const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();
