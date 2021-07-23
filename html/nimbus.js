@@ -68,6 +68,7 @@ function main() {
     const hudCtx = hud.getContext("2d");
 
     //Create the shader programs
+    createShaderProgram(ctx, skyBoxShader);
     createShaderProgram(ctx, shipInteriorShader);
     createShaderProgram(ctx, shipExteriorShader);
 

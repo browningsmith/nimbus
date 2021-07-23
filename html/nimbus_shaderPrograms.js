@@ -1,3 +1,47 @@
+let skyBoxShader = {
+
+    vertexShaderCode: `
+    
+        attribute vec4 a_vertexPosition;
+
+        uniform mat4 u_projectionMatrix;
+        uniform mat4 u_worldViewMatrix;
+
+        void main(void)
+        {
+            gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition; // Calculate vertex position in frame
+        }
+    `,
+
+    fragmentShaderCode: `
+    
+        void main(void)
+        {
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White
+        }
+    `,
+
+    program: null,
+    data: null,
+
+    tieLocations: function(ctx) {
+
+        //Get location of attributes and uniforms, store in shaderProgramData object
+        this.data = {
+
+            attributes: {
+
+                vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            },
+            uniforms: {
+
+                projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+                worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+            },
+        };
+    },
+}
+
 let shipInteriorShader = {
 
     vertexShaderCode: `
