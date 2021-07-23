@@ -29,14 +29,14 @@
  *              at the top of this file, and attempts to link the resulting shaders together into
  *              a new WebGLProgram.
  */
-function createShaderProgram(ctx) {
+function createShaderProgram(ctx, shaderProgram) {
 
     //Compile shaders
-    const vertexShader = loadShader(ctx, ctx.VERTEX_SHADER, vertexShaderCode);
-    const fragmentShader = loadShader(ctx, ctx.FRAGMENT_SHADER, fragmentShaderCode);
+    const vertexShader = loadShader(ctx, ctx.VERTEX_SHADER, shaderProgram.vertexShaderCode);
+    const fragmentShader = loadShader(ctx, ctx.FRAGMENT_SHADER, shaderProgram.fragmentShaderCode);
 
     //Create pointer to new shader program
-    const newShaderProgram = ctx.createProgram();
+    let newShaderProgram = ctx.createProgram();
 
     //Attach shaders
     ctx.attachShader(newShaderProgram, vertexShader);
@@ -56,7 +56,7 @@ function createShaderProgram(ctx) {
     ctx.deleteShader(vertexShader);
     ctx.deleteShader(fragmentShader);
 
-    return newShaderProgram;
+    shaderProgram.program = newShaderProgram;
 }
 
 /**
@@ -191,7 +191,7 @@ function drawHUD(hudCtx) {
  *              Enables depth testing and obscuring farther away objects
  *              Computes a new FOV based on the new window size
  */
-function drawScene(ctx, shaderProgramData) {
+function drawScene(ctx, shaderProgram) {
 
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -212,7 +212,7 @@ function drawScene(ctx, shaderProgramData) {
     ctx.cullFace(ctx.BACK);
 
     //Tell WebGL to use the shader program
-    ctx.useProgram(shaderProgramData.program);
+    ctx.useProgram(shaderProgram.program);
 
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
@@ -224,13 +224,13 @@ function drawScene(ctx, shaderProgramData) {
     mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
 
     //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.worldViewMatrix, false, worldViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
 
     //Render all objects
     for (object in objects) {
 
-        drawObject(ctx, shaderProgramData, object);
+        drawObject(ctx, shaderProgram, object);
     }
 }
 
@@ -243,7 +243,7 @@ function drawScene(ctx, shaderProgramData) {
  * Description: Handles drawing a specific object in the frame
  */
 
- function drawObject(ctx, shaderProgramData, object) {
+ function drawObject(ctx, shaderProgram, object) {
  
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
@@ -263,25 +263,25 @@ function drawScene(ctx, shaderProgramData) {
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.vertex);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexPosition); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexPosition); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out colors
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.color);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexColor); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexColor); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out normals
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.normal);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexNormal); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexNormal); //Enable the pointer to the buffer
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, objects[object].model.buffers.drawPoint);
 
     //Set the uniforms
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.modelViewMatrix, false, modelViewMatrix);
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.normalMatrix, false, normalMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.normalMatrix, false, normalMatrix);
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, objects[object].model.drawPointCount, ctx.UNSIGNED_SHORT, 0);

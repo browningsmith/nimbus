@@ -68,24 +68,23 @@ function main() {
     const hudCtx = hud.getContext("2d");
 
     //Create the shader program
-    const shaderProgram = createShaderProgram(ctx);
+    createShaderProgram(ctx, shipInteriorShader);
 
     //Get location of attributes and uniforms, store in shaderProgramData object
-    const shaderProgramData = {
+    shipInteriorShader.data = {
 
-        program: shaderProgram,
         attributes: {
 
-            vertexPosition: ctx.getAttribLocation(shaderProgram, "a_vertexPosition"),
-            vertexColor: ctx.getAttribLocation(shaderProgram, "a_vertexColor"),
-            vertexNormal: ctx.getAttribLocation(shaderProgram, "a_vertexNormal"),
+            vertexPosition: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexPosition"),
+            vertexColor: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexColor"),
+            vertexNormal: ctx.getAttribLocation(shipInteriorShader.program, "a_vertexNormal"),
         },
         uniforms: {
 
-            projectionMatrix: ctx.getUniformLocation(shaderProgram, "u_projectionMatrix"),
-            modelViewMatrix: ctx.getUniformLocation(shaderProgram, "u_modelViewMatrix"),
-            worldViewMatrix: ctx.getUniformLocation(shaderProgram, "u_worldViewMatrix"),
-            normalMatrix: ctx.getUniformLocation(shaderProgram, "u_normalMatrix"),
+            projectionMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_projectionMatrix"),
+            modelViewMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_modelViewMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_worldViewMatrix"),
+            normalMatrix: ctx.getUniformLocation(shipInteriorShader.program, "u_normalMatrix"),
         },
     };
 
@@ -162,7 +161,7 @@ function main() {
         //Update camera position
         updatePosition(deltaT, ctx);
 
-        drawScene(ctx, shaderProgramData);
+        drawScene(ctx, shipInteriorShader);
         //drawHUD(hudCtx);
 
         requestAnimationFrame(newFrame);
