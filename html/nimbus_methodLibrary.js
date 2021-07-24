@@ -94,6 +94,62 @@ function loadShader(ctx, type, code) {
     return newShader;
 }
 
+//
+// Initialize a texture and load an image.
+// When the image finished loading copy it into the texture.
+//
+function loadTexture(ctx, textures, textureEncapsulation)
+{
+    function isPowerOf2(value)
+    {
+        return (value & (value - 1)) == 0;
+    }
+    
+    let texture = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+  
+    // Load a single pixel as texture until full texture loads
+    const level = 0;
+    const internalFormat = ctx.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = ctx.RGBA;
+    const srcType = ctx.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+    ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
+                  width, height, border, srcFormat, srcType,
+                  pixel);
+  
+    const image = new Image();
+    image.onload = function() {
+        ctx.bindTexture(ctx.TEXTURE_2D, texture);
+        ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
+                    srcFormat, srcType, image);
+  
+        // WebGL1 has different requirements for power of 2 images
+        // vs non power of 2 images so check if the image is a
+        // power of 2 in both dimensions.
+        if (isPowerOf2(image.width) && isPowerOf2(image.height))
+        {
+            // Yes, it's a power of 2. Generate mips.
+            ctx.generateMipmap(ctx.TEXTURE_2D);
+        }
+        else
+        {
+            // No, it's not a power of 2. Turn off mips and set
+            // wrapping to clamp to edge
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+        }
+    };
+    image.crossOrigin = "";
+    image.src = textures[textureEncapsulation].url;
+  
+    textures[textureEncapsulation].texture = texture;
+}
+
 /**
  * Function: initBuffers
  * 
@@ -175,6 +231,15 @@ function initBuffers(ctx, model) {
     ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(skyBoxModels[model].vertexValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
+    let uvBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, uvBuffer);
+
+    //Pass in the uv data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(skyBoxModels[model].uvValues), ctx.STATIC_DRAW);
+
+    //Create pointer to a new buffer
     let drawPointBuffer = ctx.createBuffer();
 
     //Bind the buffer to element buffer
@@ -186,6 +251,7 @@ function initBuffers(ctx, model) {
     return {
 
         vertex: vertexBuffer,
+        uv: uvBuffer,
         drawPoint: drawPointBuffer,
     };
 }
@@ -311,6 +377,16 @@ function drawScene(ctx, shaderProgram) {
     ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
     ctx.vertexAttribPointer(skyBoxShader.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
     ctx.enableVertexAttribArray(skyBoxShader.data.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out texture coordinates
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.uv);
+    ctx.vertexAttribPointer(skyBoxShader.data.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
+    ctx.enableVertexAttribArray(skyBoxShader.data.attributes.textureCoordinates);
+
+    //Instruct WebGL on which texture to use
+    ctx.activeTexture(ctx.TEXTURE0);
+    ctx.bindTexture(ctx.TEXTURE_2D, textures.negZplane.texture);
+    ctx.uniform1i(skyBoxShader.data.uniforms.uSampler, 0);
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.drawPoint);

@@ -17,7 +17,10 @@ let skyBoxModels = {
         ],
         uvValues: [
 
-
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+            0.0, 1.0,
         ],
         drawPointIndices: [
 
@@ -26,6 +29,8 @@ let skyBoxModels = {
         ],
 
         drawPointCount: 6,
+
+        texture: textures.negZplane.texture,
 
     },
 };

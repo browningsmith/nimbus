@@ -72,6 +72,12 @@ function main() {
     createShaderProgram(ctx, shipInteriorShader);
     createShaderProgram(ctx, shipExteriorShader);
 
+    //Load textures
+    for (textureEncapsulation in textures)
+    {
+        loadTexture(ctx, textures, textureEncapsulation);
+    }
+
     //Create and fill buffers for skybox panels
     for (model in skyBoxModels)
     {

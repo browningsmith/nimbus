@@ -3,21 +3,29 @@ let skyBoxShader = {
     vertexShaderCode: `
     
         attribute vec4 a_vertexPosition;
+        attribute vec2 a_textureCoordinates;
 
         uniform mat4 u_projectionMatrix;
         uniform mat4 u_worldViewMatrix;
 
+        varying highp vec2 v_textureCoordinates;
+
         void main(void)
         {
             gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition; // Calculate vertex position in frame
+            v_textureCoordinates = a_textureCoordinates;
         }
     `,
 
     fragmentShaderCode: `
     
+        varying highp vec2 v_textureCoordinates;
+
+        uniform sampler2D u_Sampler;
+    
         void main(void)
         {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White
+            gl_FragColor = texture2D(u_Sampler, v_textureCoordinates); // The color of the texture mapped to the current point
         }
     `,
 
@@ -32,11 +40,13 @@ let skyBoxShader = {
             attributes: {
 
                 vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+                textureCoordinates: ctx.getAttribLocation(this.program, "a_textureCoordinates"),
             },
             uniforms: {
 
                 projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
                 worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+                uSampler: ctx.getUniformLocation(this.program, "u_Sampler"),
             },
         };
     },
