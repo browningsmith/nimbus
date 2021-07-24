@@ -78,6 +78,14 @@ function main() {
         loadTexture(ctx, textures, textureEncapsulation);
     }
 
+    // Attach textures to objects
+    skyBoxModels.negZplane.texture = textures.negZplane.texture;
+    skyBoxModels.posXplane.texture = textures.posXplane.texture;
+    skyBoxModels.posZplane.texture = textures.posZplane.texture;
+    skyBoxModels.negXplane.texture = textures.negXplane.texture;
+    skyBoxModels.posYplane.texture = textures.posYplane.texture;
+    skyBoxModels.negYplane.texture = textures.negYplane.texture;
+
     //Create and fill buffers for skybox panels
     for (model in skyBoxModels)
     {

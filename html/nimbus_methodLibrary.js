@@ -120,6 +120,8 @@ function loadTexture(ctx, textures, textureEncapsulation)
     ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
                   width, height, border, srcFormat, srcType,
                   pixel);
+
+    
   
     const image = new Image();
     image.onload = function() {
@@ -130,7 +132,7 @@ function loadTexture(ctx, textures, textureEncapsulation)
         // WebGL1 has different requirements for power of 2 images
         // vs non power of 2 images so check if the image is a
         // power of 2 in both dimensions.
-        if (isPowerOf2(image.width) && isPowerOf2(image.height))
+        /*if (isPowerOf2(image.width) && isPowerOf2(image.height))
         {
             // Yes, it's a power of 2. Generate mips.
             ctx.generateMipmap(ctx.TEXTURE_2D);
@@ -142,7 +144,9 @@ function loadTexture(ctx, textures, textureEncapsulation)
             ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
             ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
             ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-        }
+        }*/
+
+        ctx.generateMipmap(ctx.TEXTURE_2D);
     };
     image.crossOrigin = "";
     image.src = textures[textureEncapsulation].url;
@@ -330,7 +334,7 @@ function drawScene(ctx, shaderProgram) {
     // Render the skybox
     for (panel in skyBoxModels)
     {
-        drawSkyBoxPanel(ctx, panel);
+        drawSkyBoxPanel(ctx, panel, textureEncapsulation);
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
@@ -385,15 +389,11 @@ function drawScene(ctx, shaderProgram) {
 
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
-    ctx.bindTexture(ctx.TEXTURE_2D, textures.negZplane.texture);
+    ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture);
     ctx.uniform1i(skyBoxShader.data.uniforms.uSampler, 0);
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.drawPoint);
-
-    //Set the uniforms
-    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.modelViewMatrix, false, modelViewMatrix);
-    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.normalMatrix, false, normalMatrix);
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, skyBoxModels[panel].drawPointCount, ctx.UNSIGNED_SHORT, 0);
