@@ -128,25 +128,12 @@ function loadTexture(ctx, textures, textureEncapsulation)
         ctx.bindTexture(ctx.TEXTURE_2D, texture);
         ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
                     srcFormat, srcType, image);
-  
-        // WebGL1 has different requirements for power of 2 images
-        // vs non power of 2 images so check if the image is a
-        // power of 2 in both dimensions.
-        /*if (isPowerOf2(image.width) && isPowerOf2(image.height))
-        {
-            // Yes, it's a power of 2. Generate mips.
-            ctx.generateMipmap(ctx.TEXTURE_2D);
-        }
-        else
-        {
-            // No, it's not a power of 2. Turn off mips and set
-            // wrapping to clamp to edge
-            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
-            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
-            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-        }*/
-
-        ctx.generateMipmap(ctx.TEXTURE_2D);
+        
+        
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+        
     };
     image.crossOrigin = "";
     image.src = textures[textureEncapsulation].url;
@@ -346,6 +333,7 @@ function drawScene(ctx, shaderProgram) {
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
+    ctx.disable(ctx.CULL_FACE);
 
     //Render all interior objects
     for (object in interiorObjects) {
@@ -870,10 +858,10 @@ function moveUp(amount) {
 
     camera.y += amount;
 
-    if (camera.y < 0.0)
+    /*if (camera.y < 0.0)
     {
         camera.y = 0.0;
-    }
+    }*/
 }
 
 /**

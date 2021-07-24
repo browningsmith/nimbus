@@ -165,7 +165,7 @@ let camera = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 3.0,
+    speed: 10.0,
 
     rightSpeed: 0.0,
     upSpeed: 0.0,
