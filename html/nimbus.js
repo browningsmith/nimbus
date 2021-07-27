@@ -89,13 +89,13 @@ function main() {
     //Create and fill buffers for skybox panels
     for (model in skyBoxModels)
     {
-        skyBoxModels[model].buffers = initSkyBoxBuffers(ctx, model);
+        initSkyBoxBuffers(ctx, skyBoxModels[model]);
     }
 
     //Create and fill buffers, attach them to their respective models
     for (model in models) {
 
-        models[model].buffers = initBuffers(ctx, model);
+        initBuffers(ctx, models[model]);
 	}
 
     // Create more cubes in random places
@@ -161,8 +161,8 @@ function main() {
         //Update camera position
         updatePosition(deltaT, ctx);
 
-        drawScene(ctx, shipInteriorShader);
-        //drawHUD(hudCtx);
+        drawScene(ctx);
+        drawHUD(hudCtx);
 
         requestAnimationFrame(newFrame);
     }
