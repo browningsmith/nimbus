@@ -154,11 +154,11 @@ let shipExteriorShader = {
             highp vec3 ambientLight = vec3(0.3, 0.3, 0.3); //Set ambientLight to 0.3 rgb
             highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0); //Set directional light color to white
 
-            highp vec3 lightDirection = normalize(vec3(0.2, 0.2, -1.0)); //Set light direction vector
+            highp vec3 lightDirection = normalize(vec3(0.2, -0.8, 1.0)); //Set light direction vector
 
             highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object
 
-            highp float directional = max(dot(transformedNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
+            highp float directional = max(dot(transformedNormal.xyz, lightDirection * -1.0),0.0); //Compute directional based on transformed normal and direction of light
 
             v_currentLighting = ambientLight + (directionalLightColor * directional); //Compute lighting of current vertex as ambient light plus directional light times the directional
         }
