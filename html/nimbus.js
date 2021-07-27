@@ -73,12 +73,12 @@ function main() {
     createShaderProgram(ctx, shipExteriorShader);
 
     //Load textures
-    for (textureEncapsulation in textures)
+    for (textureData in textures)
     {
-        loadTexture(ctx, textures, textureEncapsulation);
+        loadTexture(ctx, textures, textureData);
     }
 
-    // Attach textures to objects
+    // Attach skybox textures to the respective models
     skyBoxModels.negZplane.texture = textures.negZplane.texture;
     skyBoxModels.posXplane.texture = textures.posXplane.texture;
     skyBoxModels.posZplane.texture = textures.posZplane.texture;

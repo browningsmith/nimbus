@@ -42,24 +42,23 @@ let skyBoxShader = {
     `,
 
     program: null,
-    data: null,
+    attributes: null,
+    uniforms: null,
 
     tieLocations: function(ctx) {
 
-        //Get location of attributes and uniforms, store in shaderProgramData object
-        this.data = {
+        //Get location of attributes and uniforms, store in the ShaderData object
+        this.attributes = {
 
-            attributes: {
+            vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            textureCoordinates: ctx.getAttribLocation(this.program, "a_textureCoordinates"),
+        };
+        
+        this.uniforms = {
 
-                vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
-                textureCoordinates: ctx.getAttribLocation(this.program, "a_textureCoordinates"),
-            },
-            uniforms: {
-
-                projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
-                worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-                uSampler: ctx.getUniformLocation(this.program, "u_Sampler"),
-            },
+            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+            uSampler: ctx.getUniformLocation(this.program, "u_Sampler"),
         };
     },
 }
@@ -118,26 +117,25 @@ let shipInteriorShader = {
     `,
 
     program: null,
-    data: null,
+    attributes: null,
+    uniforms: null,
 
     tieLocations: function(ctx) {
 
         //Get location of attributes and uniforms, store in shaderProgramData object
-        this.data = {
+        this.attributes = {
 
-            attributes: {
+            vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            vertexColor: ctx.getAttribLocation(this.program, "a_vertexColor"),
+            vertexNormal: ctx.getAttribLocation(this.program, "a_vertexNormal"),
+        };
 
-                vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
-                vertexColor: ctx.getAttribLocation(this.program, "a_vertexColor"),
-                vertexNormal: ctx.getAttribLocation(this.program, "a_vertexNormal"),
-            },
-            uniforms: {
+        this.uniforms = {
 
-                projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
-                modelViewMatrix: ctx.getUniformLocation(this.program, "u_modelViewMatrix"),
-                worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-                normalMatrix: ctx.getUniformLocation(this.program, "u_normalMatrix"),
-            },
+            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+            modelViewMatrix: ctx.getUniformLocation(this.program, "u_modelViewMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+            normalMatrix: ctx.getUniformLocation(this.program, "u_normalMatrix"),
         };
     },
 }
@@ -190,26 +188,25 @@ let shipExteriorShader = {
     `,
 
     program: null,
-    data: null,
+    attributes: null,
+    uniforms: null,
 
     tieLocations: function(ctx) {
 
         //Get location of attributes and uniforms, store in shaderProgramData object
-        this.data = {
+        this.attributes = {
 
-            attributes: {
+            vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            vertexColor: ctx.getAttribLocation(this.program, "a_vertexColor"),
+            vertexNormal: ctx.getAttribLocation(this.program, "a_vertexNormal"),
+        };
+        
+        this.uniforms = {
 
-                vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
-                vertexColor: ctx.getAttribLocation(this.program, "a_vertexColor"),
-                vertexNormal: ctx.getAttribLocation(this.program, "a_vertexNormal"),
-            },
-            uniforms: {
-
-                projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
-                modelViewMatrix: ctx.getUniformLocation(this.program, "u_modelViewMatrix"),
-                worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-                normalMatrix: ctx.getUniformLocation(this.program, "u_normalMatrix"),
-            },
+            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+            modelViewMatrix: ctx.getUniformLocation(this.program, "u_modelViewMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+            normalMatrix: ctx.getUniformLocation(this.program, "u_normalMatrix"),
         };
     },
 }

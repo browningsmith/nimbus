@@ -321,7 +321,7 @@ function drawScene(ctx, shaderProgram) {
     // Render the skybox
     for (panel in skyBoxModels)
     {
-        drawSkyBoxPanel(ctx, panel, textureEncapsulation);
+        drawSkyBoxPanel(ctx, panel);
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
@@ -362,23 +362,23 @@ function drawScene(ctx, shaderProgram) {
     mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     
     //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(skyBoxShader.data.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
-    ctx.vertexAttribPointer(skyBoxShader.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(skyBoxShader.data.attributes.vertexPosition); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(skyBoxShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.vertexPosition); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out texture coordinates
     ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.uv);
-    ctx.vertexAttribPointer(skyBoxShader.data.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(skyBoxShader.data.attributes.textureCoordinates);
+    ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
 
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
     ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture);
-    ctx.uniform1i(skyBoxShader.data.uniforms.uSampler, 0);
+    ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.drawPoint);
@@ -402,8 +402,8 @@ function drawScene(ctx, shaderProgram) {
     ctx.useProgram(shaderProgram.program);
     
     //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.worldViewMatrix, false, worldViewMatrix);
     
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
@@ -423,25 +423,25 @@ function drawScene(ctx, shaderProgram) {
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.vertex);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexPosition); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexPosition); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out colors
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.color);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexColor); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexColor); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out normals
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.normal);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexNormal); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexNormal); //Enable the pointer to the buffer
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, objects[object].model.buffers.drawPoint);
 
     //Set the uniforms
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.modelViewMatrix, false, modelViewMatrix);
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.normalMatrix, false, normalMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.normalMatrix, false, normalMatrix);
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, objects[object].model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
@@ -453,8 +453,8 @@ function drawScene(ctx, shaderProgram) {
     ctx.useProgram(shaderProgram.program);
     
     //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.worldViewMatrix, false, worldViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.worldViewMatrix, false, worldViewMatrix);
     
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
@@ -474,25 +474,25 @@ function drawScene(ctx, shaderProgram) {
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.vertex);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexPosition); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexPosition); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out colors
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.color);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexColor); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexColor); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out normals
     ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.normal);
-    ctx.vertexAttribPointer(shaderProgram.data.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgram.data.attributes.vertexNormal); //Enable the pointer to the buffer
+    ctx.vertexAttribPointer(shaderProgram.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shaderProgram.attributes.vertexNormal); //Enable the pointer to the buffer
 
     //Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, objects[object].model.buffers.drawPoint);
 
     //Set the uniforms
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.modelViewMatrix, false, modelViewMatrix);
-    ctx.uniformMatrix4fv(shaderProgram.data.uniforms.normalMatrix, false, normalMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shaderProgram.uniforms.normalMatrix, false, normalMatrix);
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, objects[object].model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
