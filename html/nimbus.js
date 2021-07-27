@@ -75,7 +75,7 @@ function main() {
     //Load textures
     for (textureData in textures)
     {
-        loadTexture(ctx, textures, textureData);
+        loadTexture(ctx, textures[textureData]);
     }
 
     // Attach skybox textures to the respective models

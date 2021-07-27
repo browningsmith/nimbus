@@ -98,12 +98,12 @@ function loadShader(ctx, type, code) {
 // Initialize a texture and load an image.
 // When the image finished loading copy it into the texture.
 //
-function loadTexture(ctx, textures, textureEncapsulation)
+function loadTexture(ctx, textureData)
 {
-    function isPowerOf2(value)
+    /*function isPowerOf2(value)
     {
         return (value & (value - 1)) == 0;
-    }
+    }*/
     
     let texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
@@ -136,9 +136,9 @@ function loadTexture(ctx, textures, textureEncapsulation)
         
     };
     image.crossOrigin = "";
-    image.src = textures[textureEncapsulation].url;
+    image.src = textureData.url;
   
-    textures[textureEncapsulation].texture = texture;
+    textureData.texture = texture;
 }
 
 /**
