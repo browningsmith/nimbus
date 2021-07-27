@@ -1,7 +1,14 @@
 /**
- * Object: models
+ * Object: model
  * 
- * Description: A collection of model objects
+ * Attributes:
+ *    - vertexValues - Array of vertex coordinates (x,y,z)
+ *    - [colorValues] - Optional array of color values, (r,g,b,a)
+ *    - [normalValues] - Optional array of vertex normals (x,y,z components)
+ *    - [uvValues] - Optional array of texture coordinates (x,y or u,v)
+ *    - drawPointIndices - Array of element indices that drawElements can use to draw primitives
+ *    - drawPointCount - Length of drawPointIndices array, i.e. number of points to draw
+ *    - [texture] - Optional WebGL texture
  */
 
 let skyBoxModels = {

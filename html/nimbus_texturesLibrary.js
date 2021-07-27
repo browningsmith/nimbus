@@ -1,3 +1,11 @@
+/*
+ *  Object: textureData
+ *
+ *  Attributes:
+ *     url - the source of the 2D image
+ *     texture - the WebGL texture object
+ */
+
 let textures = {
 
     negZplane: {

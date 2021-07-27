@@ -1,3 +1,15 @@
+/*
+ * Object: ShaderData
+ *
+ * Attributes:
+ *     - vertexShaderCode - String representing vertex shader source code
+ *     - fragmentShaderCode - String representing fragment shader source code
+ *     - program - The resulting WebGL shader program
+ *     - attributes - Pointers to shader attributes
+ *     - uniforms - Pointers to shader uniforms
+ *     - tieLocations - Function to pull out attribute and shader locations from the compiled program
+ */
+
 let skyBoxShader = {
 
     vertexShaderCode: `
