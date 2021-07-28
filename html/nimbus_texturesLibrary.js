@@ -10,13 +10,13 @@ let textures = {
 
     negZplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_nz.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_nz.jpg",
         texture: null,
     },
 
     posXplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_nx.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_px.jpg",
         texture: null,
     },
 
