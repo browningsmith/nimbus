@@ -22,25 +22,25 @@ let textures = {
 
     posZplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_pz.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_pz.png",
         texture: null,
     },
 
     negXplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_px.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_nx.png",
         texture: null,
     },
 
     posYplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_py.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_py.png",
         texture: null,
     },
 
     negYplane: {
 
-        url: "https://playground.babylonjs.com/textures/skybox_ny.jpg",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud_ny.png",
         texture: null,
     },
 };
