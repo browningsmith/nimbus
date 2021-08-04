@@ -37,7 +37,7 @@ let skyBoxShader = {
     
         void main(void)
         {
-            gl_FragColor = texture2D(u_Sampler, v_textureCoordinates) * vec4(256.0 / 256.0, 170.0 / 256.0, 0.0 / 256.0, 1.0); // The color of the texture mapped to the current point
+            gl_FragColor = texture2D(u_Sampler, v_textureCoordinates); // The color of the texture mapped to the current point
         }
     `,
 
@@ -162,7 +162,7 @@ let shipExteriorShader = {
             v_currentColor = a_vertexColor; //Color to be passed to fragment shader
             
             highp vec3 ambientLight = vec3(0.3, 0.3, 0.3); //Set ambientLight to 0.3 rgb
-            highp vec3 directionalLightColor = vec3(256.0 / 256.0, 170.0 / 256.0, 0.0 / 256.0); //Set directional light color to white
+            highp vec3 directionalLightColor = vec3(256.0 / 256.0, 256.0 / 256.0, 256.0 / 256.0); //Set directional light color to white
 
             highp vec3 lightDirection = normalize(vec3(0.2, 0.0, 1.0)); //Set light direction vector
 
