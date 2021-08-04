@@ -10,37 +10,37 @@ let textures = {
 
     negZplane: {
 
-        url: "http://www.keith-smith.rocks/nimbus_textures/firstCloudo_nz.png",
+        url: "http://www.keith-smith.rocks/nimbus_textures/firstCloud3_nz.png",
         texture: null,
     },
 
     posXplane: {
 
-        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloudo_px.png",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud3_px.png",
         texture: null,
     },
 
     posZplane: {
 
-        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloudo_pz.png",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud3_pz.png",
         texture: null,
     },
 
     negXplane: {
 
-        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloudo_nx.png",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud3_nx.png",
         texture: null,
     },
 
     posYplane: {
 
-        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloudo_py.png",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud3_py.png",
         texture: null,
     },
 
     negYplane: {
 
-        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloudo_ny.png",
+        url: "https://www.keith-smith.rocks/nimbus_textures/firstCloud3_ny.png",
         texture: null,
     },
 };
