@@ -29,14 +29,14 @@
  *              at the top of this file, and attempts to link the resulting shaders together into
  *              a new WebGLProgram.
  */
-function createShaderProgram(ctx) {
+function createShaderProgram(shaderData) {
 
     //Compile shaders
-    const vertexShader = loadShader(ctx, ctx.VERTEX_SHADER, vertexShaderCode);
-    const fragmentShader = loadShader(ctx, ctx.FRAGMENT_SHADER, fragmentShaderCode);
+    const vertexShader = loadShader(ctx.VERTEX_SHADER, shaderData.vertexShaderCode);
+    const fragmentShader = loadShader(ctx.FRAGMENT_SHADER, shaderData.fragmentShaderCode);
 
     //Create pointer to new shader program
-    const newShaderProgram = ctx.createProgram();
+    let newShaderProgram = ctx.createProgram();
 
     //Attach shaders
     ctx.attachShader(newShaderProgram, vertexShader);
@@ -52,7 +52,14 @@ function createShaderProgram(ctx) {
         return null;
     }
 
-    return newShaderProgram;
+    // Delete shaders now they are no longer needed
+    ctx.deleteShader(vertexShader);
+    ctx.deleteShader(fragmentShader);
+
+    shaderData.program = newShaderProgram;
+
+    // Pull out attribute and uniform locations based on custom tieLocations function
+    shaderData.tieLocations();
 }
 
 /**
@@ -65,7 +72,7 @@ function createShaderProgram(ctx) {
  *              "code". Prints an error to the console if it is unable to compile the shader, with a
  *              description of the compilation error.
  */
-function loadShader(ctx, type, code) {
+function loadShader(type, code) {
 
     //Create pointer to a new shader
     const newShader = ctx.createShader(type);
@@ -87,6 +94,53 @@ function loadShader(ctx, type, code) {
     return newShader;
 }
 
+//
+// Initialize a texture and load an image.
+// When the image finished loading copy it into the texture.
+//
+function loadTexture(textureData)
+{
+    /*function isPowerOf2(value)
+    {
+        return (value & (value - 1)) == 0;
+    }*/
+    
+    let texture = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+  
+    // Load a single pixel as texture until full texture loads
+    const level = 0;
+    const internalFormat = ctx.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = ctx.RGBA;
+    const srcType = ctx.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+    ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
+                  width, height, border, srcFormat, srcType,
+                  pixel);
+
+    
+  
+    const image = new Image();
+    image.onload = function() {
+        ctx.bindTexture(ctx.TEXTURE_2D, texture);
+        ctx.texImage2D(ctx.TEXTURE_2D, level, internalFormat,
+                    srcFormat, srcType, image);
+        
+        
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+        
+    };
+    image.crossOrigin = "";
+    image.src = textureData.url;
+  
+    textureData.texture = texture;
+}
+
 /**
  * Function: initBuffers
  * 
@@ -98,7 +152,7 @@ function loadShader(ctx, type, code) {
  *              for vertex position data, a buffer for vertex normals, a buffer for
  *              vertex colors, and a buffer for vertex indices.
  */
-function initBuffers(ctx, model) {
+function initBuffers(model) {
 
     //Create pointer to a new buffer
     let vertexBuffer = ctx.createBuffer();
@@ -107,7 +161,7 @@ function initBuffers(ctx, model) {
     ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
 
     //Pass in the vertex data
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].vertexValues), ctx.STATIC_DRAW);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.vertexValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
     let colorBuffer = ctx.createBuffer();
@@ -116,7 +170,7 @@ function initBuffers(ctx, model) {
     ctx.bindBuffer(ctx.ARRAY_BUFFER, colorBuffer);
 
     //Pass in color data
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].colorValues), ctx.STATIC_DRAW);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.colorValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
     let normalBuffer = ctx.createBuffer();
@@ -125,7 +179,7 @@ function initBuffers(ctx, model) {
     ctx.bindBuffer(ctx.ARRAY_BUFFER, normalBuffer);
 
     //Pass in normals data
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(models[model].normalValues), ctx.STATIC_DRAW);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.normalValues), ctx.STATIC_DRAW);
 
     //Create pointer to a new buffer
     let drawPointBuffer = ctx.createBuffer();
@@ -134,13 +188,61 @@ function initBuffers(ctx, model) {
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, drawPointBuffer);
 
     //Pass in element index data
-    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(models[model].drawPointIndices), ctx.STATIC_DRAW);
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(model.drawPointIndices), ctx.STATIC_DRAW);
 
-    return {
+    model.buffers = {
 
         vertex: vertexBuffer,
         color: colorBuffer,
         normal: normalBuffer,
+        drawPoint: drawPointBuffer,
+    };
+}
+
+/**
+ * Function: initSkyBoxBuffers
+ * 
+ * Input: WebGLRenderingContext ctx, model model,
+ * Output: Collection of WebGLRenderingContext buffer data
+ * 
+ * Description: This function takes the given model, and creates buffers for them
+ *              and places the appropriate data in these buffers. It creates a buffer
+ *              for vertex position data, a buffer for vertex normals, a buffer for
+ *              vertex colors, and a buffer for vertex indices.
+ */
+ function initSkyBoxBuffers(model) {
+
+    //Create pointer to a new buffer
+    let vertexBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+
+    //Pass in the vertex data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.vertexValues), ctx.STATIC_DRAW);
+
+    //Create pointer to a new buffer
+    let uvBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, uvBuffer);
+
+    //Pass in the uv data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.uvValues), ctx.STATIC_DRAW);
+
+    //Create pointer to a new buffer
+    let drawPointBuffer = ctx.createBuffer();
+
+    //Bind the buffer to element buffer
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, drawPointBuffer);
+
+    //Pass in element index data
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(model.drawPointIndices), ctx.STATIC_DRAW);
+
+    model.buffers = {
+
+        vertex: vertexBuffer,
+        uv: uvBuffer,
         drawPoint: drawPointBuffer,
     };
 }
@@ -154,7 +256,7 @@ function initBuffers(ctx, model) {
  * Description: Clears the canvas, then draws a horizontal and vertical white line on the 
  *              2D hud canvas at the center of the screen
  */
-function drawHUD(hudCtx) {
+function drawHUD() {
 
     hudCtx.canvas.width = hudCtx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     hudCtx.canvas.height = hudCtx.canvas.clientHeight;
@@ -187,7 +289,7 @@ function drawHUD(hudCtx) {
  *              Enables depth testing and obscuring farther away objects
  *              Computes a new FOV based on the new window size
  */
-function drawScene(ctx, shaderProgramData) {
+function drawScene() {
 
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -207,9 +309,6 @@ function drawScene(ctx, shaderProgramData) {
     ctx.enable(ctx.CULL_FACE);
     ctx.cullFace(ctx.BACK);
 
-    //Tell WebGL to use the shader program
-    ctx.useProgram(shaderProgramData.program);
-
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
@@ -219,16 +318,74 @@ function drawScene(ctx, shaderProgramData) {
     mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
 
-    //Set worldview and projection uniforms
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.worldViewMatrix, false, worldViewMatrix);
+    // Render the skybox
+    for (panel in skyBoxModels)
+    {
+        drawSkyBoxPanel(skyBoxModels[panel]);
+    }
 
-    //Render all objects
-    for (object in objects) {
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
 
-        drawObject(ctx, shaderProgramData, object);
+    //Render all exterior objects
+    for (object in exteriorObjects) {
+
+        drawExteriorObject(exteriorObjects[object]);
+    }
+
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
+    ctx.disable(ctx.CULL_FACE);
+
+    //Render all interior objects
+    for (object in interiorObjects) {
+
+        drawInteriorObject(interiorObjects[object]);
     }
 }
+
+/**
+ * Function: drawSkyboxPanel
+ * 
+ * Input: WebGLRenderingContext ctx, Object panel
+ * Output: None
+ * 
+ * Description: Handles drawing a specific object in the frame
+ */
+
+ function drawSkyBoxPanel(panel) {
+ 
+    //Tell WebGL to use the shader program
+    ctx.useProgram(skyBoxShader.program);
+
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.pitchAngle * -1.0, [1, 0, 0]); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
+    ctx.vertexAttribPointer(skyBoxShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out texture coordinates
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.uv);
+    ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
+
+    //Instruct WebGL on which texture to use
+    ctx.activeTexture(ctx.TEXTURE0);
+    ctx.bindTexture(ctx.TEXTURE_2D, panel.texture);
+    ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, panel.buffers.drawPoint);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, panel.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
 
 /**
  * Function: drawObject
@@ -239,15 +396,22 @@ function drawScene(ctx, shaderProgramData) {
  * Description: Handles drawing a specific object in the frame
  */
 
- function drawObject(ctx, shaderProgramData, object) {
+ function drawExteriorObject(object) {
  
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shipExteriorShader.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shipExteriorShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shipExteriorShader.uniforms.worldViewMatrix, false, worldViewMatrix);
+    
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
 
-    mat4.translate(modelViewMatrix, modelViewMatrix, [objects[object].x, objects[object].y, objects[object].z]);  //Fifth transform: move back from origin based on position
-    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
-    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
-    mat4.rotate(modelViewMatrix, modelViewMatrix, objects[object].roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
+    mat4.translate(modelViewMatrix, modelViewMatrix, [object.x, object.y, object.z]);  //Fifth transform: move back from origin based on position
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
 
     //Compute new normals matrix
     //Do it before the scaling is applied, because otherwise the lighting doesn't work for some reason, not sure why yet :/
@@ -255,32 +419,83 @@ function drawScene(ctx, shaderProgramData) {
     mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
-    mat4.scale(modelViewMatrix, modelViewMatrix, [objects[object].scale, objects[object].scale, objects[object].scale]); //First transform: scale object based on object scale
+    mat4.scale(modelViewMatrix, modelViewMatrix, [object.scale, object.scale, object.scale]); //First transform: scale object based on object scale
 
     //Instruct WebGL how to pull out vertices
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.vertex);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexPosition); //Enable the pointer to the buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.vertex);
+    ctx.vertexAttribPointer(shipExteriorShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipExteriorShader.attributes.vertexPosition); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out colors
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.color);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexColor); //Enable the pointer to the buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.color);
+    ctx.vertexAttribPointer(shipExteriorShader.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipExteriorShader.attributes.vertexColor); //Enable the pointer to the buffer
 
     //Instruct WebGL how to pull out normals
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, objects[object].model.buffers.normal);
-    ctx.vertexAttribPointer(shaderProgramData.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderProgramData.attributes.vertexNormal); //Enable the pointer to the buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.normal);
+    ctx.vertexAttribPointer(shipExteriorShader.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipExteriorShader.attributes.vertexNormal); //Enable the pointer to the buffer
 
     //Give WebGL the element array
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, objects[object].model.buffers.drawPoint);
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, object.model.buffers.drawPoint);
 
     //Set the uniforms
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.modelViewMatrix, false, modelViewMatrix);
-    ctx.uniformMatrix4fv(shaderProgramData.uniforms.normalMatrix, false, normalMatrix);
+    ctx.uniformMatrix4fv(shipExteriorShader.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shipExteriorShader.uniforms.normalMatrix, false, normalMatrix);
 
     //Draw triangles
-    ctx.drawElements(ctx.TRIANGLES, objects[object].model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+    ctx.drawElements(ctx.TRIANGLES, object.model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
+
+ function drawInteriorObject(object) {
+ 
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shipInteriorShader.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.worldViewMatrix, false, worldViewMatrix);
+    
+    //Compute new model view matrix
+    mat4.identity(modelViewMatrix);
+
+    mat4.translate(modelViewMatrix, modelViewMatrix, [object.x, object.y, object.z]);  //Fifth transform: move back from origin based on position
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
+
+    //Compute new normals matrix
+    //Do it before the scaling is applied, because otherwise the lighting doesn't work for some reason, not sure why yet :/
+    mat4.identity(normalMatrix);
+    mat4.invert(normalMatrix, modelViewMatrix);
+    mat4.transpose(normalMatrix, normalMatrix);
+
+    mat4.scale(modelViewMatrix, modelViewMatrix, [object.scale, object.scale, object.scale]); //First transform: scale object based on object scale
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.vertex);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out colors
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.color);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexColor); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out normals
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.normal);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexNormal); //Enable the pointer to the buffer
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, object.model.buffers.drawPoint);
+
+    //Set the uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.normalMatrix, false, normalMatrix);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, object.model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
  }
 
 /**
@@ -522,7 +737,7 @@ function updateCameraSpeed() {
  *              chunks
  */
 //Function to update the camera position based on camera speeds
-function updatePosition(deltaT,ctx) {
+function updatePosition(deltaT) {
 
     //Record the cameras last position
     camera.lastx = camera.x;
@@ -589,19 +804,14 @@ function yawRight(angle) {
     // Update camera yawAngle
     camera.yawAngle += angle
     
-    //Create a quaternion representing rotation around upVec
-    const yawQuat = quat.create();
+    // Reset camera rightVec and forwardVec
+    vec3.set(camera.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(camera.forwardVec, 0.0, 0.0, -1.0);
 
-    //Now set the quaternion using the positive angle
-    quat.setAxisAngle(yawQuat, vec3.fromValues(0.0, 1.0, 0.0), angle);
-
-    //Apply this rotation to camera's rightVec and forwardVec
-    vec3.transformQuat(camera.rightVec, camera.rightVec, yawQuat);
-    vec3.transformQuat(camera.forwardVec, camera.forwardVec, yawQuat);
-
-    //Normalize camera's rightVec and forwardVec
-    vec3.normalize(camera.rightVec, camera.rightVec);
-    vec3.normalize(camera.forwardVec, camera.forwardVec);
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateY(camera.rightVec, camera.rightVec, [0.0, 0.0, 0.0], camera.yawAngle);
+    vec3.rotateY(camera.forwardVec, camera.forwardVec, [0.0, 0.0, 0.0], camera.yawAngle);
+    
 }
 
 /**
@@ -647,6 +857,11 @@ function moveRight(amount) {
 function moveUp(amount) {
 
     camera.y += amount;
+
+    /*if (camera.y < 0.0)
+    {
+        camera.y = 0.0;
+    }*/
 }
 
 /**
@@ -660,9 +875,9 @@ function moveUp(amount) {
  */
 function updateObjectRotation(object, deltaT) {
 
-    objects[object].roll += objects[object].rollSpeed * deltaT;
-    objects[object].pitch += objects[object].pitchSpeed * deltaT;
-    objects[object].yaw += objects[object].yawSpeed * deltaT;
+    exteriorObjects[object].roll += exteriorObjects[object].rollSpeed * deltaT;
+    exteriorObjects[object].pitch += exteriorObjects[object].pitchSpeed * deltaT;
+    exteriorObjects[object].yaw += exteriorObjects[object].yawSpeed * deltaT;
 }
 
 /**

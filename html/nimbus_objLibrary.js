@@ -18,63 +18,26 @@
  * Copyright (c) 2021, Browning Keith Smith. All rights reserved.
  */
 
- //Vertex Shader source code
+const piOver2 = Math.PI / 2.0;
 
-const vertexShaderCode = `
-
-    attribute vec4 a_vertexPosition;
-    attribute vec3 a_vertexNormal;
-    attribute vec4 a_vertexColor;
-    
-    uniform mat4 u_projectionMatrix;
-    uniform mat4 u_modelViewMatrix;
-    uniform mat4 u_normalMatrix;
-    uniform mat4 u_worldViewMatrix;
-
-    varying lowp vec4 v_currentColor;
-    varying highp vec3 v_currentLighting;
-
-    void main(void) {
-
-        gl_Position = u_projectionMatrix * u_worldViewMatrix * u_modelViewMatrix * a_vertexPosition; //Compute vertex position based on model, worldview, and projection
-        v_currentColor = a_vertexColor; //Color to be passed to fragment shader
-        
-        highp vec3 ambientLight = vec3(0.3, 0.3, 0.3); //Set ambientLight to 0.3 rgb
-        highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0); //Set directional light color to white
-
-        highp vec3 lightDirection = normalize(vec3(0.5, 1.0, 1.0)); //Set light direction vector
-
-        highp vec4 transformedNormal = u_normalMatrix * vec4(a_vertexNormal, 1.0); //Compute new normals based on object
-
-        highp float directional = max(dot(transformedNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
-
-        v_currentLighting = ambientLight + (directionalLightColor * directional); //Compute lighting of current vertex as ambient light plus directional light times the directional
-    }
-`;
-
-//Fragment Shader source code
-
-const fragmentShaderCode = `
-
-    varying lowp vec4 v_currentColor;
-    varying lowp vec3 v_currentLighting;
-
-    void main(void) {
-
-        gl_FragColor = vec4(v_currentColor.rgb * v_currentLighting, 1.0); //Each fragment is the color multiplied by the light level
-    }
-`;
+//Canvas and context element(s)
+let canvas = null;
+let hud = null;
+let ctx = null;
+let hudCtx = null;
 
 //View Matrices
 const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();
 const normalMatrix = mat4.create();
+const skyBoxRotationMatrix = mat4.create();
 
 //Projection matrix
 const projectionMatrix = mat4.create();
 
 //Void color
-let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
+//let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
+let voidColor = [0.0 / 256.0, 0.0 / 256.0, 0.0 / 256.0]; //dark purple
 
 //Chunk dimensions
 const chunkLength = 255.0; //With the way model is rendering currently, this is the maximum
@@ -135,7 +98,7 @@ const keys = {
  * Description: a collection of 3D objects for the program to render
  */
 
-let objects = [
+let interiorObjects = [
 
     /**
      * Object: object
@@ -147,12 +110,12 @@ let objects = [
      *             Double scale,
      *             model model
      */
-
+    
     {
     
         x: 0.0,
-        y: 6.0,
-        z: -6.0,
+        y: 0.0,
+        z: 0.0,
 
         roll: 0.0,
         pitch: 0.0,
@@ -164,8 +127,22 @@ let objects = [
 
         scale: 1.0,
 
-        model: models.monkey,
+        model: models.shipInterior,
     },
+]
+
+let exteriorObjects = [
+
+    /**
+     * Object: object
+     * 
+     * Description: A 3D object for the program to render, not to be confused with a JavaScript "Object"
+     * 
+     * Attributes: Double x, y, z
+     *             Double roll, pitch, yaw,
+     *             Double scale,
+     *             model model
+     */
 ];
 
 /**
@@ -182,13 +159,13 @@ let objects = [
 let camera = {
 
     x: 0.0, //Camera initialized 6 units above origin
-    y: 6.0,
+    y: 0.0,
     z: 0.0,
 
     lastx: 0.0,
-    lastz: chunkLength * 1.0 + 1.0, //Set the last z to be at least a chunk behind
+    lastz: 0.0,
 
-    yawAngle: 0.0, // Angle of roration around y axis
+    yawAngle: 0.0, // Angle of rotation around y axis
     pitchAngle: 0.0, // Angle of rotation around x axis
 
     //Normal vectors representing right, left, and forward for the camera.
