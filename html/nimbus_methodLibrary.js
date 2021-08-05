@@ -314,9 +314,10 @@ function drawScene() {
 
     //Compute worldViewMatrix based on opposite coordinates of camera position and camera rotation
     mat4.identity(worldViewMatrix);
-    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.pitchAngle * -1.0, [1, 0, 0]); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
-    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
-    mat4.translate(worldViewMatrix, worldViewMatrix, [camera.x * -1.0, camera.y * -1.0, camera.z * -1.0]); //First transform, move whole world away from camera
+    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
+    vec3.set(translation, camera.x * -1.0, camera.y * -1.0, camera.z * -1.0);
+    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from camera
 
     // Render the skybox
     for (panel in skyBoxModels)
@@ -333,7 +334,6 @@ function drawScene() {
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
-    ctx.disable(ctx.CULL_FACE);
 
     //Render all interior objects
     for (object in interiorObjects) {
@@ -358,8 +358,8 @@ function drawScene() {
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.pitchAngle * -1.0, [1, 0, 0]); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, [0, 1, 0]); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
@@ -408,10 +408,11 @@ function drawScene() {
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
 
-    mat4.translate(modelViewMatrix, modelViewMatrix, [object.x, object.y, object.z]);  //Fifth transform: move back from origin based on position
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
+    vec3.set(translation, object.x, object.y, object.z);
+    mat4.translate(modelViewMatrix, modelViewMatrix, translation);  //Fifth transform: move back from origin based on position
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, XAXIS); //Fourth transform: rotate around x based on object pitch
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, YAXIS);   //Third transform: rotate around y based on object yaw
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, ZAXIS);  //Second transform: rotate around z based on object roll
 
     //Compute new normals matrix
     //Do it before the scaling is applied, because otherwise the lighting doesn't work for some reason, not sure why yet :/
@@ -419,7 +420,8 @@ function drawScene() {
     mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
-    mat4.scale(modelViewMatrix, modelViewMatrix, [object.scale, object.scale, object.scale]); //First transform: scale object based on object scale
+    vec3.set(scaling, object.scale, object.scale, object.scale);
+    mat4.scale(modelViewMatrix, modelViewMatrix, scaling); //First transform: scale object based on object scale
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.vertex);
@@ -459,10 +461,11 @@ function drawScene() {
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
 
-    mat4.translate(modelViewMatrix, modelViewMatrix, [object.x, object.y, object.z]);  //Fifth transform: move back from origin based on position
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, [1, 0, 0]); //Fourth transform: rotate around x based on object pitch
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, [0, 1, 0]);   //Third transform: rotate around y based on object yaw
-    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, [0, 0, 1]);  //Second transform: rotate around z based on object roll
+    vec3.set(translation, object.x, object.y, object.z);
+    mat4.translate(modelViewMatrix, modelViewMatrix, translation);  //Fifth transform: move back from origin based on position
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.pitch, XAXIS); //Fourth transform: rotate around x based on object pitch
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.yaw, YAXIS);   //Third transform: rotate around y based on object yaw
+    mat4.rotate(modelViewMatrix, modelViewMatrix, object.roll, ZAXIS);  //Second transform: rotate around z based on object roll
 
     //Compute new normals matrix
     //Do it before the scaling is applied, because otherwise the lighting doesn't work for some reason, not sure why yet :/
@@ -470,7 +473,8 @@ function drawScene() {
     mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
-    mat4.scale(modelViewMatrix, modelViewMatrix, [object.scale, object.scale, object.scale]); //First transform: scale object based on object scale
+    vec3.set(scaling, object.scale, object.scale, object.scale);
+    mat4.scale(modelViewMatrix, modelViewMatrix, scaling); //First transform: scale object based on object scale
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, object.model.buffers.vertex);
@@ -809,8 +813,8 @@ function yawRight(angle) {
     vec3.set(camera.forwardVec, 0.0, 0.0, -1.0);
 
     // Rotate rightVec and forwardVec based on new yawAngle
-    vec3.rotateY(camera.rightVec, camera.rightVec, [0.0, 0.0, 0.0], camera.yawAngle);
-    vec3.rotateY(camera.forwardVec, camera.forwardVec, [0.0, 0.0, 0.0], camera.yawAngle);
+    vec3.rotateY(camera.rightVec, camera.rightVec, VEC3_ZERO, camera.yawAngle);
+    vec3.rotateY(camera.forwardVec, camera.forwardVec, VEC3_ZERO, camera.yawAngle);
     
 }
 

@@ -20,6 +20,18 @@
 
 const piOver2 = Math.PI / 2.0;
 
+// Axis ids used by gl-matrix.js rotation functions
+const XAXIS = [1, 0, 0];
+const YAXIS = [0, 1, 0];
+const ZAXIS = [0, 0, 1];
+
+// 3d vector of zeroes
+const VEC3_ZERO = [0, 0, 0];
+
+// Vectors that can be used to set translation and rotations to be used by gl-matrix functions
+let translation = vec3.create(0.0, 0.0, 0.0);
+let scaling = vec3.create(0.0, 0.0, 0.0);
+
 //Canvas and context element(s)
 let canvas = null;
 let hud = null;

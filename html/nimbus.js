@@ -96,7 +96,7 @@ function main() {
 	}
 
     // Create more cubes in random places
-    /*for (let i=0; i<1000; i++)
+    for (let i=0; i<1000; i++)
     {
         let newCube = {
 
@@ -118,7 +118,7 @@ function main() {
         };
 
         exteriorObjects.push(newCube);
-    }*/
+    }
 
     // Randomize rotation speeds of each object
     randomizeRotations(exteriorObjects);
