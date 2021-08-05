@@ -18,6 +18,14 @@
  * Copyright (c) 2021, Browning Keith Smith. All rights reserved.
  */
 
+const piOver2 = Math.PI / 2.0;
+
+//Canvas and context element(s)
+let canvas = null;
+let hud = null;
+let ctx = null;
+let hudCtx = null;
+
 //View Matrices
 const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();

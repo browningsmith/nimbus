@@ -29,11 +29,11 @@
  *              at the top of this file, and attempts to link the resulting shaders together into
  *              a new WebGLProgram.
  */
-function createShaderProgram(ctx, shaderData) {
+function createShaderProgram(shaderData) {
 
     //Compile shaders
-    const vertexShader = loadShader(ctx, ctx.VERTEX_SHADER, shaderData.vertexShaderCode);
-    const fragmentShader = loadShader(ctx, ctx.FRAGMENT_SHADER, shaderData.fragmentShaderCode);
+    const vertexShader = loadShader(ctx.VERTEX_SHADER, shaderData.vertexShaderCode);
+    const fragmentShader = loadShader(ctx.FRAGMENT_SHADER, shaderData.fragmentShaderCode);
 
     //Create pointer to new shader program
     let newShaderProgram = ctx.createProgram();
@@ -59,7 +59,7 @@ function createShaderProgram(ctx, shaderData) {
     shaderData.program = newShaderProgram;
 
     // Pull out attribute and uniform locations based on custom tieLocations function
-    shaderData.tieLocations(ctx);
+    shaderData.tieLocations();
 }
 
 /**
@@ -72,7 +72,7 @@ function createShaderProgram(ctx, shaderData) {
  *              "code". Prints an error to the console if it is unable to compile the shader, with a
  *              description of the compilation error.
  */
-function loadShader(ctx, type, code) {
+function loadShader(type, code) {
 
     //Create pointer to a new shader
     const newShader = ctx.createShader(type);
@@ -98,7 +98,7 @@ function loadShader(ctx, type, code) {
 // Initialize a texture and load an image.
 // When the image finished loading copy it into the texture.
 //
-function loadTexture(ctx, textureData)
+function loadTexture(textureData)
 {
     /*function isPowerOf2(value)
     {
@@ -152,7 +152,7 @@ function loadTexture(ctx, textureData)
  *              for vertex position data, a buffer for vertex normals, a buffer for
  *              vertex colors, and a buffer for vertex indices.
  */
-function initBuffers(ctx, model) {
+function initBuffers(model) {
 
     //Create pointer to a new buffer
     let vertexBuffer = ctx.createBuffer();
@@ -210,7 +210,7 @@ function initBuffers(ctx, model) {
  *              for vertex position data, a buffer for vertex normals, a buffer for
  *              vertex colors, and a buffer for vertex indices.
  */
- function initSkyBoxBuffers(ctx, model) {
+ function initSkyBoxBuffers(model) {
 
     //Create pointer to a new buffer
     let vertexBuffer = ctx.createBuffer();
@@ -256,7 +256,7 @@ function initBuffers(ctx, model) {
  * Description: Clears the canvas, then draws a horizontal and vertical white line on the 
  *              2D hud canvas at the center of the screen
  */
-function drawHUD(hudCtx) {
+function drawHUD() {
 
     hudCtx.canvas.width = hudCtx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     hudCtx.canvas.height = hudCtx.canvas.clientHeight;
@@ -289,7 +289,7 @@ function drawHUD(hudCtx) {
  *              Enables depth testing and obscuring farther away objects
  *              Computes a new FOV based on the new window size
  */
-function drawScene(ctx) {
+function drawScene() {
 
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -321,7 +321,7 @@ function drawScene(ctx) {
     // Render the skybox
     for (panel in skyBoxModels)
     {
-        drawSkyBoxPanel(ctx, skyBoxModels[panel]);
+        drawSkyBoxPanel(skyBoxModels[panel]);
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
@@ -329,7 +329,7 @@ function drawScene(ctx) {
     //Render all exterior objects
     for (object in exteriorObjects) {
 
-        drawExteriorObject(ctx, exteriorObjects[object]);
+        drawExteriorObject(exteriorObjects[object]);
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
@@ -338,7 +338,7 @@ function drawScene(ctx) {
     //Render all interior objects
     for (object in interiorObjects) {
 
-        drawInteriorObject(ctx, interiorObjects[object]);
+        drawInteriorObject(interiorObjects[object]);
     }
 }
 
@@ -351,7 +351,7 @@ function drawScene(ctx) {
  * Description: Handles drawing a specific object in the frame
  */
 
- function drawSkyBoxPanel(ctx, panel) {
+ function drawSkyBoxPanel(panel) {
  
     //Tell WebGL to use the shader program
     ctx.useProgram(skyBoxShader.program);
@@ -396,7 +396,7 @@ function drawScene(ctx) {
  * Description: Handles drawing a specific object in the frame
  */
 
- function drawExteriorObject(ctx, object) {
+ function drawExteriorObject(object) {
  
     //Tell WebGL to use the shader program
     ctx.useProgram(shipExteriorShader.program);
@@ -447,7 +447,7 @@ function drawScene(ctx) {
     ctx.drawElements(ctx.TRIANGLES, object.model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
  }
 
- function drawInteriorObject(ctx, object) {
+ function drawInteriorObject(object) {
  
     //Tell WebGL to use the shader program
     ctx.useProgram(shipInteriorShader.program);
@@ -737,7 +737,7 @@ function updateCameraSpeed() {
  *              chunks
  */
 //Function to update the camera position based on camera speeds
-function updatePosition(deltaT,ctx) {
+function updatePosition(deltaT) {
 
     //Record the cameras last position
     camera.lastx = camera.x;

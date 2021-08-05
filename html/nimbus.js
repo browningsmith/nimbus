@@ -37,16 +37,13 @@
  *              link the shader programs, retrieve attribute locations from the compiled programs, calls
  *              functions to initialize buffer data, and begins the loop of calling animation frames.
  */
-
-const piOver2 = Math.PI / 2.0;
-
 function main() {
 
     //Get canvas element
-    const canvas = document.getElementById("canvas");
+    canvas = document.getElementById("canvas");
 
     //Get hud canvas element
-    const hud = document.getElementById("hud");
+    hud = document.getElementById("hud");
 
     //Add mouse event listeners
     hud.addEventListener("mousemove", updateMouse);
@@ -55,7 +52,7 @@ function main() {
     window.addEventListener("keyup", parseUpKey);
 
     //Get canvas context
-    const ctx = canvas.getContext("webgl");
+    ctx = canvas.getContext("webgl");
 
     //If unable to get context, alert user and end program
     if (!ctx) {
@@ -65,17 +62,17 @@ function main() {
     }
 
     //Get hud context
-    const hudCtx = hud.getContext("2d");
+    hudCtx = hud.getContext("2d");
 
     //Create the shader programs
-    createShaderProgram(ctx, skyBoxShader);
-    createShaderProgram(ctx, shipInteriorShader);
-    createShaderProgram(ctx, shipExteriorShader);
+    createShaderProgram(skyBoxShader);
+    createShaderProgram(shipInteriorShader);
+    createShaderProgram(shipExteriorShader);
 
     //Load textures
     for (textureData in textures)
     {
-        loadTexture(ctx, textures[textureData]);
+        loadTexture(textures[textureData]);
     }
 
     // Attach skybox textures to the respective models
@@ -89,13 +86,13 @@ function main() {
     //Create and fill buffers for skybox panels
     for (model in skyBoxModels)
     {
-        initSkyBoxBuffers(ctx, skyBoxModels[model]);
+        initSkyBoxBuffers(skyBoxModels[model]);
     }
 
     //Create and fill buffers, attach them to their respective models
     for (model in models) {
 
-        initBuffers(ctx, models[model]);
+        initBuffers(models[model]);
 	}
 
     // Create more cubes in random places
@@ -159,10 +156,10 @@ function main() {
         }
 
         //Update camera position
-        updatePosition(deltaT, ctx);
+        updatePosition(deltaT);
 
-        drawScene(ctx);
-        drawHUD(hudCtx);
+        drawScene();
+        drawHUD();
 
         requestAnimationFrame(newFrame);
     }

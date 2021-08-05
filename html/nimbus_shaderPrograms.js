@@ -45,7 +45,7 @@ let skyBoxShader = {
     attributes: null,
     uniforms: null,
 
-    tieLocations: function(ctx) {
+    tieLocations: function() {
 
         //Get location of attributes and uniforms, store in the ShaderData object
         this.attributes = {
@@ -120,7 +120,7 @@ let shipInteriorShader = {
     attributes: null,
     uniforms: null,
 
-    tieLocations: function(ctx) {
+    tieLocations: function() {
 
         //Get location of attributes and uniforms, store in shaderProgramData object
         this.attributes = {
@@ -191,7 +191,7 @@ let shipExteriorShader = {
     attributes: null,
     uniforms: null,
 
-    tieLocations: function(ctx) {
+    tieLocations: function() {
 
         //Get location of attributes and uniforms, store in shaderProgramData object
         this.attributes = {
