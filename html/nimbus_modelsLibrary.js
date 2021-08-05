@@ -13,172 +13,17 @@
 
 let skyBoxModels = {
 
-    negZplane: {
+    negZplane: {vertexValues:[1.0,-1.0,-1.0,1.0,1.0,-1.0,-1.0,1.0,-1.0,-1.0,-1.0,-1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
+    
+    posXplane:{vertexValues:[1.0,-1.0,1.0,1.0,1.0,1.0,1.0,1.0,-1.0,1.0,-1.0,-1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
 
-        vertexValues: [
+    posZplane: {vertexValues:[-1.0,-1.0,1.0,-1.0,1.0,1.0,1.0,1.0,1.0,1.0,-1.0,1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
 
-            1.0, -1.0, -1.0,
-            1.0, 1.0, -1.0,
-            -1.0, 1.0, -1.0,
-            -1.0, -1.0, -1.0,
-        ],
-        uvValues: [
+    negXplane: {vertexValues:[-1.0,-1.0,-1.0,-1.0,1.0,-1.0,-1.0,1.0,1.0,-1.0,-1.0,1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
 
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
+    posYplane: {vertexValues:[1.0,1.0,-1.0,1.0,1.0,1.0,-1.0,1.0,1.0,-1.0,1.0,-1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
 
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
-
-    posXplane: {
-
-        vertexValues: [
-
-            1.0, -1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, -1.0,
-            1.0, -1.0, -1.0,
-        ],
-        uvValues: [
-
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
-
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
-
-    posZplane: {
-
-        vertexValues: [
-
-            -1.0, -1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, -1.0, 1.0,
-        ],
-        uvValues: [
-
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
-
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
-
-    negXplane: {
-
-        vertexValues: [
-
-            -1.0, -1.0, -1.0,
-            -1.0, 1.0, -1.0,
-            -1.0, 1.0, 1.0,
-            -1.0, -1.0, 1.0,
-        ],
-        uvValues: [
-
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
-
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
-
-    posYplane: {
-
-        vertexValues: [
-
-            
-            1.0, 1.0, -1.0,
-            1.0, 1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            -1.0, 1.0, -1.0,
-            
-        ],
-        uvValues: [
-
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
-
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
-
-    negYplane: {
-
-        vertexValues: [
-
-            
-            
-            1.0, -1.0, 1.0,
-            1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0, 1.0,
-            
-        ],
-        uvValues: [
-
-            1.0, 1.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0,
-        ],
-        drawPointIndices: [
-
-            0, 1, 2,
-            0, 2, 3,
-        ],
-
-        drawPointCount: 6,
-
-        texture: null,
-    },
+    negYplane: {vertexValues:[1.0,-1.0,1.0,1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,1.0,],uvValues:[1.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,],drawPointIndices:[0,1,2,0,2,3,],drawPointCount:6,texture:null,},
 };
 
  let models = {
