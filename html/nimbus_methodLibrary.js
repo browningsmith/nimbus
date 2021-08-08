@@ -953,6 +953,20 @@ function updateShipSpeedAndPosition(ship, deltaT)
             ship.forwardAccel = ship.accelRate * 2.0;
         }
     }
+
+    // Update ship yaw based on yawAccel
+    ship.yawSpeed += ship.yawAngle * deltaT;
+
+    // Update ship yaw based on yawSpeed
+    /*ship.yawAngle += ship.yawSpeed * deltaT;
+    if (ship.yawAngle < ship.maxYaw * -1.0)
+    {
+        ship.yawAngle = ship.maxYaw * -1.0;
+    }
+    if (ship.yawAngle > ship.maxYaw)
+    {
+        ship.yawAngle = ship.maxYaw;
+    }*/
     
     // Update ship speed based on acceleration
     ship.forwardSpeed += ship.forwardAccel * deltaT;
