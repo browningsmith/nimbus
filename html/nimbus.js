@@ -100,9 +100,9 @@ function main() {
     {
         let newCube = {
 
-            x: Math.random() * 2000.0 - 1000.0,
-            y: Math.random() * 2000.0 - 1000.0,
-            z: Math.random() * 2000.0 - 1000.0,
+            x: Math.random() * 400.0 - 200.0,
+            y: Math.random() * 400.0 - 200.0,
+            z: Math.random() * 400.0 - 200.0,
 
             roll: 0.0,
             pitch: 0.0,

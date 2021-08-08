@@ -796,7 +796,38 @@ function updateShipAccel() {
         }
     }
 
-    console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
+    //If both W and S are down, or if neither of them are down
+    if ((keys.W.down && keys.S.down) || !(keys.W.down || keys.S.down)) {
+
+        //Set that pitch accelerate button is not pressed
+        player.boardedShip.isPressingPitch = false;
+
+        player.boardedShip.pitchAccel = 0.0;
+
+        console.log("Ship pitch set to " + player.boardedShip.isPressingPitch);
+    }
+    else {
+
+        //If W is the key that is down
+        if (keys.W.down) {
+
+            //Set that pitch button is pressed
+            player.boardedShip.isPressingPitch = true;
+            
+            //Set pitch acceleration
+            player.boardedShip.pitchAccel = player.boardedShip.pitchAccelRate * -1.0;
+        }
+        else {
+
+            //Set that pitch button is pressed
+            player.boardedShip.isPressingPitch = true;
+            
+            //Set pitch acceleration to negative
+            player.boardedShip.pitchAccel = player.boardedShip.pitchAccelRate;
+        }
+    }
+
+    console.log("Ship pitch set to " + player.boardedShip.isPressingPitch);
 }
 
 /**
@@ -968,12 +999,43 @@ function updateShipSpeedAndPosition(ship, deltaT)
         }
         else if (ship.yawSpeed >= 0.01)
         {
-            ship.yawAccel = ship.yawAccelRate * -1.0;
+            ship.yawAccel = ship.yawAccelRate * -2.0;
         }
         else
         {
-            ship.yawAccel = ship.yawAccelRate;
+            ship.yawAccel = ship.yawAccelRate * 2.0;
         }
+    }
+
+    // Auto straighten, set pitchSpeed to opposite if ship pitch is outside a threshold
+    // If ship pitch is within full stop threshold
+    if (!ship.isPressingPitch)
+    {
+        // If ship pitch speed is within full stop threshold
+        if ((ship.pitchSpeed < 0.01) && (ship.pitchSpeed > -0.01))
+        {
+            ship.pitchAccel = 0.0;
+            ship.pitchSpeed = 0.0;
+        }
+        else if (ship.pitchSpeed >= 0.01)
+        {
+            ship.pitchAccel = ship.pitchAccelRate * -2.0;
+        }
+        else
+        {
+            ship.pitchAccel = ship.pitchAccelRate * 2.0;
+        }
+    }
+
+    // Update ship pitch speed based on pitchAccel
+    ship.pitchSpeed += ship.pitchAccel * deltaT;
+    if (ship.pitchSpeed < ship.maxPitchSpeed * -1.0)
+    {
+        ship.pitchSpeed = ship.maxPitchSpeed * -1.0;
+    }
+    if (ship.pitchSpeed > ship.maxPitchSpeed)
+    {
+        ship.pitchSpeed = ship.maxPitchSpeed;
     }
     
 
@@ -992,6 +1054,14 @@ function updateShipSpeedAndPosition(ship, deltaT)
     ship.forwardSpeed += ship.forwardAccel * deltaT;
 
     // console.log("Ship speed: " + ship.forwardSpeed);
+
+    // Reset ship rightVec, upVec and forwardVec
+    vec3.set(ship.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(ship.upVec, 0.0, 1.0, 0.0);
+    vec3.set(ship.forwardVec, 0.0, 0.0, -1.0);
+
+    // Update ship pitch based on pitchSpeed
+    pitchShipUp(ship, ship.pitchSpeed * deltaT);
 
     // Update ship yaw based on yawSpeed
     yawShipRight(ship, ship.yawSpeed * deltaT);
@@ -1027,15 +1097,40 @@ function updateShipSpeedAndPosition(ship, deltaT)
 function yawShipRight(ship, angle) {
 
     // Update ship yawAngle
-    ship.yawAngle -= angle
-    
-    // Reset ship rightVec and forwardVec
-    vec3.set(ship.rightVec, 1.0, 0.0, 0.0);
-    vec3.set(ship.forwardVec, 0.0, 0.0, -1.0);
+    ship.yawAngle -= angle;
 
     // Rotate rightVec and forwardVec based on new yawAngle
     vec3.rotateY(ship.rightVec, ship.rightVec, VEC3_ZERO, ship.yawAngle);
     vec3.rotateY(ship.forwardVec, ship.forwardVec, VEC3_ZERO, ship.yawAngle); 
+}
+
+/**
+ * Function: pitchShipUp
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Rotates the ship around it's local x vector by the given angle
+ */
+ function pitchShipUp(ship, angle) {
+
+    // Update ship yawAngle
+    ship.pitchAngle += angle;
+
+    if (ship.pitchAngle > 90.0 * Math.PI / 180.0)
+    {
+        ship.pitchAngle = 90.0 * Math.PI / 180.0;
+        ship.pitchSpeed = 0.0;
+    }
+    if (ship.pitchAngle < -90.0 * Math.PI / 180.0)
+    {
+        ship.pitchAngle = -90.0 * Math.PI / 180.0;
+        ship.pitchSpeed = 0.0;
+    }
+
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateX(ship.upVec, ship.upVec, VEC3_ZERO, ship.pitchAngle);
+    vec3.rotateX(ship.forwardVec, ship.forwardVec, VEC3_ZERO, ship.pitchAngle); 
 }
 
 /**

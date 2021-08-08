@@ -218,6 +218,12 @@ let player = {
     yawSpeed: 0.0,
     maxYawSpeed: 70.0 * Math.PI / 180.0,
 
+    isPressingPitch: false,
+    pitchAccelRate: 30.0 * Math.PI / 180.0,
+    pitchAccel: 0.0,
+    pitchSpeed: 0.0,
+    maxPitchSpeed: 70.0 * Math.PI / 180.0,
+
     interiorModel: models.shipInterior,
 };
 
