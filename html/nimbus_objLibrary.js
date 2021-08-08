@@ -195,10 +195,7 @@ let player = {
     upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 0.0,
-
-    rightSpeed: 0.0,
-    upSpeed: 0.0,
+    forwardAccel: 0.0,
     forwardSpeed: 0.0,
 
     interiorModel: models.shipInterior,

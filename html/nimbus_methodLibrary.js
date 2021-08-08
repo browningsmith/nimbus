@@ -693,6 +693,27 @@ function parseUpKey(event) {
 }
 
 /**
+ * Function: performKeyActions
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: This function is called when a key press update happens
+ */
+function performKeyActions() {
+
+    // If the player is piloting a ship, do ship movement
+    if (boardedShip != null) {
+
+        
+    }
+    else
+    {
+        updatePlayerSpeed();
+    }
+}
+
+/**
  * Function: updatePlayerSpeed
  * 
  * Input: KeyboardEvent event
