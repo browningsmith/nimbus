@@ -1266,3 +1266,33 @@ function randomizeRotations(objects)
         objects[object].yawSpeed = Math.random() * 5.0;
     }
 }
+
+function shiftToNextChunk(object)
+{
+    while ((object.x - ship.x) > (chunkSize / 2.0))
+    {
+        object.x -= chunkSize;
+    }
+    while ((object.x - ship.x) < (chunkSize / -2.0))
+    {
+        object.x += chunkSize;
+    }
+
+    while ((object.y - ship.y) > (chunkSize / 2.0))
+    {
+        object.y -= chunkSize;
+    }
+    while ((object.y - ship.y) < (chunkSize / -2.0))
+    {
+        object.y += chunkSize;
+    }
+
+    while ((object.z - ship.z) > (chunkSize / 2.0))
+    {
+        object.z -= chunkSize;
+    }
+    while ((object.z - ship.z) < (chunkSize / -2.0))
+    {
+        object.z += chunkSize;
+    }
+}

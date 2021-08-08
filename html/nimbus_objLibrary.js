@@ -52,6 +52,8 @@ const projectionMatrix = mat4.create();
 //let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
 let voidColor = [0.0 / 256.0, 0.0 / 256.0, 0.0 / 256.0]; //black
 
+chunkSize = 1000.0;
+
 /**
  * Object: keys
  * 

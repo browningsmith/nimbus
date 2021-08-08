@@ -96,13 +96,13 @@ function main() {
 	}
 
     // Create more cubes in random places
-    for (let i=0; i<1000; i++)
+    for (let i=0; i<2000; i++)
     {
         let newCube = {
 
-            x: Math.random() * 400.0 - 200.0,
-            y: Math.random() * 400.0 - 200.0,
-            z: Math.random() * 400.0 - 200.0,
+            x: Math.random() * chunkSize * 2.0 - chunkSize,
+            y: Math.random() * chunkSize * 2.0 - chunkSize,
+            z: Math.random() * chunkSize * 2.0 - chunkSize,
 
             roll: 0.0,
             pitch: 0.0,
@@ -156,6 +156,7 @@ function main() {
         // Update object rotations
         for (object in exteriorObjects)
         {
+            shiftToNextChunk(exteriorObjects[object]);
             updateObjectRotation(object, deltaT);
         }
 
@@ -170,6 +171,8 @@ function main() {
 
         requestAnimationFrame(newFrame);
     }
+
+    alert("Movement Controls:\n\nMove cursor to look around cockpit\nE - Increase ship speed\nQ - Decrease ship speed\nA - Turn ship left\nD - Turn ship right\nW - Pitch ship down\nS - Pitch ship up");
 
     requestAnimationFrame(newFrame);
 }
