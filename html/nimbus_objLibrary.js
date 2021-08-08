@@ -43,6 +43,7 @@ const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();
 const normalMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
+const shipInteriorViewMatrix = mat4.create();
 
 //Projection matrix
 const projectionMatrix = mat4.create();
@@ -86,6 +87,16 @@ const keys = {
     D: {
 
         code: "KeyD",
+        down: false,
+    },
+    Q: {
+
+        code: "KeyQ",
+        down: false,
+    },
+    E: {
+
+        code: "KeyE",
         down: false,
     },
     Space: {
@@ -195,6 +206,7 @@ let player = {
     upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
+    accelRate: 100.0,
     forwardAccel: 0.0,
     forwardSpeed: 0.0,
 

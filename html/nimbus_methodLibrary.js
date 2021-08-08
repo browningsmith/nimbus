@@ -292,6 +292,8 @@ function drawHUD() {
 function drawScene() {
 
     let ship = player.boardedShip;
+
+    
     
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -314,8 +316,23 @@ function drawScene() {
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
-    //Compute worldViewMatrix based on opposite coordinates of player position and player rotation
-    mat4.identity(worldViewMatrix);
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Fifth transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // Fourth transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.rollAngle * -1.0, ZAXIS); // Third transform, rotate whole world around z axis (in the opposite direction the ship is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.pitchAngle * -1.0, XAXIS); //Second transform, rotate whole world around x axis (in the opposite direction the ship is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.yawAngle * -1.0, YAXIS); //First transform, rotate whole world around y axis (in the opposite direction the ship is facing)
+
+    // Compute shipInteriorViewMatrix
+    mat4.identity(shipInteriorViewMatrix);
+    mat4.rotate(shipInteriorViewMatrix, shipInteriorViewMatrix, player.pitchAngle * -1.0, XAXIS); // Seventh transform, rotate whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(shipInteriorViewMatrix, shipInteriorViewMatrix, player.yawAngle * -1.0, YAXIS); //Sixth transform, rotate whole world around y axis (in the opposite direction the player is facing)
+    vec3.set(translation, player.x * -1.0, player.y * -1.0, player.z * -1.0);
+    mat4.translate(shipInteriorViewMatrix, shipInteriorViewMatrix, translation); //Fifth transform, move whole world away from player
+
+    //Compute worldViewMatrix
+    mat4.copy(worldViewMatrix, shipInteriorViewMatrix);
     mat4.rotate(worldViewMatrix, worldViewMatrix, ship.rollAngle * -1.0, ZAXIS); // Fourth transform, rotate whole world around z axis (in the opposite direction the ship is facing)
     mat4.rotate(worldViewMatrix, worldViewMatrix, ship.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the ship is facing)
     mat4.rotate(worldViewMatrix, worldViewMatrix, ship.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the ship is facing)
@@ -368,11 +385,6 @@ function drawScene() {
     
     //Tell WebGL to use the shader program
     ctx.useProgram(skyBoxShader.program);
-
-    // Compute skyBoxRotationMatrix
-    mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the ship is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the ship is facing)
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
@@ -525,7 +537,7 @@ function drawScene() {
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(shipInteriorShader.uniforms.projectionMatrix, false, projectionMatrix);
-    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.worldViewMatrix, false, worldViewMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.worldViewMatrix, false, shipInteriorViewMatrix);
     
     //Compute new model view matrix
     mat4.identity(modelViewMatrix);
@@ -640,8 +652,8 @@ function parseDownKey(event) {
                 //Update that key is down
                 keys[key].down = true;
 
-                //Update player speeds
-                updatePlayerSpeed();
+                //Perform actions for when keys are pressed
+                performKeyActions();
             }
             else {
 
@@ -681,8 +693,8 @@ function parseUpKey(event) {
                 //Update that key is up
                 keys[key].down = false;
 
-                //Update player speeds
-                updatePlayerSpeed();
+                //Perform actions for when keys are pressed
+                performKeyActions();
             }
             else {
 
@@ -703,13 +715,52 @@ function parseUpKey(event) {
 function performKeyActions() {
 
     // If the player is piloting a ship, do ship movement
-    if (boardedShip != null) {
+    if (player.isPiloting) {
 
-        
+        updateShipAccel();
     }
     else
     {
         updatePlayerSpeed();
+    }
+}
+
+/**
+ * Function: updateShipAccel
+ * 
+ * Input: KeyboardEvent event
+ * Output: None
+ * 
+ * Description: This function takes a look at the state of pressed keys
+ * and updates the ship's forward acceleration based on that.
+ */
+function updateShipAccel() {
+
+    //If both Q and E are down, or if neither of them are down
+    if ((keys.Q.down && keys.E.down) || !(keys.Q.down || keys.E.down)) {
+
+        //Set ship acceleration to 0
+        player.boardedShip.forwardAccel = 0.0;
+
+        console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
+    }
+    else {
+
+        //If E is the key that is down
+        if (keys.E.down) {
+
+            //Set forward acceleration
+            player.boardedShip.forwardAccel = player.boardedShip.accelRate;
+
+            console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
+        }
+        else {
+
+            //Set forward acceleration to negative
+            player.boardedShip.forwardAccel = player.boardedShip.accelRate * -1.0;
+
+            console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
+        }
     }
 }
 
@@ -838,6 +889,42 @@ function updatePlayerPosition(deltaT) {
 
         moveRight(player.rightSpeed * deltaT); //Move player forward by rightSpeed * change in time from last frame
     }
+}
+
+/**
+ * Function: updateShipSpeedAndPosition
+ * 
+ * Input: Double deltaT
+ * Output: None
+ * 
+ * Description: Updates ship speed and position based on acceleration 
+ *              and deltaT.
+ */
+function updateShipSpeedAndPosition(ship, deltaT)
+{
+    // Update ship speed based on acceleration
+    ship.forwardSpeed += ship.forwardAccel * deltaT;
+
+    console.log("Ship speed: " + ship.forwardSpeed);
+
+    // Update ship position based on speed
+    moveShipForward(ship, ship.forwardSpeed * deltaT);
+}
+
+/**
+ * Function: moveShipForward
+ * 
+ * Input: Double amount
+ * Output: None
+ * 
+ * Description: Moves the ship forward by given amount. Moves
+ *              backward if given amount is negative
+ */
+ function moveShipForward(ship, amount) {
+
+    ship.x += ship.forwardVec[0] * amount;
+    ship.y += ship.forwardVec[1] * amount;
+    ship.z += ship.forwardVec[2] * amount;
 }
 
 /**

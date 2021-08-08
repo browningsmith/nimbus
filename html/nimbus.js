@@ -159,6 +159,9 @@ function main() {
             updateObjectRotation(object, deltaT);
         }
 
+        //Update ship position
+        updateShipSpeedAndPosition(ship, deltaT);
+
         //Update player position
         updatePlayerPosition(deltaT);
 
