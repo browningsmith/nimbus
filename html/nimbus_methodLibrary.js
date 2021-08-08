@@ -312,12 +312,12 @@ function drawScene() {
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
-    //Compute worldViewMatrix based on opposite coordinates of camera position and camera rotation
+    //Compute worldViewMatrix based on opposite coordinates of player position and player rotation
     mat4.identity(worldViewMatrix);
-    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
-    mat4.rotate(worldViewMatrix, worldViewMatrix, camera.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
-    vec3.set(translation, camera.x * -1.0, camera.y * -1.0, camera.z * -1.0);
-    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from camera
+    mat4.rotate(worldViewMatrix, worldViewMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
+    vec3.set(translation, player.x * -1.0, player.y * -1.0, player.z * -1.0);
+    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from player
 
     // Render the skybox
     for (panel in skyBoxModels)
@@ -358,8 +358,8 @@ function drawScene() {
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the camera is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, camera.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the camera is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
@@ -509,7 +509,7 @@ function drawScene() {
  * Output: None
  * 
  * Description: Updates lastMousePosition, and uses the change in mouse position to
- *              update the direction that the camera is facing by calling pithcUp
+ *              update the direction that the player is facing by calling pithcUp
  *              and yawRight
  */
 function updateMouse(event) {
@@ -562,8 +562,8 @@ function mouseLeave(event) {
  * Description: This function parses which key triggered the event,
  *              and whether the key had already been pressed. If the
  *              key was not already pressed, it sets that key to pressed,
- *              then calls updateCameraSpeed to update the speed and
- *              direction in which the camera is moving.
+ *              then calls updatePlayerSpeed to update the speed and
+ *              direction in which the player is moving.
  */
 function parseDownKey(event) {
 
@@ -583,8 +583,8 @@ function parseDownKey(event) {
                 //Update that key is down
                 keys[key].down = true;
 
-                //Update camera speeds
-                updateCameraSpeed();
+                //Update player speeds
+                updatePlayerSpeed();
             }
             else {
 
@@ -603,8 +603,8 @@ function parseDownKey(event) {
  * Description: This function parses which key triggered the up event,
  *              and whether the key had already been let go. If the
  *              key was not already let go, it sets that key to not pressed,
- *              then calls updateCameraSpeed to update the speed and
- *              direction in which the camera is moving.
+ *              then calls updatePlayerSpeed to update the speed and
+ *              direction in which the player is moving.
  */
 function parseUpKey(event) {
 
@@ -624,8 +624,8 @@ function parseUpKey(event) {
                 //Update that key is up
                 keys[key].down = false;
 
-                //Update camera speeds
-                updateCameraSpeed();
+                //Update player speeds
+                updatePlayerSpeed();
             }
             else {
 
@@ -636,40 +636,40 @@ function parseUpKey(event) {
 }
 
 /**
- * Function: updateCameraSpeed
+ * Function: updatePlayerSpeed
  * 
  * Input: KeyboardEvent event
  * Output: None
  * 
  * Description: This function takes a look at the state of pressed keys, and
- *              sets the speed of the camera based on that.
+ *              sets the speed of the player based on that.
  */
-function updateCameraSpeed() {
+function updatePlayerSpeed() {
 
     //If both W and S are down, or if neither of them are down
     if ((keys.W.down && keys.S.down) || !(keys.W.down || keys.S.down)) {
 
         //Set forward speed to 0.0
-        camera.forwardSpeed = 0.0;
+        player.forwardSpeed = 0.0;
 
-        //console.log("Camera forward speed set to " + camera.forwardSpeed);
+        //console.log("Player forward speed set to " + player.forwardSpeed);
     }
     else {
 
         //If W is the key that is down
         if (keys.W.down) {
 
-            //Set forward speed to camera.speed
-            camera.forwardSpeed = camera.speed;
+            //Set forward speed to player.speed
+            player.forwardSpeed = player.speed;
 
-            //console.log("Camera forward speed set to " + camera.forwardSpeed);
+            //console.log("Player forward speed set to " + player.forwardSpeed);
         }
         else {
 
-            //Set forward speed to reverse camera.speed
-            camera.forwardSpeed = camera.speed * -1.0;
+            //Set forward speed to reverse player.speed
+            player.forwardSpeed = player.speed * -1.0;
 
-            //console.log("Camera forward speed set to " + camera.forwardSpeed);
+            //console.log("Player forward speed set to " + player.forwardSpeed);
         }
     }
 
@@ -677,26 +677,26 @@ function updateCameraSpeed() {
     if ((keys.A.down && keys.D.down) || !(keys.A.down || keys.D.down)) {
 
         //Set right speed to 0.0
-        camera.rightSpeed = 0.0;
+        player.rightSpeed = 0.0;
 
-        //console.log("Camera right speed set to " + camera.rightSpeed);
+        //console.log("Player right speed set to " + player.rightSpeed);
     }
     else {
 
         //If A is the key that is down
         if (keys.A.down) {
 
-            //Set right speed to reverse camera.speed
-            camera.rightSpeed = camera.speed * -1.0;
+            //Set right speed to reverse player.speed
+            player.rightSpeed = player.speed * -1.0;
 
-            //console.log("Camera right speed set to " + camera.rightSpeed);
+            //console.log("Player right speed set to " + player.rightSpeed);
         }
         else {
 
-            //Set right speed to camera.speed
-            camera.rightSpeed = camera.speed;
+            //Set right speed to player.speed
+            player.rightSpeed = player.speed;
 
-            //console.log("Camera right speed set to " + camera.rightSpeed);
+            //console.log("Player right speed set to " + player.rightSpeed);
         }
     }
 
@@ -704,68 +704,64 @@ function updateCameraSpeed() {
     if ((keys.Space.down && keys.ShiftLeft.down) || !(keys.Space.down || keys.ShiftLeft.down)) {
 
         //Set up speed to 0.0
-        camera.upSpeed = 0.0;
+        player.upSpeed = 0.0;
 
-        //console.log("Camera up speed set to " + camera.upSpeed);
+        //console.log("Player up speed set to " + player.upSpeed);
     }
     else {
 
         //If A is the key that is down
         if (keys.Space.down) {
 
-            //Set up speed to camera.speed
-            camera.upSpeed = camera.speed;
+            //Set up speed to player.speed
+            player.upSpeed = player.speed;
 
-            //console.log("Camera up speed set to " + camera.upSpeed);
+            //console.log("Player up speed set to " + player.upSpeed);
         }
         else {
 
-            //Set up speed to reverse camera.speed
-            camera.upSpeed = camera.speed * -1.0;
+            //Set up speed to reverse player.speed
+            player.upSpeed = player.speed * -1.0;
 
-            //console.log("Camera up speed set to " + camera.upSpeed);
+            //console.log("Player up speed set to " + player.upSpeed);
         }
     }
 }
 
 /**
- * Function: updatePosition
+ * Function: updatePlayerPosition
  * 
  * Input: Double deltaT, WebGLRenderingContext ctx
  * Output: None
  * 
- * Description: Updates the camera position based on camera directional speeds 
+ * Description: Updates the player position based on player directional speeds 
  *              and deltaT as long as the given directional speed is greater than zero.
- *              Records what the last x and z position of the camera were, and initializes
+ *              Records what the last x and z position of the player were, and initializes
  *              checkForStrides method to see if terrain data needs to be swapped between
  *              chunks
  */
-//Function to update the camera position based on camera speeds
-function updatePosition(deltaT) {
+//Function to update the player position based on player speeds
+function updatePlayerPosition(deltaT) {
 
-    //Record the cameras last position
-    camera.lastx = camera.x;
-    camera.lastz = camera.z;
-
-    //Move camera forward/backward
+    //Move player forward/backward
     //If forward speed is not zero
-    if (!(camera.forwardSpeed == 0.0)) {
+    if (!(player.forwardSpeed == 0.0)) {
 
-        moveForward(camera.forwardSpeed * deltaT); //Move camera forward by forwardSpeed * change in time from last frame
+        moveForward(player.forwardSpeed * deltaT); //Move player forward by forwardSpeed * change in time from last frame
     }
 
-    //Move camera up/down
+    //Move player up/down
     //If up speed is not zero
-    if (!(camera.upSpeed == 0.0)) {
+    if (!(player.upSpeed == 0.0)) {
 
-        moveUp(camera.upSpeed * deltaT); //Move camera forward by forwardSpeed * change in time from last frame
+        moveUp(player.upSpeed * deltaT); //Move player forward by forwardSpeed * change in time from last frame
     }
 
-    //Move camera left/right
+    //Move player left/right
     //If right speed is not zero
-    if (!(camera.rightSpeed == 0.0)) {
+    if (!(player.rightSpeed == 0.0)) {
 
-        moveRight(camera.rightSpeed * deltaT); //Move camera forward by rightSpeed * change in time from last frame
+        moveRight(player.rightSpeed * deltaT); //Move player forward by rightSpeed * change in time from last frame
     }
 }
 
@@ -775,22 +771,22 @@ function updatePosition(deltaT) {
  * Input: Double angle
  * Output: None
  * 
- * Description: Pitches the camera around it's local x vector by the given angle
+ * Description: Pitches the player's view around it's local x vector by the given angle
  */
-//Function to pitch the camera around it's local x vector
+//Function to pitch the player's view around it's local x vector
 function pitchUp(angle) {
 
-    // Update camera pitchAngle
-    camera.pitchAngle += angle;
+    // Update player's view pitchAngle
+    player.pitchAngle += angle;
 
-    if (camera.pitchAngle > piOver2)
+    if (player.pitchAngle > piOver2)
     {
-        camera.pitchAngle = piOver2;
+        player.pitchAngle = piOver2;
     }
 
-    if (camera.pitchAngle < piOver2 * -1.0)
+    if (player.pitchAngle < piOver2 * -1.0)
     {
-        camera.pitchAngle = piOver2 * -1.0;
+        player.pitchAngle = piOver2 * -1.0;
     }
 }
 
@@ -800,21 +796,21 @@ function pitchUp(angle) {
  * Input: Double angle
  * Output: None
  * 
- * Description: Rotates the camera around it's local y vector by the given angle
+ * Description: Rotates the player around it's local y vector by the given angle
  */
-//Function to yaw the camera around it's local y vector
+//Function to yaw the player around it's local y vector
 function yawRight(angle) {
 
-    // Update camera yawAngle
-    camera.yawAngle += angle
+    // Update player yawAngle
+    player.yawAngle += angle
     
-    // Reset camera rightVec and forwardVec
-    vec3.set(camera.rightVec, 1.0, 0.0, 0.0);
-    vec3.set(camera.forwardVec, 0.0, 0.0, -1.0);
+    // Reset player rightVec and forwardVec
+    vec3.set(player.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(player.forwardVec, 0.0, 0.0, -1.0);
 
     // Rotate rightVec and forwardVec based on new yawAngle
-    vec3.rotateY(camera.rightVec, camera.rightVec, VEC3_ZERO, camera.yawAngle);
-    vec3.rotateY(camera.forwardVec, camera.forwardVec, VEC3_ZERO, camera.yawAngle);
+    vec3.rotateY(player.rightVec, player.rightVec, VEC3_ZERO, player.yawAngle);
+    vec3.rotateY(player.forwardVec, player.forwardVec, VEC3_ZERO, player.yawAngle);
     
 }
 
@@ -824,13 +820,13 @@ function yawRight(angle) {
  * Input: Double amount
  * Output: None
  * 
- * Description: Moves the camera forward by given amount. Moves
+ * Description: Moves the player forward by given amount. Moves
  *              backward if given amount is negative
  */
 function moveForward(amount) {
 
-    camera.x += camera.forwardVec[0] * amount;
-    camera.z += camera.forwardVec[2] * amount;
+    player.x += player.forwardVec[0] * amount;
+    player.z += player.forwardVec[2] * amount;
 }
 
 /**
@@ -839,13 +835,13 @@ function moveForward(amount) {
  * Input: Double amount
  * Output: None
  * 
- * Description: Moves the camera right by given amount. Moves
+ * Description: Moves the player right by given amount. Moves
  *              left if given amount is negative
  */
 function moveRight(amount) {
 
-    camera.x += camera.rightVec[0] * amount;
-    camera.z += camera.rightVec[2] * amount;
+    player.x += player.rightVec[0] * amount;
+    player.z += player.rightVec[2] * amount;
 }
 
 /**
@@ -854,17 +850,17 @@ function moveRight(amount) {
  * Input: Double amount
  * Output: None
  * 
- * Description: Moves the camera up by given amount. Moves
+ * Description: Moves the player up by given amount. Moves
  *              down if given amount is negative
  */
-//Function to move up based on camera directional vectors
+//Function to move up based on player directional vectors
 function moveUp(amount) {
 
-    camera.y += amount;
+    player.y += amount;
 
-    /*if (camera.y < 0.0)
+    /*if (player.y < 0.0)
     {
-        camera.y = 0.0;
+        player.y = 0.0;
     }*/
 }
 

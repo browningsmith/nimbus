@@ -155,8 +155,8 @@ function main() {
             updateObjectRotation(object, deltaT);
         }
 
-        //Update camera position
-        updatePosition(deltaT);
+        //Update player position
+        updatePlayerPosition(deltaT);
 
         drawScene();
         drawHUD();

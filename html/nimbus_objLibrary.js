@@ -158,9 +158,9 @@ let exteriorObjects = [
 ];
 
 /**
- * Object: camera
+ * Object: player
  * 
- * Description: Contains data on camera position and angle. Is a representation
+ * Description: Contains data on player position and view angle. Is a representation
  *              of the user's first-person location and perspective.
  * 
  * Attributes: Double x, y, z,
@@ -168,20 +168,17 @@ let exteriorObjects = [
  *             mat4 rotationMatrix,
  *             Double speed, rightSpeed, upSpeed, forwardSpeed
  */
-let camera = {
+let player = {
 
-    x: 0.0, //Camera initialized 6 units above origin
+    x: 0.0,
     y: 0.0,
     z: 0.0,
-
-    lastx: 0.0,
-    lastz: 0.0,
 
     yawAngle: 0.0, // Angle of rotation around y axis
     pitchAngle: 0.0, // Angle of rotation around x axis
 
-    //Normal vectors representing right, left, and forward for the camera.
-    //Camera is initialized facing negative Z
+    //Normal vectors representing right, left, and forward for the player's view.
+    //Player is initialized facing negative Z
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
