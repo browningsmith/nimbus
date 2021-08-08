@@ -291,6 +291,8 @@ function drawHUD() {
  */
 function drawScene() {
 
+    let ship = player.boardedShip;
+    
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -314,10 +316,11 @@ function drawScene() {
 
     //Compute worldViewMatrix based on opposite coordinates of player position and player rotation
     mat4.identity(worldViewMatrix);
-    mat4.rotate(worldViewMatrix, worldViewMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(worldViewMatrix, worldViewMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
-    vec3.set(translation, player.x * -1.0, player.y * -1.0, player.z * -1.0);
-    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from player
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.rollAngle * -1.0, ZAXIS); // Fourth transform, rotate whole world around z axis (in the opposite direction the ship is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the ship is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the ship is facing)
+    vec3.set(translation, ship.x * -1.0, ship.y * -1.0, ship.z * -1.0);
+    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from ship
 
     // Render the skybox
     for (panel in skyBoxModels)
@@ -361,13 +364,15 @@ function drawScene() {
 
  function drawSkyBoxPanel(panel) {
  
+    let ship = player.boardedShip;
+    
     //Tell WebGL to use the shader program
     ctx.useProgram(skyBoxShader.program);
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the ship is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the ship is facing)
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
