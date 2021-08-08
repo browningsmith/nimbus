@@ -765,6 +765,35 @@ function updateShipAccel() {
         }
     }
 
+    //If both A and D are down, or if neither of them are down
+    if ((keys.A.down && keys.D.down) || !(keys.A.down || keys.D.down)) {
+
+        //Set that yaw accelerate button is not pressed
+        player.boardedShip.isPressingYaw = false;
+
+        console.log("Ship yaw set to " + player.boardedShip.isPressingYaw);
+    }
+    else {
+
+        //If A is the key that is down
+        if (keys.A.down) {
+
+            //Set that yaw button is pressed
+            player.boardedShip.isPressingYaw = true;
+            
+            //Set yaw acceleration
+            player.boardedShip.yawAccel = player.boardedShip.yawAccelRate * -1.0;
+        }
+        else {
+
+            //Set that yaw button is pressed
+            player.boardedShip.isPressingYaw = true;
+            
+            //Set forward acceleration to negative
+            player.boardedShip.yawAccel = player.boardedShip.yawAccelRate;
+        }
+    }
+
     console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
 }
 

@@ -211,6 +211,11 @@ let player = {
     forwardAccel: 0.0,
     forwardSpeed: 0.0,
 
+    isPressingYaw: false,
+    yawAccelRate: 30.0 * Math.PI / 180.0,
+    yawAccel: 0.0,
+    maxYaw: 30.0 * Math.PI / 180.0,
+
     interiorModel: models.shipInterior,
 };
 
