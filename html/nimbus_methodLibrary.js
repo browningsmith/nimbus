@@ -739,29 +739,33 @@ function updateShipAccel() {
     //If both Q and E are down, or if neither of them are down
     if ((keys.Q.down && keys.E.down) || !(keys.Q.down || keys.E.down)) {
 
-        //Set ship acceleration to 0
-        player.boardedShip.forwardAccel = 0.0;
+        //Set that accelerate button is not pressed
+        player.boardedShip.isPressingAccelerate = false;
 
-        console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
+        console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
     }
     else {
 
         //If E is the key that is down
         if (keys.E.down) {
 
+            //Set that accelerate button is pressed
+            player.boardedShip.isPressingAccelerate = true;
+            
             //Set forward acceleration
             player.boardedShip.forwardAccel = player.boardedShip.accelRate;
-
-            console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
         }
         else {
 
+            //Set that accelerate button is pressed
+            player.boardedShip.isPressingAccelerate = true;
+            
             //Set forward acceleration to negative
             player.boardedShip.forwardAccel = player.boardedShip.accelRate * -1.0;
-
-            console.log("Ship forward acceleration set to " + player.boardedShip.forwardAccel);
         }
     }
+
+    console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
 }
 
 /**
@@ -902,10 +906,29 @@ function updatePlayerPosition(deltaT) {
  */
 function updateShipSpeedAndPosition(ship, deltaT)
 {
+    // Auto brake, set acceleration to opposite if ship speed is outside a threshold
+    if (!ship.isPressingAccelerate)
+    {
+        // If ship speed is within full stop threshold
+        if ((ship.forwardSpeed < 0.01) && (ship.forwardSpeed > -0.01))
+        {
+            ship.forwardAccel = 0.0;
+            ship.forwardSpeed = 0.0;
+        }
+        else if (ship.forwardSpeed >= 0.01)
+        {
+            ship.forwardAccel = ship.accelRate * -2.0;
+        }
+        else
+        {
+            ship.forwardAccel = ship.accelRate * 2.0;
+        }
+    }
+    
     // Update ship speed based on acceleration
     ship.forwardSpeed += ship.forwardAccel * deltaT;
 
-    console.log("Ship speed: " + ship.forwardSpeed);
+    // console.log("Ship speed: " + ship.forwardSpeed);
 
     // Update ship position based on speed
     moveShipForward(ship, ship.forwardSpeed * deltaT);

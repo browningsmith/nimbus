@@ -206,7 +206,8 @@ let player = {
     upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    accelRate: 100.0,
+    accelRate: 30.0,
+    isPressingAccelerate: false,
     forwardAccel: 0.0,
     forwardSpeed: 0.0,
 
