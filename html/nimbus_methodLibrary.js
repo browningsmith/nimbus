@@ -327,6 +327,14 @@ function drawScene() {
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
 
+    //Render all interior objects
+    for (object in interiorObjects) {
+
+        drawInteriorObject(interiorObjects[object]);
+    }
+
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
+
     //Render all exterior objects
     for (object in exteriorObjects) {
 
@@ -335,10 +343,10 @@ function drawScene() {
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
 
-    //Render all interior objects
-    for (object in interiorObjects) {
-
-        drawInteriorObject(interiorObjects[object]);
+    // Render the ship interior
+    if (player.boardedShip != null)
+    {
+        drawShipInterior();
     }
 }
 
@@ -500,6 +508,50 @@ function drawScene() {
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, object.model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
+
+ function drawShipInterior() {
+ 
+    const ship = player.boardedShip;
+    const model = ship.interiorModel;
+    
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shipInteriorShader.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.worldViewMatrix, false, worldViewMatrix);
+    
+    //Compute new model view matrix
+    mat4.identity(modelViewMatrix);
+
+    //Compute new normals matrix
+    mat4.identity(normalMatrix);
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.vertex);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out colors
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.color);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexColor); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out normals
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.normal);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexNormal); //Enable the pointer to the buffer
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, model.buffers.drawPoint);
+
+    //Set the uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.normalMatrix, false, normalMatrix);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
  }
 
 /**

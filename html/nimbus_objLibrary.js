@@ -118,25 +118,6 @@ let interiorObjects = [
      *             Double scale,
      *             model model
      */
-    
-    {
-    
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
-
-        rollSpeed: 0.0,
-        pitchSpeed: 0.0,
-        yawSpeed: 0.0,
-
-        scale: 1.0,
-
-        model: models.shipInterior,
-    },
 ]
 
 let exteriorObjects = [
@@ -183,6 +164,9 @@ let player = {
     rightSpeed: 0.0,
     upSpeed: 0.0,
     forwardSpeed: 0.0,
+
+    boardedShip: null,
+    isPiloting: false,
 };
 
 /**
@@ -216,6 +200,8 @@ let player = {
     rightSpeed: 0.0,
     upSpeed: 0.0,
     forwardSpeed: 0.0,
+
+    interiorModel: models.shipInterior,
 };
 
 /**

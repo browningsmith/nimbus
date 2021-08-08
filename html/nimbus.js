@@ -120,6 +120,10 @@ function main() {
         exteriorObjects.push(newCube);
     }
 
+    // Set current boarded ship and whether player is piloting
+    player.boardedShip = ship;
+    player.isPiloting = true;
+
     // Randomize rotation speeds of each object
     randomizeRotations(exteriorObjects);
 
