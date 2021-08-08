@@ -736,9 +736,6 @@ function updatePlayerSpeed() {
  * 
  * Description: Updates the player position based on player directional speeds 
  *              and deltaT as long as the given directional speed is greater than zero.
- *              Records what the last x and z position of the player were, and initializes
- *              checkForStrides method to see if terrain data needs to be swapped between
- *              chunks
  */
 //Function to update the player position based on player speeds
 function updatePlayerPosition(deltaT) {
