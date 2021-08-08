@@ -742,6 +742,8 @@ function updateShipAccel() {
         //Set that accelerate button is not pressed
         player.boardedShip.isPressingAccelerate = false;
 
+        player.boardedShip.forwardAccel = 0.0;
+
         console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
     }
     else {
@@ -936,7 +938,7 @@ function updatePlayerPosition(deltaT) {
 function updateShipSpeedAndPosition(ship, deltaT)
 {
     // Auto brake, set acceleration to opposite if ship speed is outside a threshold
-    if (!ship.isPressingAccelerate)
+    if (!ship.isPressingAccelerate && ship.isAutoDecelActive)
     {
         // If ship speed is within full stop threshold
         if ((ship.forwardSpeed < 0.01) && (ship.forwardSpeed > -0.01))
@@ -954,24 +956,45 @@ function updateShipSpeedAndPosition(ship, deltaT)
         }
     }
 
-    // Update ship yaw based on yawAccel
-    ship.yawSpeed += ship.yawAngle * deltaT;
-
-    // Update ship yaw based on yawSpeed
-    /*ship.yawAngle += ship.yawSpeed * deltaT;
-    if (ship.yawAngle < ship.maxYaw * -1.0)
+    // Auto straighten, set yawSpeed to opposite if ship yaw is outside a threshold
+    // If ship yaw is within full stop threshold
+    if (!ship.isPressingYaw)
     {
-        ship.yawAngle = ship.maxYaw * -1.0;
+        // If ship yaw speed is within full stop threshold
+        if ((ship.yawSpeed < 0.01) && (ship.yawSpeed > -0.01))
+        {
+            ship.yawAccel = 0.0;
+            ship.yawSpeed = 0.0;
+        }
+        else if (ship.yawSpeed >= 0.01)
+        {
+            ship.yawAccel = ship.yawAccelRate * -1.0;
+        }
+        else
+        {
+            ship.yawAccel = ship.yawAccelRate;
+        }
     }
-    if (ship.yawAngle > ship.maxYaw)
+    
+
+    // Update ship yaw speed based on yawAccel
+    ship.yawSpeed += ship.yawAccel * deltaT;
+    if (ship.yawSpeed < ship.maxYawSpeed * -1.0)
     {
-        ship.yawAngle = ship.maxYaw;
-    }*/
+        ship.yawSpeed = ship.maxYawSpeed * -1.0;
+    }
+    if (ship.yawSpeed > ship.maxYawSpeed)
+    {
+        ship.yawSpeed = ship.maxYawSpeed;
+    }
     
     // Update ship speed based on acceleration
     ship.forwardSpeed += ship.forwardAccel * deltaT;
 
     // console.log("Ship speed: " + ship.forwardSpeed);
+
+    // Update ship yaw based on yawSpeed
+    yawShipRight(ship, ship.yawSpeed * deltaT);
 
     // Update ship position based on speed
     moveShipForward(ship, ship.forwardSpeed * deltaT);
@@ -991,6 +1014,28 @@ function updateShipSpeedAndPosition(ship, deltaT)
     ship.x += ship.forwardVec[0] * amount;
     ship.y += ship.forwardVec[1] * amount;
     ship.z += ship.forwardVec[2] * amount;
+}
+
+/**
+ * Function: yawShipRight
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Rotates the ship around it's local y vector by the given angle
+ */
+function yawShipRight(ship, angle) {
+
+    // Update ship yawAngle
+    ship.yawAngle -= angle
+    
+    // Reset ship rightVec and forwardVec
+    vec3.set(ship.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(ship.forwardVec, 0.0, 0.0, -1.0);
+
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateY(ship.rightVec, ship.rightVec, VEC3_ZERO, ship.yawAngle);
+    vec3.rotateY(ship.forwardVec, ship.forwardVec, VEC3_ZERO, ship.yawAngle); 
 }
 
 /**

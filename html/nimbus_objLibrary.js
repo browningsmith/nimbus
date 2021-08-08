@@ -208,13 +208,15 @@ let player = {
 
     accelRate: 30.0,
     isPressingAccelerate: false,
+    isAutoDecelActive: false,
     forwardAccel: 0.0,
     forwardSpeed: 0.0,
 
     isPressingYaw: false,
     yawAccelRate: 30.0 * Math.PI / 180.0,
     yawAccel: 0.0,
-    maxYaw: 30.0 * Math.PI / 180.0,
+    yawSpeed: 0.0,
+    maxYawSpeed: 70.0 * Math.PI / 180.0,
 
     interiorModel: models.shipInterior,
 };
