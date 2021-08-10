@@ -291,6 +291,8 @@ function drawHUD() {
  */
 function drawScene() {
 
+    let ship = player.boardedShip;
+    
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -312,17 +314,41 @@ function drawScene() {
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
-    //Compute worldViewMatrix based on opposite coordinates of player position and player rotation
-    mat4.identity(worldViewMatrix);
-    mat4.rotate(worldViewMatrix, worldViewMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(worldViewMatrix, worldViewMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Fifth transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // Fourth transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.rollAngle * -1.0, ZAXIS); // Third transform, rotate whole world around z axis (in the opposite direction the ship is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.pitchAngle * -1.0, XAXIS); //Second transform, rotate whole world around x axis (in the opposite direction the ship is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, ship.yawAngle * -1.0, YAXIS); //First transform, rotate whole world around y axis (in the opposite direction the ship is facing)
+
+    // Compute shipInteriorViewMatrix
+    mat4.identity(shipInteriorViewMatrix);
+    mat4.rotate(shipInteriorViewMatrix, shipInteriorViewMatrix, player.pitchAngle * -1.0, XAXIS); // Seventh transform, rotate whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(shipInteriorViewMatrix, shipInteriorViewMatrix, player.yawAngle * -1.0, YAXIS); //Sixth transform, rotate whole world around y axis (in the opposite direction the player is facing)
     vec3.set(translation, player.x * -1.0, player.y * -1.0, player.z * -1.0);
-    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from player
+    mat4.translate(shipInteriorViewMatrix, shipInteriorViewMatrix, translation); //Fifth transform, move whole world away from player
+
+    //Compute worldViewMatrix
+    mat4.copy(worldViewMatrix, shipInteriorViewMatrix);
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.rollAngle * -1.0, ZAXIS); // Fourth transform, rotate whole world around z axis (in the opposite direction the ship is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the ship is facing)
+    mat4.rotate(worldViewMatrix, worldViewMatrix, ship.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the ship is facing)
+    vec3.set(translation, ship.x * -1.0, ship.y * -1.0, ship.z * -1.0);
+    mat4.translate(worldViewMatrix, worldViewMatrix, translation); //First transform, move whole world away from ship
 
     // Render the skybox
     for (panel in skyBoxModels)
     {
         drawSkyBoxPanel(skyBoxModels[panel]);
+    }
+
+    ctx.clear(ctx.DEPTH_BUFFER_BIT);
+
+    //Render all interior objects
+    for (object in interiorObjects) {
+
+        drawInteriorObject(interiorObjects[object]);
     }
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
@@ -335,10 +361,10 @@ function drawScene() {
 
     ctx.clear(ctx.DEPTH_BUFFER_BIT);
 
-    //Render all interior objects
-    for (object in interiorObjects) {
-
-        drawInteriorObject(interiorObjects[object]);
+    // Render the ship interior
+    if (player.boardedShip != null)
+    {
+        drawShipInterior();
     }
 }
 
@@ -353,13 +379,10 @@ function drawScene() {
 
  function drawSkyBoxPanel(panel) {
  
+    let ship = player.boardedShip;
+    
     //Tell WebGL to use the shader program
     ctx.useProgram(skyBoxShader.program);
-
-    // Compute skyBoxRotationMatrix
-    mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); //Second transform, rotate whole world around y axis (in the opposite direction the player is facing)
     
     //Set worldview and projection uniforms
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
@@ -502,6 +525,50 @@ function drawScene() {
     ctx.drawElements(ctx.TRIANGLES, object.model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
  }
 
+ function drawShipInterior() {
+ 
+    const ship = player.boardedShip;
+    const model = ship.interiorModel;
+    
+    //Tell WebGL to use the shader program
+    ctx.useProgram(shipInteriorShader.program);
+    
+    //Set worldview and projection uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.worldViewMatrix, false, shipInteriorViewMatrix);
+    
+    //Compute new model view matrix
+    mat4.identity(modelViewMatrix);
+
+    //Compute new normals matrix
+    mat4.identity(normalMatrix);
+
+    //Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.vertex);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexPosition); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out colors
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.color);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexColor, 4, ctx.FLOAT, false, 0, 0); //Pull out 4 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexColor); //Enable the pointer to the buffer
+
+    //Instruct WebGL how to pull out normals
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, model.buffers.normal);
+    ctx.vertexAttribPointer(shipInteriorShader.attributes.vertexNormal, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+    ctx.enableVertexAttribArray(shipInteriorShader.attributes.vertexNormal); //Enable the pointer to the buffer
+
+    //Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, model.buffers.drawPoint);
+
+    //Set the uniforms
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.modelViewMatrix, false, modelViewMatrix);
+    ctx.uniformMatrix4fv(shipInteriorShader.uniforms.normalMatrix, false, normalMatrix);
+
+    //Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, model.drawPointCount, ctx.UNSIGNED_SHORT, 0);
+ }
+
 /**
  * Function: updateMouse
  * 
@@ -583,8 +650,8 @@ function parseDownKey(event) {
                 //Update that key is down
                 keys[key].down = true;
 
-                //Update player speeds
-                updatePlayerSpeed();
+                //Perform actions for when keys are pressed
+                performKeyActions();
             }
             else {
 
@@ -624,8 +691,8 @@ function parseUpKey(event) {
                 //Update that key is up
                 keys[key].down = false;
 
-                //Update player speeds
-                updatePlayerSpeed();
+                //Perform actions for when keys are pressed
+                performKeyActions();
             }
             else {
 
@@ -633,6 +700,198 @@ function parseUpKey(event) {
             }
         } 
     }
+}
+
+/**
+ * Function: performKeyActions
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: This function is called when a key press update happens
+ */
+function performKeyActions() {
+
+    // Update toggle status of F
+    if (keys.F.toggleSequence == 0)
+    {
+        if (keys.F.down)
+        {
+            keys.F.toggleSequence = 1;
+        }
+    }
+    else if (keys.F.toggleSequence == 1)
+    {
+        if (!keys.F.down)
+        {
+            // Initiate toggle trigger
+            console.log("F key pressed once");
+            togglePiloting();
+
+            keys.F.toggleSequence = 0;
+        }
+    }
+    else
+    {
+        keys.F.toggleSequence = 0;
+    }
+    
+    // If the player is piloting a ship, do ship movement
+    if (player.isPiloting) {
+
+        updateShipAccel();
+    }
+    else
+    {
+        updatePlayerSpeed();
+    }
+}
+
+/**
+ * Function: togglePiloting
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: This function switches controls from player to ship
+ * and vice versa. Snaps player view forward when toggled on.
+ */
+function togglePiloting()
+{
+    // If the player is piloting, turn piloting off
+    if (player.isPiloting)
+    {
+        player.isPiloting = false;
+
+        // Disable input to controls
+        player.boardedShip.isPressingAccelerate = false;
+        player.boardedShip.forwardAccel = 0.0;
+        player.boardedShip.isPressingYaw = false;
+        player.boardedShip.yawAccel = 0.0;
+        player.boardedShip.isPressingPitch = false;
+        player.boardedShip.pitchAccel = 0.0;
+        
+    }
+    else
+    {
+        player.isPiloting = true;
+
+        // Disable current player movement
+        player.rightSpeed = 0.0;
+        player.upSpeed = 0.0;
+        player.forwardSpeed = 0.0;
+
+        // Snap player view forward
+        player.yawAngle = 0.0;
+        player.pitchAngle = 0.0;
+    }
+}
+
+/**
+ * Function: updateShipAccel
+ * 
+ * Input: KeyboardEvent event
+ * Output: None
+ * 
+ * Description: This function takes a look at the state of pressed keys
+ * and updates the ship's forward acceleration based on that.
+ */
+function updateShipAccel() {
+
+    //If both Q and E are down, or if neither of them are down
+    if ((keys.Q.down && keys.E.down) || !(keys.Q.down || keys.E.down)) {
+
+        //Set that accelerate button is not pressed
+        player.boardedShip.isPressingAccelerate = false;
+
+        player.boardedShip.forwardAccel = 0.0;
+
+        //console.log("Ship acceleration set to " + player.boardedShip.isPressingAccelerate);
+    }
+    else {
+
+        //If E is the key that is down
+        if (keys.E.down) {
+
+            //Set that accelerate button is pressed
+            player.boardedShip.isPressingAccelerate = true;
+            
+            //Set forward acceleration
+            player.boardedShip.forwardAccel = player.boardedShip.accelRate;
+        }
+        else {
+
+            //Set that accelerate button is pressed
+            player.boardedShip.isPressingAccelerate = true;
+            
+            //Set forward acceleration to negative
+            player.boardedShip.forwardAccel = player.boardedShip.accelRate * -1.0;
+        }
+    }
+
+    //If both A and D are down, or if neither of them are down
+    if ((keys.A.down && keys.D.down) || !(keys.A.down || keys.D.down)) {
+
+        //Set that yaw accelerate button is not pressed
+        player.boardedShip.isPressingYaw = false;
+
+        player.boardedShip.yawAccel = 0.0;
+
+        //console.log("Ship yaw set to " + player.boardedShip.isPressingYaw);
+    }
+    else {
+
+        //If A is the key that is down
+        if (keys.A.down) {
+
+            //Set that yaw button is pressed
+            player.boardedShip.isPressingYaw = true;
+            
+            //Set yaw acceleration
+            player.boardedShip.yawAccel = player.boardedShip.yawAccelRate * -1.0;
+        }
+        else {
+
+            //Set that yaw button is pressed
+            player.boardedShip.isPressingYaw = true;
+            
+            //Set forward acceleration to negative
+            player.boardedShip.yawAccel = player.boardedShip.yawAccelRate;
+        }
+    }
+
+    //If both W and S are down, or if neither of them are down
+    if ((keys.W.down && keys.S.down) || !(keys.W.down || keys.S.down)) {
+
+        //Set that pitch accelerate button is not pressed
+        player.boardedShip.isPressingPitch = false;
+
+        player.boardedShip.pitchAccel = 0.0;
+
+        //console.log("Ship pitch set to " + player.boardedShip.isPressingPitch);
+    }
+    else {
+
+        //If W is the key that is down
+        if (keys.W.down) {
+
+            //Set that pitch button is pressed
+            player.boardedShip.isPressingPitch = true;
+            
+            //Set pitch acceleration
+            player.boardedShip.pitchAccel = player.boardedShip.pitchAccelRate * -1.0;
+        }
+        else {
+
+            //Set that pitch button is pressed
+            player.boardedShip.isPressingPitch = true;
+            
+            //Set pitch acceleration to negative
+            player.boardedShip.pitchAccel = player.boardedShip.pitchAccelRate;
+        }
+    }
+
+    //console.log("Ship pitch set to " + player.boardedShip.isPressingPitch);
 }
 
 /**
@@ -736,9 +995,6 @@ function updatePlayerSpeed() {
  * 
  * Description: Updates the player position based on player directional speeds 
  *              and deltaT as long as the given directional speed is greater than zero.
- *              Records what the last x and z position of the player were, and initializes
- *              checkForStrides method to see if terrain data needs to be swapped between
- *              chunks
  */
 //Function to update the player position based on player speeds
 function updatePlayerPosition(deltaT) {
@@ -763,6 +1019,184 @@ function updatePlayerPosition(deltaT) {
 
         moveRight(player.rightSpeed * deltaT); //Move player forward by rightSpeed * change in time from last frame
     }
+}
+
+/**
+ * Function: updateShipSpeedAndPosition
+ * 
+ * Input: Double deltaT
+ * Output: None
+ * 
+ * Description: Updates ship speed and position based on acceleration 
+ *              and deltaT.
+ */
+function updateShipSpeedAndPosition(ship, deltaT)
+{
+    // Auto brake, set acceleration to opposite if ship speed is outside a threshold
+    if (!ship.isPressingAccelerate && ship.isAutoDecelActive)
+    {
+        // If ship speed is within full stop threshold
+        if ((ship.forwardSpeed < 0.01) && (ship.forwardSpeed > -0.01))
+        {
+            ship.forwardAccel = 0.0;
+            ship.forwardSpeed = 0.0;
+        }
+        else if (ship.forwardSpeed >= 0.01)
+        {
+            ship.forwardAccel = ship.accelRate * -2.0;
+        }
+        else
+        {
+            ship.forwardAccel = ship.accelRate * 2.0;
+        }
+    }
+
+    // Auto straighten, set yawSpeed to opposite if ship yaw is outside a threshold
+    // If ship yaw is within full stop threshold
+    if (!ship.isPressingYaw)
+    {
+        // If ship yaw speed is within full stop threshold
+        if ((ship.yawSpeed < 0.01) && (ship.yawSpeed > -0.01))
+        {
+            ship.yawAccel = 0.0;
+            ship.yawSpeed = 0.0;
+        }
+        else if (ship.yawSpeed >= 0.01)
+        {
+            ship.yawAccel = ship.yawAccelRate * -2.0;
+        }
+        else
+        {
+            ship.yawAccel = ship.yawAccelRate * 2.0;
+        }
+    }
+
+    // Auto straighten, set pitchSpeed to opposite if ship pitch is outside a threshold
+    // If ship pitch is within full stop threshold
+    if (!ship.isPressingPitch)
+    {
+        // If ship pitch speed is within full stop threshold
+        if ((ship.pitchSpeed < 0.01) && (ship.pitchSpeed > -0.01))
+        {
+            ship.pitchAccel = 0.0;
+            ship.pitchSpeed = 0.0;
+        }
+        else if (ship.pitchSpeed >= 0.01)
+        {
+            ship.pitchAccel = ship.pitchAccelRate * -2.0;
+        }
+        else
+        {
+            ship.pitchAccel = ship.pitchAccelRate * 2.0;
+        }
+    }
+
+    // Update ship pitch speed based on pitchAccel
+    ship.pitchSpeed += ship.pitchAccel * deltaT;
+    if (ship.pitchSpeed < ship.maxPitchSpeed * -1.0)
+    {
+        ship.pitchSpeed = ship.maxPitchSpeed * -1.0;
+    }
+    if (ship.pitchSpeed > ship.maxPitchSpeed)
+    {
+        ship.pitchSpeed = ship.maxPitchSpeed;
+    }
+    
+
+    // Update ship yaw speed based on yawAccel
+    ship.yawSpeed += ship.yawAccel * deltaT;
+    if (ship.yawSpeed < ship.maxYawSpeed * -1.0)
+    {
+        ship.yawSpeed = ship.maxYawSpeed * -1.0;
+    }
+    if (ship.yawSpeed > ship.maxYawSpeed)
+    {
+        ship.yawSpeed = ship.maxYawSpeed;
+    }
+    
+    // Update ship speed based on acceleration
+    ship.forwardSpeed += ship.forwardAccel * deltaT;
+
+    // console.log("Ship speed: " + ship.forwardSpeed);
+
+    // Reset ship rightVec, upVec and forwardVec before pitch and yaw are applied
+    vec3.set(ship.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(ship.upVec, 0.0, 1.0, 0.0);
+    vec3.set(ship.forwardVec, 0.0, 0.0, -1.0);
+
+    // Update ship pitch based on pitchSpeed
+    pitchShipUp(ship, ship.pitchSpeed * deltaT);
+
+    // Update ship yaw based on yawSpeed
+    yawShipRight(ship, ship.yawSpeed * deltaT);
+
+    // Update ship position based on speed
+    moveShipForward(ship, ship.forwardSpeed * deltaT);
+}
+
+
+
+/**
+ * Function: moveShipForward
+ * 
+ * Input: Double amount
+ * Output: None
+ * 
+ * Description: Moves the ship forward by given amount. Moves
+ *              backward if given amount is negative
+ */
+ function moveShipForward(ship, amount) {
+
+    ship.x += ship.forwardVec[0] * amount;
+    ship.y += ship.forwardVec[1] * amount;
+    ship.z += ship.forwardVec[2] * amount;
+}
+
+/**
+ * Function: yawShipRight
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Rotates the ship around it's local y vector by the given angle
+ */
+function yawShipRight(ship, angle) {
+
+    // Update ship yawAngle
+    ship.yawAngle -= angle;
+
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateY(ship.rightVec, ship.rightVec, VEC3_ZERO, ship.yawAngle);
+    vec3.rotateY(ship.forwardVec, ship.forwardVec, VEC3_ZERO, ship.yawAngle); 
+}
+
+/**
+ * Function: pitchShipUp
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Rotates the ship around it's local x vector by the given angle
+ */
+ function pitchShipUp(ship, angle) {
+
+    // Update ship yawAngle
+    ship.pitchAngle += angle;
+
+    if (ship.pitchAngle > 90.0 * Math.PI / 180.0)
+    {
+        ship.pitchAngle = 90.0 * Math.PI / 180.0;
+        ship.pitchSpeed = 0.0;
+    }
+    if (ship.pitchAngle < -90.0 * Math.PI / 180.0)
+    {
+        ship.pitchAngle = -90.0 * Math.PI / 180.0;
+        ship.pitchSpeed = 0.0;
+    }
+
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateX(ship.upVec, ship.upVec, VEC3_ZERO, ship.pitchAngle);
+    vec3.rotateX(ship.forwardVec, ship.forwardVec, VEC3_ZERO, ship.pitchAngle); 
 }
 
 /**
@@ -827,6 +1261,24 @@ function moveForward(amount) {
 
     player.x += player.forwardVec[0] * amount;
     player.z += player.forwardVec[2] * amount;
+
+    if (player.z < -0.8)
+    {
+        player.z = -0.8;
+    }
+    if (player.z > 0.8)
+    {
+        player.z = 0.8;
+    }
+
+    if (player.x < -4.8)
+    {
+        player.x = -4.8;
+    }
+    if (player.x > 4.8)
+    {
+        player.x = 4.8;
+    }
 }
 
 /**
@@ -842,6 +1294,24 @@ function moveRight(amount) {
 
     player.x += player.rightVec[0] * amount;
     player.z += player.rightVec[2] * amount;
+
+    if (player.z < -0.8)
+    {
+        player.z = -0.8;
+    }
+    if (player.z > 0.8)
+    {
+        player.z = 0.8;
+    }
+
+    if (player.x < -4.8)
+    {
+        player.x = -4.8;
+    }
+    if (player.x > 4.8)
+    {
+        player.x = 4.8;
+    }
 }
 
 /**
@@ -858,10 +1328,14 @@ function moveUp(amount) {
 
     player.y += amount;
 
-    /*if (player.y < 0.0)
+    if (player.y < 0.0)
     {
         player.y = 0.0;
-    }*/
+    }
+    if (player.y > 0.0)
+    {
+        player.y = 0.0;
+    }
 }
 
 /**
@@ -896,5 +1370,35 @@ function randomizeRotations(objects)
         objects[object].rollSpeed = Math.random() * 5.0;
         objects[object].pitchSpeed = Math.random() * 5.0;
         objects[object].yawSpeed = Math.random() * 5.0;
+    }
+}
+
+function shiftToNextChunk(object)
+{
+    while ((object.x - ship.x) > (chunkSize / 2.0))
+    {
+        object.x -= chunkSize;
+    }
+    while ((object.x - ship.x) < (chunkSize / -2.0))
+    {
+        object.x += chunkSize;
+    }
+
+    while ((object.y - ship.y) > (chunkSize / 2.0))
+    {
+        object.y -= chunkSize;
+    }
+    while ((object.y - ship.y) < (chunkSize / -2.0))
+    {
+        object.y += chunkSize;
+    }
+
+    while ((object.z - ship.z) > (chunkSize / 2.0))
+    {
+        object.z -= chunkSize;
+    }
+    while ((object.z - ship.z) < (chunkSize / -2.0))
+    {
+        object.z += chunkSize;
     }
 }

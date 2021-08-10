@@ -43,17 +43,16 @@ const modelViewMatrix = mat4.create();
 const worldViewMatrix = mat4.create();
 const normalMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
+const shipInteriorViewMatrix = mat4.create();
 
 //Projection matrix
 const projectionMatrix = mat4.create();
 
 //Void color
 //let voidColor = [128.0 / 256.0, 223.0 / 256.0, 224.0 / 256.0]; //sky blue
-let voidColor = [0.0 / 256.0, 0.0 / 256.0, 0.0 / 256.0]; //dark purple
+let voidColor = [0.0 / 256.0, 0.0 / 256.0, 0.0 / 256.0]; //black
 
-//Chunk dimensions
-const chunkLength = 255.0; //With the way model is rendering currently, this is the maximum
-const chunkWidth = 255.0; //With the way model is rendering currently, this is the maximum
+chunkSize = 1000.0;
 
 /**
  * Object: keys
@@ -92,6 +91,21 @@ const keys = {
         code: "KeyD",
         down: false,
     },
+    Q: {
+
+        code: "KeyQ",
+        down: false,
+    },
+    E: {
+
+        code: "KeyE",
+        down: false,
+    },
+    F: {
+        code: "KeyF",
+        down: false,
+        toggleSequence: 0, // 0 for up, 1 for down, 2 for up again
+    },
     Space: {
 
         code: "Space",
@@ -122,25 +136,6 @@ let interiorObjects = [
      *             Double scale,
      *             model model
      */
-    
-    {
-    
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
-
-        rollSpeed: 0.0,
-        pitchSpeed: 0.0,
-        yawSpeed: 0.0,
-
-        scale: 1.0,
-
-        model: models.shipInterior,
-    },
 ]
 
 let exteriorObjects = [
@@ -163,9 +158,9 @@ let exteriorObjects = [
  * Description: Contains data on player position and view angle. Is a representation
  *              of the user's first-person location and perspective.
  * 
- * Attributes: Double x, y, z,
- *             vec3 rightVec, upVec, forwardVec,
- *             mat4 rotationMatrix,
+ * Attributes: Double x, y, z, yawAngle, pitchAngle
+ *             vec3 rightVec, forwardVec,
+ *             
  *             Double speed, rightSpeed, upSpeed, forwardSpeed
  */
 let player = {
@@ -187,6 +182,56 @@ let player = {
     rightSpeed: 0.0,
     upSpeed: 0.0,
     forwardSpeed: 0.0,
+
+    boardedShip: null,
+    isPiloting: false,
+};
+
+/**
+ * Object: ship
+ * 
+ * Description: Contains data on ship position and rotation.
+ * 
+ * Attributes: Double x, y, z, yawAngle, pitchAngle, rollAngle
+ *             vec3 rightVec, upVec, forwardVec
+ *             
+ *             Double speed, rightSpeed, upSpeed, forwardSpeed
+ */
+ let ship = {
+
+    x: 0.0,
+    y: 0.0,
+    z: 0.0,
+
+    yawAngle: Math.PI, // Angle of rotation around y axis
+    pitchAngle: 0.0, // Angle of rotation around x axis
+    rollAngle: 0.0, // Angle of rotation around z axis
+
+    //Normal vectors representing right, left, and forward for the ship's facing direction.
+    //Ship is initialized facing negative Z
+    rightVec: vec3.fromValues(1.0, 0.0, 0.0),
+    upVec: vec3.fromValues(0.0, 1.0, 0.0),
+    forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
+
+    accelRate: 30.0,
+    isPressingAccelerate: false,
+    isAutoDecelActive: false,
+    forwardAccel: 0.0,
+    forwardSpeed: 0.0,
+
+    isPressingYaw: false,
+    yawAccelRate: 30.0 * Math.PI / 180.0,
+    yawAccel: 0.0,
+    yawSpeed: 0.0,
+    maxYawSpeed: 70.0 * Math.PI / 180.0,
+
+    isPressingPitch: false,
+    pitchAccelRate: 30.0 * Math.PI / 180.0,
+    pitchAccel: 0.0,
+    pitchSpeed: 0.0,
+    maxPitchSpeed: 70.0 * Math.PI / 180.0,
+
+    interiorModel: models.shipInterior,
 };
 
 /**
