@@ -96,13 +96,13 @@ function main() {
 	}
 
     // Create more cubes in random places
-    /*for (let i=0; i<1000; i++)
+    for (let i=0; i<2000; i++)
     {
         let newCube = {
 
-            x: Math.random() * 200.0 - 100.0,
-            y: Math.random() * 200.0 - 100.0,
-            z: Math.random() * 200.0 - 100.0,
+            x: Math.random() * chunkSize * 2.0 - chunkSize,
+            y: Math.random() * chunkSize * 2.0 - chunkSize,
+            z: Math.random() * chunkSize * 2.0 - chunkSize,
 
             roll: 0.0,
             pitch: 0.0,
@@ -118,7 +118,11 @@ function main() {
         };
 
         exteriorObjects.push(newCube);
-    }*/
+    }
+
+    // Set current boarded ship
+    player.boardedShip = ship;
+    player.isPiloting = true;
 
     // Randomize rotation speeds of each object
     randomizeRotations(exteriorObjects);
@@ -152,17 +156,23 @@ function main() {
         // Update object rotations
         for (object in exteriorObjects)
         {
+            shiftToNextChunk(exteriorObjects[object]);
             updateObjectRotation(object, deltaT);
         }
 
-        //Update camera position
-        updatePosition(deltaT);
+        //Update ship position
+        updateShipSpeedAndPosition(ship, deltaT);
+
+        //Update player position
+        updatePlayerPosition(deltaT);
 
         drawScene();
         drawHUD();
 
         requestAnimationFrame(newFrame);
     }
+
+    alert("Movement Controls:\n\nMove cursor to look around cockpit\nE - Increase ship speed\nQ - Decrease ship speed\nA - Turn ship left\nD - Turn ship right\nW - Pitch ship down\nS - Pitch ship up\nF - Switch between ship control and player control");
 
     requestAnimationFrame(newFrame);
 }
