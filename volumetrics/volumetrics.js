@@ -15,15 +15,19 @@ let shaderData = {
 
     fragmentShaderCode: `
     
+        uniform highp vec2 u_resolution;
+    
         void main(void)
         {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            highp vec2 st = gl_FragCoord.xy / u_resolution;
+
+            gl_FragColor = vec4(mix(1.0, 0.0, st.x), mix(0.0, 1.0, st.x), 0.0, 1.0);
         }
     `,
 
     program: null,
     attributes: null,
-    //uniforms: null,
+    uniforms: null,
 
     tieLocations: function() {
 
@@ -32,6 +36,10 @@ let shaderData = {
 
             vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
         };
+        this.uniforms = {
+
+            resolution: ctx.getUniformLocation(this.program, "u_resolution"),
+        }
         
     },
 };
@@ -54,6 +62,8 @@ let planeObject = {
 
     elementCount: 6,
 };
+
+let resolutionUniform = vec2.create();
 
 function main()
 {
@@ -206,6 +216,9 @@ function renderFrame()
 
     //Tell WebGL to use the shader program
     ctx.useProgram(shaderData.program);
+
+    // Set resolution uniform
+    ctx.uniform2f(shaderData.uniforms.resolution, ctx.canvas.width, ctx.canvas.height);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
