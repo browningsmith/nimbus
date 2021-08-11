@@ -15,13 +15,14 @@ let shaderData = {
 
     fragmentShaderCode: `
     
-        uniform highp vec2 u_resolution;
+        precision highp float;
     
-        void main(void)
-        {
-            highp vec2 st = gl_FragCoord.xy / u_resolution;
-
-            gl_FragColor = vec4(mix(1.0, 0.0, st.x), mix(0.0, 1.0, st.x), 0.0, 1.0);
+        uniform vec2 u_resolution;
+        uniform float u_time;
+          
+        void main() {
+            
+            gl_FragColor = vec4(0.0, fract(u_time), 0.0, 1.0);
         }
     `,
 
@@ -39,6 +40,7 @@ let shaderData = {
         this.uniforms = {
 
             resolution: ctx.getUniformLocation(this.program, "u_resolution"),
+            time: ctx.getUniformLocation(this.program, "u_time"),
         }
         
     },
@@ -63,8 +65,6 @@ let planeObject = {
     elementCount: 6,
 };
 
-let resolutionUniform = vec2.create();
-
 function main()
 {
     //Get canvas element
@@ -84,7 +84,17 @@ function main()
 
     loadModel(planeObject);
 
-    renderFrame();
+    // Animation loop
+    function newFrame(currentTime)
+    {
+        currentTime *= 0.001; // Convert to seconds
+        
+        renderFrame(currentTime);
+
+        requestAnimationFrame(newFrame);
+    }
+
+    requestAnimationFrame(newFrame);
 }
 
 /**
@@ -202,7 +212,7 @@ function main()
     };
 }
 
-function renderFrame()
+function renderFrame(currentTime)
 {
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -219,6 +229,9 @@ function renderFrame()
 
     // Set resolution uniform
     ctx.uniform2f(shaderData.uniforms.resolution, ctx.canvas.width, ctx.canvas.height);
+
+    // Set time uniform
+    ctx.uniform1f(shaderData.uniforms.time, currentTime);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
