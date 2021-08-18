@@ -28,6 +28,16 @@ let shaderData = {
         {
             vec2 st = gl_FragCoord.xy/u_resolution;
             vec3 color = vec3(0.0);
+
+            float compressed_dimension = 2.0;
+
+            // Expand st
+            vec2 st_exp = st * compressed_dimension * 2.0;
+            // Convert to int
+            highp ivec2 st_exp_i = ivec2(st_exp);
+
+            // Calculate index of uncompressed texel
+            int i = st_exp_i.y * int(compressed_dimension) * 2 + st_exp_i.x;
         
             gl_FragColor = texture2D(u_sampler, st);
         }
@@ -93,9 +103,11 @@ function main()
     loadModel(planeObject);
 
     let textureData = [];
-    for (let i=0; i<4 * 4; i++)
+    let alpha = 256;
+    for (let i=0; i<16; i++)
     {
-        textureData[i] = Math.floor(Math.random() * 256);
+        textureData[i] = alpha;
+        alpha -= 16;
     }
     let texture = loadArrayToTexture(2, 2, textureData);
 
