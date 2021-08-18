@@ -20,47 +20,39 @@ let shaderData = {
         uniform vec2 u_resolution;
         uniform float u_time;
 
-        vec2 random2( vec2 p )
-        {
-            return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);
-        }
+        uniform sampler2D u_sampler;
         
         void main()
         {
             vec2 st = gl_FragCoord.xy/u_resolution;
             vec3 color = vec3(0.0);
 
-            // Scale
-            st *= 25.0;
+            // Get texture data for this pixel
+            vec4 texData = texture2D(u_sampler, st);
 
-            // Separate into tiles
-            vec2 i = floor(st);
-            vec2 f = fract(st);
+            float compressed_dimension = 2.0; // Size of one side of the texture sampler, as loaded
 
-            float min_dist = 9.0;
+            vec2 st_expanded = st * compressed_dimension;
+            vec2 st_expanded_f = fract(st_expanded);
 
-            // Generate points in this and surrounding tiles
-            for (int x = -1; x < 2; x++)
+            if ((st_expanded_f.x < 0.5) && (st_expanded_f.y < 0.5))
             {
-                for (int y = -1; y < 2; y++)
-                {
-                    vec2 ll_corner = i + vec2(float(x), float(y));
-
-                    vec2 point = random2(ll_corner);
-
-                    point = 0.5 + 0.5*sin(u_time + 6.2831*point);
-
-                    point += ll_corner;
-
-                    float dist = distance(st, point);
-
-                    min_dist = min(min_dist, dist);
-                }
+                color = vec3(texData.x);
             }
-
-            color = vec3(0.0, 0.8 - min_dist*0.5, 0.0);
+            else if (st_expanded_f.y < 0.5)
+            {
+                color = vec3(texData.y);
+            }
+            else if (st_expanded_f.x < 0.5)
+            {
+                color = vec3(texData.z);
+            }
+            else
+            {
+                color = vec3(texData.w);
+            }
         
-            gl_FragColor = vec4(color, 1.0);
+            gl_FragColor = vec4(color.x, 0.0, color.x, 1.0);
         }
     `,
 
@@ -79,6 +71,7 @@ let shaderData = {
 
             resolution: ctx.getUniformLocation(this.program, "u_resolution"),
             time: ctx.getUniformLocation(this.program, "u_time"),
+            sampler: ctx.getUniformLocation(this.program, "u_sampler"),
         }
         
     },
@@ -122,12 +115,19 @@ function main()
 
     loadModel(planeObject);
 
+    let textureData = [];
+    for (let i=0; i<4 * 4; i++)
+    {
+        textureData[i] = Math.floor(Math.random() * 256);
+    }
+    let texture = loadArrayToTexture(2, 2, textureData);
+
     // Animation loop
     function newFrame(currentTime)
     {
         currentTime *= 0.001; // Convert to seconds
         
-        renderFrame(currentTime);
+        renderFrame(currentTime, texture);
 
         requestAnimationFrame(newFrame);
     }
@@ -250,7 +250,40 @@ function main()
     };
 }
 
-function renderFrame(currentTime)
+/**
+ * Function: loadArrayToTexture
+ * 
+ * Input: int width, int height, int[] data
+ * Output: 
+ * 
+ * Description: 
+ */
+function loadArrayToTexture(width, height, data)
+{
+    let texture = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+
+    ctx.texImage2D(
+        ctx.TEXTURE_2D,
+        0, // LOD
+        ctx.RGBA, // internal format
+        width, // Width
+        height, // Height
+        0, // Border
+        ctx.RGBA, // source format
+        ctx.UNSIGNED_BYTE, // source type
+        new Uint8Array(data)
+    );
+
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
+
+    return texture;
+}
+
+function renderFrame(currentTime, texture)
 {
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -264,6 +297,11 @@ function renderFrame(currentTime)
 
     //Tell WebGL to use the shader program
     ctx.useProgram(shaderData.program);
+
+    //Instruct WebGL on which texture to use
+    ctx.activeTexture(ctx.TEXTURE0);
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+    ctx.uniform1i(shaderData.uniforms.sampler, 0);
 
     // Set resolution uniform
     ctx.uniform2f(shaderData.uniforms.resolution, ctx.canvas.width, ctx.canvas.height);
