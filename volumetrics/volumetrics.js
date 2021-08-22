@@ -1,7 +1,8 @@
 let canvas = null;
 let ctx = null;
 
-let dimension = 16;
+let dimension = 2;
+let animationDuration = 5;
 
 let shaderData = {
 
@@ -23,6 +24,7 @@ let shaderData = {
     
         uniform vec2 u_resolution;
         uniform float u_time;
+        uniform float u_dimension;
 
         uniform sampler2D u_sampler;
         
@@ -34,7 +36,7 @@ let shaderData = {
             vec3 color1 = vec3(0.0, 0.0, 0.0);
             vec3 color2 = vec3(1.0, 1.0, 1.0);
 
-            float dimension = 16.0;
+            float dimension = u_dimension;
 
             st *= dimension;
             vec2 st_i = floor(st);
@@ -42,11 +44,17 @@ let shaderData = {
             //vec2 smooth = smoothstep(0.0, 1.0, st_f);
             vec2 smooth = st_f * st_f * st_f * (st_f * (st_f * 6.0 - 15.0) + 10.0);
 
+            // Get the index of the four corners of this grid square
+            vec2 i00 = st_i;
+            vec2 i10 = st_i + vec2(1.0, 0.0); if (i10.x >= dimension) { i10.x -= dimension; }
+            vec2 i01 = st_i + vec2(0.0, 1.0); if (i01.y >= dimension) { i01.y -= dimension; }
+            vec2 i11 = st_i + vec2(1.0, 1.0); if (i11.x >= dimension) { i11.x -= dimension; } if (i11.y >= dimension) { i11.y -= dimension; }
+
             // Get the values of the four corners
-            float f00 = texture2D(u_sampler, (st_i + vec2(0.0, 0.0)) / dimension).x;
-            float f10 = texture2D(u_sampler, (st_i + vec2(1.0, 0.0)) / dimension).x;
-            float f01 = texture2D(u_sampler, (st_i + vec2(0.0, 1.0)) / dimension).x;
-            float f11 = texture2D(u_sampler, (st_i + vec2(1.0, 1.0)) / dimension).x;
+            float f00 = texture2D(u_sampler, i00 / dimension).x;
+            float f10 = texture2D(u_sampler, i10 / dimension).x;
+            float f01 = texture2D(u_sampler, i01 / dimension).x;
+            float f11 = texture2D(u_sampler, i11 / dimension).x;
 
             // Calculate unit vectors
             vec2 c00 = vec2(sin(f00 * PI * 2.0 + u_time * f00 * 2.0), cos(f00 * PI * 2.0 + u_time * f00 * 2.0));
@@ -81,7 +89,7 @@ let shaderData = {
                     smooth.y
                 );
 
-            noise = clamp(noise*100.0, 0.0, 1.0);
+            noise = clamp(noise*20.0, 0.0, 1.0);
 
             color = mix(color1, color2, noise);
         
@@ -106,6 +114,7 @@ let shaderData = {
             resolution: ctx.getUniformLocation(this.program, "u_resolution"),
             time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
+            dimension: ctx.getUniformLocation(this.program, "u_dimension")
         }
         
     },
@@ -164,6 +173,7 @@ function main()
     function newFrame(currentTime)
     {
         currentTime *= 0.001; // Convert to seconds
+        currentTime = currentTime % animationDuration;
         
         renderFrame(currentTime, texture);
 
@@ -313,8 +323,8 @@ function loadArrayToTexture(width, height, data)
         new Uint8Array(data)
     );
 
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.REPEAT);
-    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.REPEAT);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
 
@@ -346,6 +356,9 @@ function renderFrame(currentTime, texture)
 
     // Set time uniform
     ctx.uniform1f(shaderData.uniforms.time, currentTime);
+
+    // Set dimension uniform
+    ctx.uniform1f(shaderData.uniforms.dimension, dimension);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
