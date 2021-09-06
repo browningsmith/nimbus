@@ -1,8 +1,8 @@
 let canvas = null;
 let ctx = null;
 
-let dimension = 4;
-let animationDuration = 4;
+let dimension = 16;
+let animationDuration = 8;
 
 let shaderData = {
 
@@ -30,15 +30,14 @@ let shaderData = {
 
         uniform sampler2D u_sampler;
 
-        vec2 zToTileXY(float z, float tileLayoutDimension)
+        vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float layoutDimension)
         {
-            vec2 tileCoord = vec2(z, 0.0);
-
+            vec2 tileCoord = vec2(coord.z * tileDimension, 0.0);
             for (int i = 0; i < 40000; i++)
             {
-                if (tileCoord.x > tileLayoutDimension)
+                if (tileCoord.x > layoutDimension)
                 {
-                    tileCoord.x -= tileLayoutDimension;
+                    tileCoord.x -= layoutDimension;
                     tileCoord.y += 1.0;
                 }
                 else
@@ -46,25 +45,21 @@ let shaderData = {
                     break;
                 }
             }
-            return floor(tileCoord);
+            tileCoord = floor(tileCoord);
+            
+            vec2 finalCoord = (tileCoord + fract(coord.xy)) / layoutDimension;
+
+            return texture2D(sampler, finalCoord);
         }
         
         void main()
         {
             vec2 st = gl_FragCoord.xy/u_resolution;
-            vec3 color = vec3(0.0);
+            //vec3 color = vec3(0.0);
 
-            float durationProgress = u_time / u_duration;
-
-            // Multiply durationProgress by dimension to get the layer to display
-
-            vec2 tileCoord = zToTileXY(durationProgress * u_dimension, u_tileLayoutDimension);
-
-            vec2 actualCoord = (tileCoord + fract(st)) / u_tileLayoutDimension;
-
-            color = texture2D(u_sampler, actualCoord).xyz;
+            float z = u_time / u_duration;
         
-            gl_FragColor = vec4(color, 1.0);
+            gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
         }
     `,
 
@@ -132,106 +127,16 @@ function main()
 
     let textureData = [];
 
-    //let tileLayoutDimension = Math.sqrt(dimension);
+    let tileLayoutDimension = Math.sqrt(dimension);
     let textureDimension = Math.sqrt(dimension * dimension * dimension);
     //console.log(textureDimension);
 
-    let intensity = 255;
-    let dropFactor = 255 / (dimension * dimension);
-
-    // Layout red tiles
-    let zx = 0;
-    let zy = 0;
-    for (let y = 0; y < dimension; y++)
+    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
     {
-        for (let x = 0; x < dimension; x++)
-        {
-            // Compute index for the tile
-            let zxx = zx * dimension + x;
-            let zyy = zy * dimension + y;
-
-            let i = (zyy * textureDimension + zxx) * 4;
-            //console.log(i);
-
-            textureData[i    ] = intensity;
-            textureData[i + 1] = 0;
-            textureData[i + 2] = 0;
-            textureData[i + 3] = 255;
-
-            intensity -= dropFactor;
-        }
-    }
-
-    // Layout green tiles
-    intensity = 255;
-    zx = 1;
-    zy = 0;
-    for (let y = 0; y < dimension; y++)
-    {
-        for (let x = 0; x < dimension; x++)
-        {
-            // Compute index for the tile
-            let zxx = zx * dimension + x;
-            let zyy = zy * dimension + y;
-
-            let i = (zyy * textureDimension + zxx) * 4;
-            //console.log(i);
-
-            textureData[i    ] = 0;
-            textureData[i + 1] = intensity;
-            textureData[i + 2] = 0;
-            textureData[i + 3] = 255;
-
-            intensity -= dropFactor;
-        }
-    }
-
-    // Layout yellow tiles
-    intensity = 255;
-    zx = 0;
-    zy = 1;
-    for (let y = 0; y < dimension; y++)
-    {
-        for (let x = 0; x < dimension; x++)
-        {
-            // Compute index for the tile
-            let zxx = zx * dimension + x;
-            let zyy = zy * dimension + y;
-
-            let i = (zyy * textureDimension + zxx) * 4;
-            //console.log(i);
-
-            textureData[i    ] = intensity;
-            textureData[i + 1] = intensity;
-            textureData[i + 2] = 0;
-            textureData[i + 3] = 255;
-
-            intensity -= dropFactor;
-        }
-    }
-
-    // Layout blue tiles
-    intensity = 255;
-    zx = 1;
-    zy = 1;
-    for (let y = 0; y < dimension; y++)
-    {
-        for (let x = 0; x < dimension; x++)
-        {
-            // Compute index for the tile
-            let zxx = zx * dimension + x;
-            let zyy = zy * dimension + y;
-
-            let i = (zyy * textureDimension + zxx) * 4;
-            //console.log(i);
-
-            textureData[i    ] = 0;
-            textureData[i + 1] = 0;
-            textureData[i + 2] = intensity;
-            textureData[i + 3] = 255;
-
-            intensity -= dropFactor;
-        }
+        textureData[i    ] = Math.floor(Math.random() * 256.0);
+        textureData[i + 1] = Math.floor(Math.random() * 256.0);
+        textureData[i + 2] = Math.floor(Math.random() * 256.0);
+        textureData[i + 3] = 255;
     }
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
