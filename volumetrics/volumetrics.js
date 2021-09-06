@@ -2,7 +2,7 @@ let canvas = null;
 let ctx = null;
 
 let dimension = 4;
-let animationDuration = 5;
+let animationDuration = 4;
 
 let shaderData = {
 
@@ -24,6 +24,7 @@ let shaderData = {
     
         uniform vec2 u_resolution;
         uniform float u_time;
+        uniform float u_duration;
         uniform float u_dimension;
 
         uniform sampler2D u_sampler;
@@ -33,18 +34,9 @@ let shaderData = {
             vec2 st = gl_FragCoord.xy/u_resolution;
             vec3 color = vec3(0.0);
 
-            vec3 color1 = vec3(0.0, 0.0, 0.0);
-            vec3 color2 = vec3(1.0, 1.0, 1.0);
+            float durationProgress = u_time / u_duration;
 
-            float dimension = u_dimension;
-
-            st *= dimension;
-            vec2 st_i = floor(st);
-            vec2 st_f = fract(st);
-            //vec2 smooth = smoothstep(0.0, 1.0, st_f);
-            vec2 smooth = st_f * st_f * st_f * (st_f * (st_f * 6.0 - 15.0) + 10.0);
-
-            color = mix(color1, color2, 0.5);
+            color = texture2D(u_sampler, st).xyz * durationProgress;
         
             gl_FragColor = vec4(color, 1.0);
         }
@@ -66,7 +58,8 @@ let shaderData = {
             resolution: ctx.getUniformLocation(this.program, "u_resolution"),
             time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
-            dimension: ctx.getUniformLocation(this.program, "u_dimension")
+            dimension: ctx.getUniformLocation(this.program, "u_dimension"),
+            duration: ctx.getUniformLocation(this.program, "u_duration")
         }
         
     },
@@ -111,14 +104,110 @@ function main()
     loadModel(planeObject);
 
     let textureData = [];
-    for (let i=0; i < (dimension * dimension * dimension * 4); i += 4)
+
+    //let tileLayoutDimension = Math.sqrt(dimension);
+    let textureDimension = Math.sqrt(dimension * dimension * dimension);
+    //console.log(textureDimension);
+
+    let intensity = 255;
+    let dropFactor = 255 / (dimension * dimension);
+
+    // Layout red tiles
+    let zx = 0;
+    let zy = 0;
+    for (let y = 0; y < dimension; y++)
     {
-        textureData[i    ] = Math.floor(Math.random() * 256.0);
-        textureData[i + 1] = Math.floor(Math.random() * 256.0);
-        textureData[i + 2] = Math.floor(Math.random() * 256.0);
-        textureData[i + 3] = 255;
+        for (let x = 0; x < dimension; x++)
+        {
+            // Compute index for the tile
+            let zxx = zx * dimension + x;
+            let zyy = zy * dimension + y;
+
+            let i = (zyy * textureDimension + zxx) * 4;
+            console.log(i);
+
+            textureData[i    ] = intensity;
+            textureData[i + 1] = 0;
+            textureData[i + 2] = 0;
+            textureData[i + 3] = 255;
+
+            intensity -= dropFactor;
+        }
     }
-    let texture = loadArrayToTexture(dimension, dimension, textureData);
+
+    // Layout green tiles
+    intensity = 255;
+    zx = 1;
+    zy = 0;
+    for (let y = 0; y < dimension; y++)
+    {
+        for (let x = 0; x < dimension; x++)
+        {
+            // Compute index for the tile
+            let zxx = zx * dimension + x;
+            let zyy = zy * dimension + y;
+
+            let i = (zyy * textureDimension + zxx) * 4;
+            console.log(i);
+
+            textureData[i    ] = 0;
+            textureData[i + 1] = intensity;
+            textureData[i + 2] = 0;
+            textureData[i + 3] = 255;
+
+            intensity -= dropFactor;
+        }
+    }
+
+    // Layout yellow tiles
+    intensity = 255;
+    zx = 0;
+    zy = 1;
+    for (let y = 0; y < dimension; y++)
+    {
+        for (let x = 0; x < dimension; x++)
+        {
+            // Compute index for the tile
+            let zxx = zx * dimension + x;
+            let zyy = zy * dimension + y;
+
+            let i = (zyy * textureDimension + zxx) * 4;
+            console.log(i);
+
+            textureData[i    ] = intensity;
+            textureData[i + 1] = intensity;
+            textureData[i + 2] = 0;
+            textureData[i + 3] = 255;
+
+            intensity -= dropFactor;
+        }
+    }
+
+    // Layout blue tiles
+    intensity = 255;
+    zx = 1;
+    zy = 1;
+    for (let y = 0; y < dimension; y++)
+    {
+        for (let x = 0; x < dimension; x++)
+        {
+            // Compute index for the tile
+            let zxx = zx * dimension + x;
+            let zyy = zy * dimension + y;
+
+            let i = (zyy * textureDimension + zxx) * 4;
+            console.log(i);
+
+            textureData[i    ] = 0;
+            textureData[i + 1] = 0;
+            textureData[i + 2] = intensity;
+            textureData[i + 3] = 255;
+
+            intensity -= dropFactor;
+        }
+    }
+    
+    let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
 
     // Animation loop
     function newFrame(currentTime)
@@ -310,6 +399,9 @@ function renderFrame(currentTime, texture)
 
     // Set dimension uniform
     ctx.uniform1f(shaderData.uniforms.dimension, dimension);
+
+    // Set duration uniform
+    ctx.uniform1f(shaderData.uniforms.duration, animationDuration);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
