@@ -26,8 +26,28 @@ let shaderData = {
         uniform float u_time;
         uniform float u_duration;
         uniform float u_dimension;
+        uniform float u_tileLayoutDimension;
 
         uniform sampler2D u_sampler;
+
+        vec2 zToTileXY(float z, float tileLayoutDimension)
+        {
+            vec2 tileCoord = vec2(z, 0.0);
+
+            for (int i = 0; i < 40000; i++)
+            {
+                if (tileCoord.x > tileLayoutDimension)
+                {
+                    tileCoord.x -= tileLayoutDimension;
+                    tileCoord.y += 1.0;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return floor(tileCoord);
+        }
         
         void main()
         {
@@ -36,7 +56,13 @@ let shaderData = {
 
             float durationProgress = u_time / u_duration;
 
-            color = texture2D(u_sampler, st).xyz * durationProgress;
+            // Multiply durationProgress by dimension to get the layer to display
+
+            vec2 tileCoord = zToTileXY(durationProgress * u_dimension, u_tileLayoutDimension);
+
+            vec2 actualCoord = (tileCoord + fract(st)) / u_tileLayoutDimension;
+
+            color = texture2D(u_sampler, actualCoord).xyz;
         
             gl_FragColor = vec4(color, 1.0);
         }
@@ -59,7 +85,8 @@ let shaderData = {
             time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
-            duration: ctx.getUniformLocation(this.program, "u_duration")
+            duration: ctx.getUniformLocation(this.program, "u_duration"),
+            tileLayoutDimension: ctx.getUniformLocation(this.program, "u_tileLayoutDimension")
         }
         
     },
@@ -124,7 +151,7 @@ function main()
             let zyy = zy * dimension + y;
 
             let i = (zyy * textureDimension + zxx) * 4;
-            console.log(i);
+            //console.log(i);
 
             textureData[i    ] = intensity;
             textureData[i + 1] = 0;
@@ -148,7 +175,7 @@ function main()
             let zyy = zy * dimension + y;
 
             let i = (zyy * textureDimension + zxx) * 4;
-            console.log(i);
+            //console.log(i);
 
             textureData[i    ] = 0;
             textureData[i + 1] = intensity;
@@ -172,7 +199,7 @@ function main()
             let zyy = zy * dimension + y;
 
             let i = (zyy * textureDimension + zxx) * 4;
-            console.log(i);
+            //console.log(i);
 
             textureData[i    ] = intensity;
             textureData[i + 1] = intensity;
@@ -196,7 +223,7 @@ function main()
             let zyy = zy * dimension + y;
 
             let i = (zyy * textureDimension + zxx) * 4;
-            console.log(i);
+            //console.log(i);
 
             textureData[i    ] = 0;
             textureData[i + 1] = 0;
@@ -402,6 +429,9 @@ function renderFrame(currentTime, texture)
 
     // Set duration uniform
     ctx.uniform1f(shaderData.uniforms.duration, animationDuration);
+
+    // Set tile layout dimension
+    ctx.uniform1f(shaderData.uniforms.tileLayoutDimension, Math.sqrt(dimension));
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
