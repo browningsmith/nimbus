@@ -59,8 +59,8 @@ let shaderData = {
 
             float z = u_time / u_duration;
         
-            //gl_FragColor = texture2D(u_sampler, st);
-            gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
+            gl_FragColor = texture2D(u_sampler, st);
+            //gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
         }
     `,
 
