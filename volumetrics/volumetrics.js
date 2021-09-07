@@ -1,8 +1,9 @@
 let canvas = null;
 let ctx = null;
 
-let dimension = 256;
-let animationDuration = 256;
+let po2 = 3;
+let dimension = Math.pow(2, po2);
+let animationDuration = dimension;
 
 let shaderData = {
 
@@ -33,6 +34,7 @@ let shaderData = {
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float layoutDimension)
         {
             vec2 tileCoord = vec2(coord.z * tileDimension, 0.0);
+            tileCoord = floor(tileCoord);
             for (int i = 0; i < 40000; i++)
             {
                 if (tileCoord.x > layoutDimension)
@@ -45,7 +47,6 @@ let shaderData = {
                     break;
                 }
             }
-            tileCoord = floor(tileCoord);
             
             vec2 finalCoord = (tileCoord + fract(coord.xy)) / layoutDimension;
 
@@ -59,8 +60,8 @@ let shaderData = {
 
             float z = u_time / u_duration;
         
-            gl_FragColor = texture2D(u_sampler, st);
-            //gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
+            //gl_FragColor = texture2D(u_sampler, st);
+            gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
         }
     `,
 
@@ -126,11 +127,26 @@ function main()
 
     loadModel(planeObject);
 
-    let textureData = new Array(dimension * dimension * dimension * 4);
+    // Compute tileLayoutDimension and textureDimension
+    let tileLayoutDimension = 0;
+    let textureDimension = 0;
+    if (po2 % 2 == 0)
+    {
+        tileLayoutDimension = Math.pow(2, po2 / 2);
+        textureDimension = Math.pow(2, 3*po2/2);
+    }
+    else
+    {
+        tileLayoutDimension = Math.pow(2, (po2+1) / 2);
+        textureDimension = Math.pow(2, (3*po2+1)/2);
+    }
+    console.log("po2: " + po2);
+    console.log("volume dimension: " + dimension);
+    console.log("tile layout in rows of: " + tileLayoutDimension);
+    console.log("texture dimension: " + textureDimension);
+    
 
-    let tileLayoutDimension = Math.floor(Math.sqrt(dimension));
-    let textureDimension = Math.floor(Math.sqrt(dimension * dimension * dimension));
-    //console.log(textureDimension);
+    let textureData = new Array(textureDimension * textureDimension * 4);
 
     let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
     for (let z = 0; z < dimension; z++)
