@@ -1,8 +1,8 @@
 let canvas = null;
 let ctx = null;
 
-let dimension = 16;
-let animationDuration = 8;
+let dimension = 256;
+let animationDuration = 256;
 
 let shaderData = {
 
@@ -59,6 +59,7 @@ let shaderData = {
 
             float z = u_time / u_duration;
         
+            //gl_FragColor = texture2D(u_sampler, st);
             gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
         }
     `,
@@ -125,19 +126,85 @@ function main()
 
     loadModel(planeObject);
 
-    let textureData = [];
+    let textureData = new Array(dimension * dimension * dimension * 4);
 
-    let tileLayoutDimension = Math.sqrt(dimension);
-    let textureDimension = Math.sqrt(dimension * dimension * dimension);
+    let tileLayoutDimension = Math.floor(Math.sqrt(dimension));
+    let textureDimension = Math.floor(Math.sqrt(dimension * dimension * dimension));
     //console.log(textureDimension);
 
-    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
+    let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
+    for (let z = 0; z < dimension; z++)
     {
-        textureData[i    ] = Math.floor(Math.random() * 256.0);
+        // Unpack z index into tile x and y
+        let tileX = z;
+        let tileY = 0;
+        while (tileX >= tileLayoutDimension)
+        {
+            tileX -= tileLayoutDimension;
+            tileY++;
+        }
+
+        // Reset intensity
+        let intensity = 255;
+        let dropFactor = 255 / (dimension * dimension);
+
+        for (let y = 0; y < dimension; y++)
+        {
+            for (let x = 0; x < dimension; x++)
+            {
+                // Construct texture index
+                let xx = tileX * dimension + x;
+                let yy = tileY * dimension + y;
+                let i = (yy * textureDimension + xx) * 4;
+                //console.log(i);
+
+                switch (colorIndex)
+                {
+                    case 0:
+                        textureData[i    ] = Math.floor(intensity);
+                        textureData[i + 1] = 0;
+                        textureData[i + 2] = 0;
+                        break;
+
+                    case 1:
+                        textureData[i    ] = 0;
+                        textureData[i + 1] = Math.floor(intensity);
+                        textureData[i + 2] = 0;
+                        break;
+
+                    case 2:
+                        textureData[i    ] = Math.floor(intensity);
+                        textureData[i + 1] = Math.floor(intensity);
+                        textureData[i + 2] = 0;
+                        break;
+
+                    default:
+                        textureData[i    ] = 0;
+                        textureData[i + 1] = 0;
+                        textureData[i + 2] = Math.floor(intensity);
+                }
+                textureData[i + 3] = 255;
+
+                intensity -= dropFactor;
+            }
+        }
+
+
+        // Switch color index
+        colorIndex++;
+        if (colorIndex > 3)
+        {
+            colorIndex = 0;
+        }
+    }
+
+    /*for (let i = 0; i < (textureDimension * textureDimension * 4); i += 4)
+    {
+        textureData[i] = Math.floor(Math.random() * 256.0);
         textureData[i + 1] = Math.floor(Math.random() * 256.0);
         textureData[i + 2] = Math.floor(Math.random() * 256.0);
         textureData[i + 3] = 255;
-    }
+    }*/
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
 
