@@ -1,8 +1,9 @@
 let canvas = null;
 let ctx = null;
 
-let po2 = 3;
+let po2 = 5;
 let dimension = Math.pow(2, po2);
+let layout = 0.0;
 let animationDuration = dimension;
 
 let shaderData = {
@@ -37,7 +38,7 @@ let shaderData = {
             tileCoord = floor(tileCoord);
             for (int i = 0; i < 40000; i++)
             {
-                if (tileCoord.x > layoutDimension)
+                if (tileCoord.x >= layoutDimension)
                 {
                     tileCoord.x -= layoutDimension;
                     tileCoord.y += 1.0;
@@ -48,7 +49,7 @@ let shaderData = {
                 }
             }
             
-            vec2 finalCoord = (tileCoord + fract(coord.xy)) / layoutDimension;
+            vec2 finalCoord = (tileCoord + coord.xy) / layoutDimension;
 
             return texture2D(sampler, finalCoord);
         }
@@ -140,6 +141,7 @@ function main()
         tileLayoutDimension = Math.pow(2, (po2+1) / 2);
         textureDimension = Math.pow(2, (3*po2+1)/2);
     }
+    layout = tileLayoutDimension;
     console.log("po2: " + po2);
     console.log("volume dimension: " + dimension);
     console.log("tile layout in rows of: " + tileLayoutDimension);
@@ -419,7 +421,7 @@ function renderFrame(currentTime, texture)
     ctx.uniform1f(shaderData.uniforms.duration, animationDuration);
 
     // Set tile layout dimension
-    ctx.uniform1f(shaderData.uniforms.tileLayoutDimension, Math.sqrt(dimension));
+    ctx.uniform1f(shaderData.uniforms.tileLayoutDimension, layout);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
