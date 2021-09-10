@@ -3,8 +3,8 @@ let ctx = null;
 
 let po2 = 5;
 let dimension = Math.pow(2, po2);
-let layout = 0.0;
-let animationDuration = dimension;
+let rowLength = 0.0;
+let animationDuration = dimension * 2.0;
 
 let shaderData = {
 
@@ -28,19 +28,18 @@ let shaderData = {
         uniform float u_time;
         uniform float u_duration;
         uniform float u_dimension;
-        uniform float u_tileLayoutDimension;
+        uniform float u_rowLength;
 
         uniform sampler2D u_sampler;
 
-        vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float layoutDimension)
+        vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         {
-            vec2 tileCoord = vec2(coord.z * tileDimension, 0.0);
-            tileCoord = floor(tileCoord);
+            vec2 tileCoord = floor(vec2(coord.z * tileDimension, 0.0));
             for (int i = 0; i < 40000; i++)
             {
-                if (tileCoord.x >= layoutDimension)
+                if (tileCoord.x >= rowLength)
                 {
-                    tileCoord.x -= layoutDimension;
+                    tileCoord.x -= rowLength;
                     tileCoord.y += 1.0;
                 }
                 else
@@ -49,20 +48,102 @@ let shaderData = {
                 }
             }
             
-            vec2 finalCoord = (tileCoord + coord.xy) / layoutDimension;
+            vec2 finalCoord = (tileCoord + coord.xy) / rowLength;
 
             return texture2D(sampler, finalCoord);
         }
         
         void main()
         {
-            vec2 st = gl_FragCoord.xy/u_resolution;
-            //vec3 color = vec3(0.0);
-
-            float z = u_time / u_duration;
+            vec3 stu = vec3(gl_FragCoord.xy/u_resolution, u_time / u_duration);
         
-            //gl_FragColor = texture2D(u_sampler, st);
-            gl_FragColor = vol3D(u_sampler, vec3(st, z), u_dimension, u_tileLayoutDimension);
+            vec3 color = vec3(0.0);
+
+            vec3 color1 = vec3(0.0, 0.0, 0.0);
+            vec3 color2 = vec3(1.0, 1.0, 1.0);
+
+            stu *= u_dimension;
+            vec3 stu_i = floor(stu);
+            vec3 stu_f = fract(stu);
+            //vec2 smooth = smoothstep(0.0, 1.0, st_f);
+            vec3 smooth = stu_f * stu_f * stu_f * (stu_f * (stu_f * 6.0 - 15.0) + 10.0);
+
+            // Get the index of the eight corners of this grid square
+            vec3 i000 = stu_i;
+            vec3 i100 = stu_i + vec3(1.0, 0.0, 0.0); if (i100.x >= u_dimension) { i100.x -= u_dimension; }
+            vec3 i010 = stu_i + vec3(0.0, 1.0, 0.0); if (i010.y >= u_dimension) { i010.y -= u_dimension; }
+            vec3 i110 = stu_i + vec3(1.0, 1.0, 0.0); if (i110.x >= u_dimension) { i110.x -= u_dimension; } if (i110.y >= u_dimension) { i110.y -= u_dimension; }
+            vec3 i001 = stu_i + vec3(0.0, 0.0, 1.0); if (i001.z >= u_dimension) { i001.z -= u_dimension; }
+            vec3 i101 = stu_i + vec3(1.0, 0.0, 1.0); if (i101.x >= u_dimension) { i101.x -= u_dimension; } if (i101.z >= u_dimension) { i101.z -= u_dimension; }
+            vec3 i011 = stu_i + vec3(0.0, 1.0, 1.0); if (i011.y >= u_dimension) { i011.y -= u_dimension; } if (i011.z >= u_dimension) { i011.z -= u_dimension; }
+            vec3 i111 = stu_i + vec3(1.0, 1.0, 1.0); if (i111.x >= u_dimension) { i111.x -= u_dimension; } if (i111.y >= u_dimension) { i111.y -= u_dimension; } if (i111.z >= u_dimension) { i111.z -= u_dimension; }
+
+            // Get the values of the eight corners
+            vec3 f000 = vol3D(u_sampler, i000 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f100 = vol3D(u_sampler, i100 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f010 = vol3D(u_sampler, i010 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f110 = vol3D(u_sampler, i110 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f001 = vol3D(u_sampler, i001 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f101 = vol3D(u_sampler, i101 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f011 = vol3D(u_sampler, i011 / u_dimension, u_dimension, u_rowLength).xyz;
+            vec3 f111 = vol3D(u_sampler, i111 / u_dimension, u_dimension, u_rowLength).xyz;
+
+            // Calculate unit vectors
+            vec3 c000 = normalize(f000 * 2.0 - 1.0);
+            vec3 c100 = normalize(f100 * 2.0 - 1.0);
+            vec3 c010 = normalize(f010 * 2.0 - 1.0);
+            vec3 c110 = normalize(f110 * 2.0 - 1.0);
+            vec3 c001 = normalize(f001 * 2.0 - 1.0);
+            vec3 c101 = normalize(f101 * 2.0 - 1.0);
+            vec3 c011 = normalize(f011 * 2.0 - 1.0);
+            vec3 c111 = normalize(f111 * 2.0 - 1.0);
+
+            // Calculate dot products
+            float d000 = dot(c000, stu_f - vec3(0.0, 0.0, 0.0));
+            float d100 = dot(c100, stu_f - vec3(1.0, 0.0, 0.0));
+            float d010 = dot(c010, stu_f - vec3(0.0, 1.0, 0.0));
+            float d110 = dot(c110, stu_f - vec3(1.0, 1.0, 0.0));
+            float d001 = dot(c001, stu_f - vec3(0.0, 0.0, 1.0));
+            float d101 = dot(c101, stu_f - vec3(1.0, 0.0, 1.0));
+            float d011 = dot(c011, stu_f - vec3(0.0, 1.0, 1.0));
+            float d111 = dot(c111, stu_f - vec3(1.0, 1.0, 1.0));
+
+            // Mix it all together based on smoothstep
+            float noise = mix(
+                    mix(
+                        mix(
+                            d000,
+                            d100,
+                            smooth.x
+                        ),
+                        mix(
+                            d010,
+                            d110,
+                            smooth.x
+                        ),
+                        smooth.y
+                    ),
+                    mix(
+                        mix(
+                            d001,
+                            d101,
+                            smooth.x
+                        ),
+                        mix(
+                            d011,
+                            d111,
+                            smooth.x
+                        ),
+                        smooth.y
+                    ),
+                    smooth.z
+                );
+
+            noise = clamp(noise*20.0, 0.0, 1.0);
+
+            color = mix(color1, color2, noise);
+
+            gl_FragColor = vec4(color, 1.0);
         }
     `,
 
@@ -84,7 +165,7 @@ let shaderData = {
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             duration: ctx.getUniformLocation(this.program, "u_duration"),
-            tileLayoutDimension: ctx.getUniformLocation(this.program, "u_tileLayoutDimension")
+            rowLength: ctx.getUniformLocation(this.program, "u_rowLength")
         }
         
     },
@@ -128,43 +209,48 @@ function main()
 
     loadModel(planeObject);
 
-    // Compute tileLayoutDimension and textureDimension
-    let tileLayoutDimension = 0;
-    let textureDimension = 0;
+    // Compute rowLength and textureDimension
     if (po2 % 2 == 0)
     {
-        tileLayoutDimension = Math.pow(2, po2 / 2);
-        textureDimension = Math.pow(2, 3*po2/2);
+        rowLength = Math.pow(2, po2 / 2);
     }
     else
     {
-        tileLayoutDimension = Math.pow(2, (po2+1) / 2);
-        textureDimension = Math.pow(2, (3*po2+1)/2);
+        rowLength = Math.pow(2, (po2+1) / 2);
     }
-    layout = tileLayoutDimension;
+    let textureDimension = rowLength * dimension;
     console.log("po2: " + po2);
     console.log("volume dimension: " + dimension);
-    console.log("tile layout in rows of: " + tileLayoutDimension);
+    console.log("tile layout in rows of: " + rowLength);
     console.log("texture dimension: " + textureDimension);
     
 
     let textureData = new Array(textureDimension * textureDimension * 4);
 
-    let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
+    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
+    {
+        textureData[i    ] = Math.floor(Math.random() * 256.0);
+        textureData[i + 1] = Math.floor(Math.random() * 256.0);
+        textureData[i + 2] = Math.floor(Math.random() * 256.0);
+        textureData[i + 3] = 255;
+    }
+
+
+    /*let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
     for (let z = 0; z < dimension; z++)
     {
         // Unpack z index into tile x and y
         let tileX = z;
         let tileY = 0;
-        while (tileX >= tileLayoutDimension)
+        while (tileX >= rowLength)
         {
-            tileX -= tileLayoutDimension;
+            tileX -= rowLength;
             tileY++;
         }
 
         // Reset intensity
-        let intensity = 255;
-        let dropFactor = 255 / (dimension * dimension);
+        //let intensity = 255;
+        //let dropFactor = 255 / (dimension * dimension);
 
         for (let y = 0; y < dimension; y++)
         {
@@ -175,6 +261,8 @@ function main()
                 let yy = tileY * dimension + y;
                 let i = (yy * textureDimension + xx) * 4;
                 //console.log(i);
+
+                let intensity = Math.floor(Math.random() * 256.0);
 
                 switch (colorIndex)
                 {
@@ -203,7 +291,7 @@ function main()
                 }
                 textureData[i + 3] = 255;
 
-                intensity -= dropFactor;
+                //intensity -= dropFactor;
             }
         }
 
@@ -214,14 +302,6 @@ function main()
         {
             colorIndex = 0;
         }
-    }
-
-    /*for (let i = 0; i < (textureDimension * textureDimension * 4); i += 4)
-    {
-        textureData[i] = Math.floor(Math.random() * 256.0);
-        textureData[i + 1] = Math.floor(Math.random() * 256.0);
-        textureData[i + 2] = Math.floor(Math.random() * 256.0);
-        textureData[i + 3] = 255;
     }*/
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
@@ -421,7 +501,7 @@ function renderFrame(currentTime, texture)
     ctx.uniform1f(shaderData.uniforms.duration, animationDuration);
 
     // Set tile layout dimension
-    ctx.uniform1f(shaderData.uniforms.tileLayoutDimension, layout);
+    ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
     //Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
