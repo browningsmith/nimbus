@@ -52,16 +52,9 @@ let shaderData = {
 
             return texture2D(sampler, finalCoord);
         }
-        
-        void main()
+
+        float noise3D(vec3 stu)
         {
-            vec3 stu = vec3(gl_FragCoord.xy/u_resolution, u_time / u_duration);
-        
-            vec3 color = vec3(0.0);
-
-            vec3 color1 = vec3(0.0, 0.0, 0.0);
-            vec3 color2 = vec3(1.0, 1.0, 1.0);
-
             stu *= u_dimension;
             vec3 stu_i = floor(stu);
             vec3 stu_f = fract(stu);
@@ -109,7 +102,7 @@ let shaderData = {
             float d111 = dot(c111, stu_f - vec3(1.0, 1.0, 1.0));
 
             // Mix it all together based on smoothstep
-            float noise = mix(
+            return mix(
                     mix(
                         mix(
                             d000,
@@ -138,12 +131,28 @@ let shaderData = {
                     ),
                     smooth.z
                 );
+        }
+        
+        void main()
+        {
+            vec2 pixCoord = gl_FragCoord.xy;
 
-            noise = clamp(noise*20.0, 0.0, 1.0);
+            // Calculate field of vision (radians)
+            float fov = 45.0 * PI / 180.0;
 
-            color = mix(color1, color2, noise);
+            // Calculate distance of origin from screen to get proper fov
+            float dfs = fov / (tan(u_resolution.x) * 2.0);
 
-            gl_FragColor = vec4(color, 1.0);
+            // Calculate direction of ray based on pixel coordinates and dfs
+            vec3 rd = normalize(
+                vec3(
+                    pixCoord.x - u_resolution.x / 2.0,
+                    pixCoord.y - u_resolution.y / 2.0,
+                    dfs * -1.0
+                )
+            );
+
+            gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
         }
     `,
 
