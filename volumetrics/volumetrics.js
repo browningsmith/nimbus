@@ -1,10 +1,10 @@
 let canvas = null;
 let ctx = null;
 
-let po2 = 5;
+let po2 = 4;
 let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
-let animationDuration = dimension * 2.0;
+let animationDuration = dimension * 1.0;
 
 let shaderData = {
 
@@ -132,6 +132,26 @@ let shaderData = {
                     smooth.z
                 );
         }
+
+        vec3 wrapVolumeCoords(vec3 coord)
+        {
+            coord = fract(coord);
+
+            if (coord.x < 0.0)
+            {
+                coord.x += 1.0;
+            }
+            if (coord.y < 0.0)
+            {
+                coord.y += 1.0;
+            }
+            if (coord.z < 0.0)
+            {
+                coord.z += 1.0;
+            }
+
+            return coord;
+        }
         
         void main()
         {
@@ -141,7 +161,7 @@ let shaderData = {
             float fov = 45.0 * PI / 180.0;
 
             // Calculate distance of origin from screen to get proper fov
-            float dfs = fov / (tan(u_resolution.x) * 2.0);
+            float dfs = 250.0;
 
             // Calculate direction of ray based on pixel coordinates and dfs
             vec3 rd = normalize(
@@ -152,7 +172,41 @@ let shaderData = {
                 )
             );
 
-            gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+            // Move ray origin through negative z space
+            vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
+
+            float t = 0.100;
+            float step = 0.001;
+            float den = 0.0;
+
+            // Perform ray marching along rd starting from ro
+            for (int i=0; i < 10000; i++)
+            {
+                if (t >= 2.0)
+                {
+                    t = 2.0;
+                    den = 0.0;
+                    break;
+                }
+                
+                den += noise3D(wrapVolumeCoords( ro + rd * t));
+
+                if (den >= 1.0)
+                {
+                    den = 1.0;                   
+                    break;
+                }
+
+                t += step;
+            }
+            den *= (1.0 - (t / 2.0)) * 1.0;
+            den = clamp(0.0, 1.0, den);
+
+            vec3 color1 = vec3(1.0, 1.0, 1.0);
+            vec3 color2 = vec3(128.0 / 256.0, 128.0 / 256.0, 128.0 / 256.0);
+
+
+            gl_FragColor = vec4(mix(color1, color2, den), 1.0);
         }
     `,
 
