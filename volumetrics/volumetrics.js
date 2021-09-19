@@ -35,7 +35,7 @@ let shaderData = {
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         {
             vec2 tileCoord = floor(vec2(coord.z * tileDimension, 0.0));
-            for (int i = 0; i < 40000; i++)
+            for (int i = 0; i < 5000; i++)
             {
                 if (tileCoord.x >= rowLength)
                 {
@@ -176,11 +176,11 @@ let shaderData = {
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
             float t = 0.100;
-            float step = 0.001;
+            float step = 0.010;
             float den = 0.0;
 
             // Perform ray marching along rd starting from ro
-            for (int i=0; i < 10000; i++)
+            for (int i=0; i < 1000; i++)
             {
                 if (t >= 2.0)
                 {
@@ -203,7 +203,7 @@ let shaderData = {
             den = clamp(0.0, 1.0, den);
 
             vec3 color1 = vec3(1.0, 1.0, 1.0);
-            vec3 color2 = vec3(128.0 / 256.0, 128.0 / 256.0, 128.0 / 256.0);
+            vec3 color2 = vec3(50.0 / 256.0, 50.0 / 256.0, 50.0 / 256.0);
 
 
             gl_FragColor = vec4(mix(color1, color2, den), 1.0);
