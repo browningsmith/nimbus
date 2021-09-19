@@ -158,10 +158,10 @@ let shaderData = {
             vec2 pixCoord = gl_FragCoord.xy;
 
             // Calculate field of vision (radians)
-            float fov = 45.0 * PI / 180.0;
+            float fov = 100.0 * PI / 180.0;
 
             // Calculate distance of origin from screen to get proper fov
-            float dfs = 250.0;
+            float dfs = u_resolution.y / (2.0 * tan(fov / 2.0));
 
             // Calculate direction of ray based on pixel coordinates and dfs
             vec3 rd = normalize(
