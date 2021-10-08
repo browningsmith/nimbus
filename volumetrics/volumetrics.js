@@ -33,34 +33,12 @@ let shaderData = {
         uniform sampler2D u_sampler;
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
-        {
-            vec2 tileCoord;
-            float mode = u_time / u_duration;
-            
-            if (mode < 0.5)
-            {
-            tileCoord = floor(vec2(coord.z * tileDimension, 0.0));
-            for (int i = 0; i < 5000; i++)
-            {
-                if (tileCoord.x >= rowLength)
-                {
-                    tileCoord.x -= rowLength;
-                    tileCoord.y += 1.0;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            }
-
-            else
-            {
+        { 
             float tileIndex = floor(coord.z * tileDimension) / rowLength;
             
+            vec2 tileCoord;
             tileCoord.x = fract(tileIndex) * rowLength;
             tileCoord.y = floor(tileIndex);
-            }
             
             vec2 finalCoord = (tileCoord + coord.xy) / rowLength;
 
