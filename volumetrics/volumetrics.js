@@ -1,7 +1,7 @@
 let canvas = null;
 let ctx = null;
 
-let po2 = 7;
+let po2 = 4;
 let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
@@ -207,13 +207,6 @@ let shaderData = {
 
 
             gl_FragColor = vec4(mix(color1, color2, den), 1.0);
-
-            /*gl_FragColor = vol3D(
-                u_sampler,
-                wrapVolumeCoords( ro + rd * t),
-                u_dimension,
-                u_rowLength
-            );*/
         }
     `,
 
@@ -297,16 +290,16 @@ function main()
 
     let textureData = new Array(textureDimension * textureDimension * 4);
 
-    /*for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
+    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
     {
         textureData[i    ] = Math.floor(Math.random() * 256.0);
         textureData[i + 1] = Math.floor(Math.random() * 256.0);
         textureData[i + 2] = Math.floor(Math.random() * 256.0);
         textureData[i + 3] = 255;
-    }*/
+    }
 
 
-    let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
+    /*let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
     for (let z = 0; z < dimension; z++)
     {
         // Unpack z index into tile x and y
@@ -372,7 +365,7 @@ function main()
         {
             colorIndex = 0;
         }
-    }
+    }*/
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
 
