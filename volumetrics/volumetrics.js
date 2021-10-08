@@ -34,7 +34,12 @@ let shaderData = {
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         {
-            vec2 tileCoord = floor(vec2(coord.z * tileDimension, 0.0));
+            vec2 tileCoord;
+            float mode = u_time / u_duration;
+            
+            if (mode < 0.5)
+            {
+            tileCoord = floor(vec2(coord.z * tileDimension, 0.0));
             for (int i = 0; i < 5000; i++)
             {
                 if (tileCoord.x >= rowLength)
@@ -46,6 +51,15 @@ let shaderData = {
                 {
                     break;
                 }
+            }
+            }
+
+            else
+            {
+            float tileIndex = floor(coord.z * tileDimension) / rowLength;
+            
+            tileCoord.x = fract(tileIndex) * rowLength;
+            tileCoord.y = floor(tileIndex);
             }
             
             vec2 finalCoord = (tileCoord + coord.xy) / rowLength;
@@ -206,7 +220,15 @@ let shaderData = {
             vec3 color2 = vec3(50.0 / 256.0, 50.0 / 256.0, 50.0 / 256.0);
 
 
-            gl_FragColor = vec4(mix(color1, color2, den), 1.0);
+            gl_FragColor = vec4(mix(color1, color2, den), 1.0); // Goo rendering
+
+            // Color volume rendering
+            /*gl_FragColor = vol3D(
+                u_sampler,
+                wrapVolumeCoords( ro + rd * t),
+                u_dimension,
+                u_rowLength
+            );*/
         }
     `,
 
