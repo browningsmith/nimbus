@@ -6,15 +6,23 @@ let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
 
+//Projection matrix
+const projectionMatrix = mat4.create();
+
 let shaderData = {
 
     vertexShaderCode: `
     
         attribute vec4 a_vertexPosition;
 
+        uniform mat4 u_projectionMatrix;
+
+        varying highp vec4 v_untransVertexPosition;
+
         void main(void)
         {
-            gl_Position = a_vertexPosition;
+            v_untransVertexPosition = a_vertexPosition;
+            gl_Position = u_projectionMatrix * a_vertexPosition;
         }
     `,
 
@@ -24,7 +32,8 @@ let shaderData = {
     
         precision highp float;
     
-        uniform vec2 u_resolution;
+        varying highp vec4 v_untransVertexPosition;
+        
         uniform float u_time;
         uniform float u_duration;
         uniform float u_dimension;
@@ -147,22 +156,12 @@ let shaderData = {
         
         void main()
         {
-            vec2 pixCoord = gl_FragCoord.xy;
+            // Direction of ray is origin to vertex coordinates
+            vec3 rd = normalize(v_untransVertexPosition.xyz);
 
-            // Calculate field of vision (radians)
-            float fov = 100.0 * PI / 180.0;
-
-            // Calculate distance of origin from screen to get proper fov
-            float dfs = u_resolution.y / (2.0 * tan(fov / 2.0));
-
-            // Calculate direction of ray based on pixel coordinates and dfs
-            vec3 rd = normalize(
-                vec3(
-                    pixCoord.x - u_resolution.x / 2.0,
-                    pixCoord.y - u_resolution.y / 2.0,
-                    dfs * -1.0
-                )
-            );
+            // This prevents a strange cross artifact forming in the center
+            if ((rd.x > -0.0001) && (rd.x < 0.0001)) {rd.x = 0.0;}
+            if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
             // Move ray origin through negative z space
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
@@ -223,7 +222,7 @@ let shaderData = {
         };
         this.uniforms = {
 
-            resolution: ctx.getUniformLocation(this.program, "u_resolution"),
+            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
             time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
@@ -238,10 +237,10 @@ let planeObject = {
 
     vertexCoordinates: [
 
-        -1.0, -1.0, 0.0,
-        1.0, -1.0, 0.0,
-        1.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0,
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+        1.0, 1.0, -1.0,
+        -1.0, 1.0, -1.0,
     ],
 
     elementIndices: [
@@ -539,20 +538,27 @@ function renderFrame(currentTime, texture)
     ctx.viewport(0, 0, ctx.canvas.width, ctx.canvas.height); //Resize viewport
 
     //Clear the canvas
-    ctx.clearColor(0.0, 0.0, 0.0, 1.0); //set clear color to black
+    ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
     ctx.clearDepth(1.0); //set clear depth to 1.0
     ctx.clear(ctx.COLOR_BUFFER_BIT, ctx.DEPTH_BUFFER_BIT);
 
+    //Enable backface culling
+    ctx.enable(ctx.CULL_FACE);
+    ctx.cullFace(ctx.BACK);
+
     //Tell WebGL to use the shader program
     ctx.useProgram(shaderData.program);
+
+    //Compute projection matrix based on new window size
+    mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
+
+    //Set projection uniform
+    ctx.uniformMatrix4fv(shaderData.uniforms.projectionMatrix, false, projectionMatrix);
 
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
     ctx.uniform1i(shaderData.uniforms.sampler, 0);
-
-    // Set resolution uniform
-    ctx.uniform2f(shaderData.uniforms.resolution, ctx.canvas.width, ctx.canvas.height);
 
     // Set time uniform
     ctx.uniform1f(shaderData.uniforms.time, currentTime);
