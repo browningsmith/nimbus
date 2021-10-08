@@ -6,8 +6,49 @@ let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
 
+const piOver2 = Math.PI / 2.0;
+
+// 3d vector of zeroes
+const VEC3_ZERO = [0, 0, 0];
+
+// Axis ids used by gl-matrix.js rotation functions
+const XAXIS = [1, 0, 0];
+const YAXIS = [0, 1, 0];
+const ZAXIS = [0, 0, 1];
+
 //Projection matrix
 const projectionMatrix = mat4.create();
+
+//Skybox rotation matrix
+const skyBoxRotationMatrix = mat4.create();
+
+// Player (camera)
+let player = {
+
+    yawAngle: 0.0, // Angle of rotation around y axis
+    pitchAngle: 0.0, // Angle of rotation around x axis
+
+    //Normal vectors representing right, left, and forward for the player's view.
+    //Player is initialized facing negative Z
+    rightVec: vec3.fromValues(1.0, 0.0, 0.0),
+    forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
+};
+
+/**
+ * Object: lastMousePosition
+ * 
+ * Description: contains data on last mouse position relative to the canvas
+ * 
+ * Attributes: Boolean inWindow,
+ *             Double x, y,
+ * 
+ */
+ let lastMousePosition = {
+
+    inWindow: false,
+    x: 0,
+    y: 0,
+};
 
 let shaderData = {
 
@@ -16,13 +57,14 @@ let shaderData = {
         attribute vec4 a_vertexPosition;
 
         uniform mat4 u_projectionMatrix;
+        uniform mat4 u_worldViewMatrix;
 
         varying highp vec4 v_untransVertexPosition;
 
         void main(void)
         {
             v_untransVertexPosition = a_vertexPosition;
-            gl_Position = u_projectionMatrix * a_vertexPosition;
+            gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition;
         }
     `,
 
@@ -223,6 +265,7 @@ let shaderData = {
         this.uniforms = {
 
             projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
             time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
@@ -367,6 +410,10 @@ function main()
     }*/
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
+
+    //Add mouse event listeners
+    canvas.addEventListener("mousemove", updateMouse);
+    canvas.addEventListener("mouseleave", mouseLeave);
 
     // Animation loop
     function newFrame(currentTime)
@@ -555,6 +602,14 @@ function renderFrame(currentTime, texture)
     //Set projection uniform
     ctx.uniformMatrix4fv(shaderData.uniforms.projectionMatrix, false, projectionMatrix);
 
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Second transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // First transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+
+    // Set world view uniform
+    ctx.uniformMatrix4fv(shaderData.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
@@ -582,6 +637,106 @@ function renderFrame(currentTime, texture)
 
     //Draw triangles
     ctx.drawElements(ctx.TRIANGLES, planeObject.elementCount, ctx.UNSIGNED_SHORT, 0);
+}
+
+/**
+ * Function: updateMouse
+ * 
+ * Input: KeyboardEvent event
+ * Output: None
+ * 
+ * Description: Updates lastMousePosition, and uses the change in mouse position to
+ *              update the direction that the player is facing by calling pithcUp
+ *              and yawRight
+ */
+ function updateMouse(event) {
+
+    //If the mouse is not in the window, record coordinates, set that it is in window, and return
+    if (!lastMousePosition.inWindow) {
+     
+        lastMousePosition.x = event.offsetX; //record x
+        lastMousePosition.y = event.offsetY; //record y
+        lastMousePosition.inWindow = true; //Set that mouse is in window
+
+        return;
+	}
+
+    //Record change in x and y
+    let deltaX = event.offsetX - lastMousePosition.x;
+    let deltaY = event.offsetY - lastMousePosition.y;
+
+    //Update mouse position
+    lastMousePosition.x = event.offsetX;
+    lastMousePosition.y = event.offsetY;
+
+    //console.log("deltaX: " + deltaX + " deltaY: " + deltaY);
+
+    //Yaw and pitch based on change in x and y
+    pitchUp(deltaY * -0.01);
+    yawRight(deltaX * -0.01);
+}
+
+/**
+ * Function: mouseLeave
+ * 
+ * Input: KeyboardEvent event
+ * Output: None
+ * 
+ * Description: Sets lastMousePosition to false. This function should be called
+ *              in the event the mouse leaves the window.
+ */
+function mouseLeave(event) {
+
+    lastMousePosition.inWindow = false;
+}
+
+/**
+ * Function: pitchUp
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Pitches the player's view around it's local x vector by the given angle
+ */
+//Function to pitch the player's view around it's local x vector
+function pitchUp(angle) {
+
+    // Update player's view pitchAngle
+    player.pitchAngle += angle;
+
+    if (player.pitchAngle > piOver2)
+    {
+        player.pitchAngle = piOver2;
+    }
+
+    if (player.pitchAngle < piOver2 * -1.0)
+    {
+        player.pitchAngle = piOver2 * -1.0;
+    }
+}
+
+/**
+ * Function: yawRight
+ * 
+ * Input: Double angle
+ * Output: None
+ * 
+ * Description: Rotates the player around it's local y vector by the given angle
+ */
+//Function to yaw the player around it's local y vector
+function yawRight(angle) {
+
+    // Update player yawAngle
+    player.yawAngle += angle
+    
+    // Reset player rightVec and forwardVec
+    vec3.set(player.rightVec, 1.0, 0.0, 0.0);
+    vec3.set(player.forwardVec, 0.0, 0.0, -1.0);
+
+    // Rotate rightVec and forwardVec based on new yawAngle
+    vec3.rotateY(player.rightVec, player.rightVec, VEC3_ZERO, player.yawAngle);
+    vec3.rotateY(player.forwardVec, player.forwardVec, VEC3_ZERO, player.yawAngle);
+    
 }
 
 window.onload = main;
