@@ -176,11 +176,11 @@ let shaderData = {
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
             float t = 0.100;
-            //float step = 0.010;
-            //float den = 0.0;
+            float step = 0.010;
+            float den = 0.0;
 
             // Perform ray marching along rd starting from ro
-            /*for (int i=0; i < 1000; i++)
+            for (int i=0; i < 1000; i++)
             {
                 if (t >= 2.0)
                 {
@@ -189,7 +189,7 @@ let shaderData = {
                     break;
                 }
                 
-                den += clamp(0.0, 1.0, noise3D(wrapVolumeCoords( ro + rd * t)));
+                den += clamp(0.0, 1.0, noise3D(wrapVolumeCoords( ro + rd * t)) + 0.08);
 
                 if (den >= 1.0)
                 {
@@ -200,20 +200,20 @@ let shaderData = {
                 t += step;
             }
             den *= (1.0 - (t / 2.0)) * 1.0;
-            den = clamp(0.0, 1.0, den);*/
+            den = clamp(0.0, 1.0, den);
 
-            //vec3 color1 = vec3(1.0, 1.0, 1.0);
-            //vec3 color2 = vec3(50.0 / 256.0, 50.0 / 256.0, 50.0 / 256.0);
+            vec3 color1 = vec3(1.0, 1.0, 1.0);
+            vec3 color2 = vec3(50.0 / 256.0, 50.0 / 256.0, 50.0 / 256.0);
 
 
-            //gl_FragColor = vec4(mix(color1, color2, den), 1.0);
+            gl_FragColor = vec4(mix(color1, color2, den), 1.0);
 
-            gl_FragColor = vol3D(
+            /*gl_FragColor = vol3D(
                 u_sampler,
                 wrapVolumeCoords( ro + rd * t),
                 u_dimension,
                 u_rowLength
-            );
+            );*/
         }
     `,
 
