@@ -276,24 +276,121 @@ let shaderData = {
     },
 };
 
-let planeObject = {
+let skyBoxModels = {
+    nzPlane: {
 
-    vertexCoordinates: [
+        vertexCoordinates: [
 
-        -1.0, -1.0, -1.0,
-        1.0, -1.0, -1.0,
-        1.0, 1.0, -1.0,
-        -1.0, 1.0, -1.0,
-    ],
+            -1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+            1.0, 1.0, -1.0,
+            -1.0, 1.0, -1.0,
+        ],
 
-    elementIndices: [
+        elementIndices: [
 
-        0, 2, 3,
-        0, 1, 2,
-    ],
+            0, 2, 3,
+            0, 1, 2,
+        ],
 
-    elementCount: 6,
-};
+        elementCount: 6,
+    },
+
+    pxPlane: {
+
+        vertexCoordinates: [
+
+            1.0, -1.0, -1.0,
+            1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0, -1.0,
+        ],
+
+        elementIndices: [
+
+            0, 2, 3,
+            0, 1, 2,
+        ],
+
+        elementCount: 6,
+    },
+
+    pzPlane: {
+
+        vertexCoordinates: [
+
+            1.0, -1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+        ],
+
+        elementIndices: [
+
+            0, 2, 3,
+            0, 1, 2,
+        ],
+
+        elementCount: 6,
+    },
+
+    nxPlane: {
+
+        vertexCoordinates: [
+
+            -1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, 1.0, 1.0,
+        ],
+
+        elementIndices: [
+
+            0, 2, 3,
+            0, 1, 2,
+        ],
+
+        elementCount: 6,
+    },
+
+    pyPlane: {
+
+        vertexCoordinates: [
+
+            -1.0, 1.0, -1.0,
+            1.0, 1.0, -1.0,
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+        ],
+
+        elementIndices: [
+
+            0, 2, 3,
+            0, 1, 2,
+        ],
+
+        elementCount: 6,
+    },
+
+    nyPlane: {
+
+        vertexCoordinates: [
+
+            -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0,
+        ],
+
+        elementIndices: [
+
+            0, 2, 3,
+            0, 1, 2,
+        ],
+
+        elementCount: 6,
+    },
+}
 
 function main()
 {
@@ -312,7 +409,11 @@ function main()
 
     createShaderProgram(shaderData);
 
-    loadModel(planeObject);
+    // Load skybox panels
+    for (panel in skyBoxModels)
+    {
+        loadModel(skyBoxModels[panel]);
+    }
 
     // Compute rowLength and textureDimension
     if (po2 % 2 == 0)
@@ -627,16 +728,20 @@ function renderFrame(currentTime, texture)
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
-    //Instruct WebGL how to pull out vertices
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, planeObject.buffers.vertex);
-    ctx.vertexAttribPointer(shaderData.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-    ctx.enableVertexAttribArray(shaderData.attributes.vertexPosition); //Enable the pointer to the buffer
+    // For each panel of the skybox
+    for (panel in skyBoxModels)
+    {
+        //Instruct WebGL how to pull out vertices
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
+        ctx.vertexAttribPointer(shaderData.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+        ctx.enableVertexAttribArray(shaderData.attributes.vertexPosition); //Enable the pointer to the buffer
 
-    //Give WebGL the element array
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, planeObject.buffers.elementIndices);
+        //Give WebGL the element array
+        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
 
-    //Draw triangles
-    ctx.drawElements(ctx.TRIANGLES, planeObject.elementCount, ctx.UNSIGNED_SHORT, 0);
+        //Draw triangles
+        ctx.drawElements(ctx.TRIANGLES, skyBoxModels[panel].elementCount, ctx.UNSIGNED_SHORT, 0);
+    }
 }
 
 /**
