@@ -208,7 +208,7 @@ let shaderData = {
             // Move ray origin through negative z space
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
-            float t = 0.100;
+            float t = 0.200;
             float step = 0.010;
             float den = 0.0;
 
@@ -235,8 +235,8 @@ let shaderData = {
             den *= (1.0 - (t / 2.0)) * 1.0;
             den = clamp(0.0, 1.0, den);
 
-            vec3 color1 = vec3(1.0, 1.0, 1.0);
-            vec3 color2 = vec3(50.0 / 256.0, 50.0 / 256.0, 50.0 / 256.0);
+            vec3 color1 = vec3(1.0, 0.5, 1.0);
+            vec3 color2 = vec3(0.2, 0.0, 0.2);
 
 
             gl_FragColor = vec4(mix(color1, color2, den), 1.0); // Goo rendering
