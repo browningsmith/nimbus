@@ -38,7 +38,7 @@
  *              functions to initialize buffer data, and begins the loop of calling animation frames.
  */
 function main() {
-
+    
     //Get canvas element
     canvas = document.getElementById("canvas");
 
