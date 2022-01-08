@@ -2,11 +2,13 @@ let canvas = null;
 let ctx = null;
 let nearColorInput = null;
 let farColorInput = null;
+let renderButton = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
+let texture = null;
 
 const piOver2 = Math.PI / 2.0;
 
@@ -219,15 +221,15 @@ let shaderData = {
             if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
             // Move ray origin through negative z space
-            vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
+            vec3 ro = vec3(0.0, 0.0, 0.0);
 
             float t = 0.200;
-            float lightAbsorption = 0.5;
+            float lightAbsorption = 0.0;
             float step = 0.010;
             float brightness = 0.0;
             float accumulatedDensity = 0.0;
             
-            for (int i=0; i<1000; i++)
+            for (int i=0; i<50; i++)
             {
                 vec3 currentPos = ro + rd * t;
                 float density = clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos)));
@@ -433,6 +435,9 @@ function main()
     nearColorInput = document.getElementById("nearColorInput");
     farColorInput = document.getElementById("farColorInput");
 
+    //Get render button
+    renderButton = document.getElementById("renderButton");
+
     //Add mouse event listeners
     canvas.addEventListener("mousemove", updateMouse);
     canvas.addEventListener("mouseleave", mouseLeave);
@@ -440,6 +445,9 @@ function main()
     //Add color picker event listeners
     nearColorInput.addEventListener("change", updateNearColor);
     farColorInput.addEventListener("change", updateFarColor);
+
+    //Add button event listener
+    renderButton.addEventListener("click", buttonHandler);
 
     createShaderProgram(shaderData);
 
@@ -544,10 +552,10 @@ function main()
         }
     }*/
     
-    let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
+    texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
 
     // Animation loop
-    function newFrame(currentTime)
+    /*function newFrame(currentTime)
     {
         currentTime *= 0.001; // Convert to seconds
         currentTime = currentTime % animationDuration;
@@ -557,7 +565,10 @@ function main()
         requestAnimationFrame(newFrame);
     }
 
-    requestAnimationFrame(newFrame);
+    requestAnimationFrame(newFrame);*/
+
+    //Render single frame
+    renderFrame(0.0, texture);
 }
 
 /**
@@ -983,6 +994,12 @@ function updateFarColor(event) {
 
     console.log("Far color value: " + event.target.value);
     hexToColor(event.target.value, farColor);
+}
+
+function buttonHandler(event) {
+
+    renderFrame(0.0, texture);
+    console.log("New scene rendered");
 }
 
 window.onload = main;
