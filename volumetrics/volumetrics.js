@@ -871,14 +871,109 @@ function yawRight(angle) {
     
 }
 
+/**
+ * Function: hexToColor
+ * 
+ * Input: String hex, vec3 colorVec
+ * Output: None
+ * 
+ * Description: Converts hex value (as returned by color input for instance)
+ * and converts it to decimal RGB values, between 0.0 and 1.0, and places the
+ * resulting values into colorVec attribute
+ */
+function hexToColor(hex, colorVec) {
+
+    console.log(hex);
+
+    let charIndex = 1; // Skip first character [0] which is just '#'
+    let rgbIndex = 0;
+
+    for ( ; rgbIndex < 3; rgbIndex++)
+    {
+        let value = 0.0;
+        
+        for (let i=0; i < 2; i++)
+        {
+            value *= 16.0;
+
+            switch (hex.charAt(charIndex))
+            {
+                case '0':
+                    value += 0.0;
+                    break;
+                case '1':
+                    value += 1.0;
+                    break;
+                case '2':
+                    value += 2.0;
+                    break;
+                case '3':
+                    value += 3.0;
+                    break;
+                case '4':
+                    value += 4.0;
+                    break;
+                case '5':
+                    value += 5.0;
+                    break;
+                case '6':
+                    value += 6.0;
+                    break;
+                case '7':
+                    value += 7.0;
+                    break;
+                case '8':
+                    value += 8.0;
+                    break;
+                case '9':
+                    value += 9.0;
+                    break;
+                case 'a':
+                    value += 10.0;
+                    break;
+                case 'b':
+                    value += 11.0;
+                    break;
+                case 'c':
+                    value += 12.0;
+                    break;
+                case 'd':
+                    value += 13.0;
+                    break;
+                case 'e':
+                    value += 14.0;
+                    break;
+                case 'f':
+                    value += 15.0;
+                    break;
+                default:
+                    value += 0.0;
+            }
+
+            charIndex++;
+        }
+
+        // Clamp between 0.0 and 256.0
+        if (value < 0.0) value = 0.0;
+        if (value > 256.0) value = 256.0;
+
+        // Convert to between 0.0 and 1.0
+        value /= 256.0;
+
+        colorVec[rgbIndex] = value;
+    }
+}
+
 function updateNearColor(event) {
 
     console.log("Near color value: " + event.target.value);
+    hexToColor(event.target.value, nearColor);
 }
 
 function updateFarColor(event) {
 
     console.log("Far color value: " + event.target.value);
+    hexToColor(event.target.value, farColor);
 }
 
 window.onload = main;
