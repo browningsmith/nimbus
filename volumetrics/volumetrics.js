@@ -25,10 +25,10 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //Near color
-const nearColor = vec3.fromValues(0.2, 0.0, 0.2);
+const nearColor = vec3.fromValues(0.0, 0.0, 0.0);
 
 //Far color
-const farColor = vec3.fromValues(1.0, 0.5, 1.0);
+const farColor = vec3.fromValues(0.0, 0.0, 0.0);
 
 // Player (camera)
 let player = {
@@ -219,46 +219,10 @@ let shaderData = {
             // Move ray origin through negative z space
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
-            float t = 0.200;
-            float step = 0.010;
-            float den = 0.0;
-
-            // Perform ray marching along rd starting from ro
-            for (int i=0; i < 1000; i++)
-            {
-                if (t >= 2.0)
-                {
-                    t = 2.0;
-                    den = 0.0;
-                    break;
-                }
-                
-                den += clamp(0.0, 1.0, noise3D(wrapVolumeCoords( ro + rd * t)) + 0.08);
-
-                if (den >= 1.0)
-                {
-                    den = 1.0;                   
-                    break;
-                }
-
-                t += step;
-            }
-            den *= (1.0 - (t / 2.0)) * 1.0;
-            den = clamp(0.0, 1.0, den);
-
             vec3 color1 = u_farColor;
             vec3 color2 = u_nearColor;
 
-
-            gl_FragColor = vec4(mix(color1, color2, den), 1.0); // Goo rendering
-
-            // Color volume rendering
-            /*gl_FragColor = vol3D(
-                u_sampler,
-                wrapVolumeCoords( ro + rd * t),
-                u_dimension,
-                u_rowLength
-            );*/
+            gl_FragColor = vec4(color1, 1.0);
         }
     `,
 
