@@ -221,15 +221,15 @@ let shaderData = {
             if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
             // Move ray origin through negative z space
-            vec3 ro = vec3(0.0, 0.0, 0.0);
+            vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
             float t = 0.200;
-            float lightAbsorption = 0.0;
+            float lightAbsorption = 0.5;
             float step = 0.010;
             float brightness = 0.0;
             float accumulatedDensity = 0.0;
             
-            for (int i=0; i<50; i++)
+            for (int i=0; i<10; i++)
             {
                 vec3 currentPos = ro + rd * t;
                 float density = clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos)));
@@ -439,8 +439,8 @@ function main()
     renderButton = document.getElementById("renderButton");
 
     //Add mouse event listeners
-    canvas.addEventListener("mousemove", updateMouse);
-    canvas.addEventListener("mouseleave", mouseLeave);
+    //canvas.addEventListener("mousemove", updateMouse);
+    //canvas.addEventListener("mouseleave", mouseLeave);
 
     //Add color picker event listeners
     nearColorInput.addEventListener("change", updateNearColor);
