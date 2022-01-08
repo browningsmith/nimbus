@@ -27,7 +27,7 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //Near color
-const nearColor = vec3.fromValues(0.0, 0.0, 0.0);
+const nearColor = vec3.fromValues(1.0, 1.0, 1.0);
 
 //Far color
 const farColor = vec3.fromValues(0.0, 0.0, 0.0);
@@ -211,7 +211,7 @@ let shaderData = {
         
         void main()
         {
-            vec3 sunDir = vec3(0.0, 0.0, -1.0);
+            vec3 sunDir = vec3(1.0, 0.0, 0.0);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
