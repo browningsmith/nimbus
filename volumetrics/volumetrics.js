@@ -1,7 +1,7 @@
 let canvas = null;
 let ctx = null;
-let nearcolor = null;
-let farcolor = null;
+let nearColorInput = null;
+let farColorInput = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
@@ -23,6 +23,12 @@ const projectionMatrix = mat4.create();
 
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
+
+//Near color
+const nearColor = vec3.fromValues(0.2, 0.0, 0.2);
+
+//Far color
+const farColor = vec3.fromValues(1.0, 0.5, 1.0);
 
 // Player (camera)
 let player = {
@@ -82,6 +88,9 @@ let shaderData = {
         uniform float u_duration;
         uniform float u_dimension;
         uniform float u_rowLength;
+
+        uniform vec3 u_farColor;
+        uniform vec3 u_nearColor;
 
         uniform sampler2D u_sampler;
 
@@ -237,8 +246,8 @@ let shaderData = {
             den *= (1.0 - (t / 2.0)) * 1.0;
             den = clamp(0.0, 1.0, den);
 
-            vec3 color1 = vec3(1.0, 0.5, 1.0);
-            vec3 color2 = vec3(0.2, 0.0, 0.2);
+            vec3 color1 = u_farColor;
+            vec3 color2 = u_nearColor;
 
 
             gl_FragColor = vec4(mix(color1, color2, den), 1.0); // Goo rendering
@@ -272,7 +281,9 @@ let shaderData = {
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             duration: ctx.getUniformLocation(this.program, "u_duration"),
-            rowLength: ctx.getUniformLocation(this.program, "u_rowLength")
+            rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
+            nearColor: ctx.getUniformLocation(this.program, "u_nearColor"),
+            farColor: ctx.getUniformLocation(this.program, "u_farColor")
         }
         
     },
@@ -410,8 +421,16 @@ function main()
     }
 
     //Get color pickers
-    nearcolor = document.getElementById("nearcolor");
-    farcolor = document.getElementById("farcolor");
+    nearColorInput = document.getElementById("nearColorInput");
+    farColorInput = document.getElementById("farColorInput");
+
+    //Add mouse event listeners
+    canvas.addEventListener("mousemove", updateMouse);
+    canvas.addEventListener("mouseleave", mouseLeave);
+
+    //Add color picker event listeners
+    nearColorInput.addEventListener("change", updateNearColor);
+    farColorInput.addEventListener("change", updateFarColor);
 
     createShaderProgram(shaderData);
 
@@ -517,14 +536,6 @@ function main()
     }*/
     
     let texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
-
-    //Add mouse event listeners
-    canvas.addEventListener("mousemove", updateMouse);
-    canvas.addEventListener("mouseleave", mouseLeave);
-
-    //Add color picker event listeners
-    nearcolor.addEventListener("change", updateNearColor);
-    farcolor.addEventListener("change", updateFarColor);
 
     // Animation loop
     function newFrame(currentTime)
@@ -738,6 +749,12 @@ function renderFrame(currentTime, texture)
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
+    // Set near color uniform
+    ctx.uniform3fv(shaderData.uniforms.nearColor, nearColor);
+
+    // Set far color uniform
+    ctx.uniform3fv(shaderData.uniforms.farColor, farColor);
+
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
@@ -805,16 +822,6 @@ function mouseLeave(event) {
     lastMousePosition.inWindow = false;
 }
 
-function updateNearColor(event) {
-
-    console.log("Near color value: " + event.target.value);
-}
-
-function updateFarColor(event) {
-
-    console.log("Far color value: " + event.target.value);
-}
-
 /**
  * Function: pitchUp
  * 
@@ -862,6 +869,16 @@ function yawRight(angle) {
     vec3.rotateY(player.rightVec, player.rightVec, VEC3_ZERO, player.yawAngle);
     vec3.rotateY(player.forwardVec, player.forwardVec, VEC3_ZERO, player.yawAngle);
     
+}
+
+function updateNearColor(event) {
+
+    console.log("Near color value: " + event.target.value);
+}
+
+function updateFarColor(event) {
+
+    console.log("Far color value: " + event.target.value);
 }
 
 window.onload = main;
