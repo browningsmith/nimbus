@@ -1,5 +1,7 @@
 let canvas = null;
 let ctx = null;
+let nearcolor = null;
+let farcolor = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
@@ -407,6 +409,10 @@ function main()
         return;
     }
 
+    //Get color pickers
+    nearcolor = document.getElementById("nearcolor");
+    farcolor = document.getElementById("farcolor");
+
     createShaderProgram(shaderData);
 
     // Load skybox panels
@@ -515,6 +521,10 @@ function main()
     //Add mouse event listeners
     canvas.addEventListener("mousemove", updateMouse);
     canvas.addEventListener("mouseleave", mouseLeave);
+
+    //Add color picker event listeners
+    nearcolor.addEventListener("change", updateNearColor);
+    farcolor.addEventListener("change", updateFarColor);
 
     // Animation loop
     function newFrame(currentTime)
@@ -793,6 +803,16 @@ function renderFrame(currentTime, texture)
 function mouseLeave(event) {
 
     lastMousePosition.inWindow = false;
+}
+
+function updateNearColor(event) {
+
+    console.log("Near color value: " + event.target.value);
+}
+
+function updateFarColor(event) {
+
+    console.log("Far color value: " + event.target.value);
 }
 
 /**
