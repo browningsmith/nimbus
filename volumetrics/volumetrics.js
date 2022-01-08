@@ -209,6 +209,8 @@ let shaderData = {
         
         void main()
         {
+            vec3 sunDir = vec3(0.0, 0.0, -1.0);
+            
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
 
@@ -219,10 +221,53 @@ let shaderData = {
             // Move ray origin through negative z space
             vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
 
+            float t = 0.200;
+            float lightAbsorption = 0.5;
+            float step = 0.010;
+            float brightness = 0.0;
+            float accumulatedDensity = 0.0;
+            
+            for (int i=0; i<1000; i++)
+            {
+                vec3 currentPos = ro + rd * t;
+                float density = clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos)));
+                float brightness2 = 0.0;
+
+                if (density > 0.0)
+                {
+                    float accumulatedDensity2 = density;
+                    float t2 = step;
+
+                    // Compute accumulated density between currentPos and direction of sun for 4 steps
+                    for (int j=0; j<4; j++)
+                    {
+                        accumulatedDensity2 += clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos + sunDir * t2)));
+                        if (accumulatedDensity2 >= 1.0)
+                        {
+                            accumulatedDensity2 = 1.0;
+                            break;
+                        }
+
+                        t2 += step;
+                    }
+
+                    // Compute brightness at this point
+                    brightness2 = exp(-1.0 * lightAbsorption * accumulatedDensity2);
+                }
+
+                // Composite new brightness with existing brightness and density
+                brightness = clamp(0.0, 1.0, brightness + brightness2 * density);
+
+                // Accumulate density
+                accumulatedDensity += density;
+
+                t += step;
+            }
+
             vec3 color1 = u_farColor;
             vec3 color2 = u_nearColor;
 
-            gl_FragColor = vec4(color1, 1.0);
+            gl_FragColor = vec4(mix(color1, color2, brightness), 1.0);
         }
     `,
 
