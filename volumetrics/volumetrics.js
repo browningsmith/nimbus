@@ -25,7 +25,7 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //Sky color
-const skyColor = vec3.fromValues(0.0, 0.0, 0.0);
+const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
 
 // Player (camera)
 let player = {
