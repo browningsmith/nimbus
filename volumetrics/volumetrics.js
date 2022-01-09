@@ -90,6 +90,8 @@ let shaderData = {
         uniform float u_dimension;
         uniform float u_rowLength;
 
+        uniform vec3 u_stepSettings; // [0] tmin, [1] tmax, [2] stepSize
+
         uniform vec3 u_skyColor;
 
         uniform sampler2D u_sampler;
@@ -221,7 +223,31 @@ let shaderData = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            gl_FragColor = vec4(u_skyColor, 1.0);
+            vec3 result = vec3(1.0, 0.0, 0.0);
+
+            if (gl_FragCoord.x < 200.0)
+            {
+                if (u_stepSettings.x > 5.0)
+                {
+                    result = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 400.0)
+            {
+                if (u_stepSettings.y > 5.0)
+                {
+                    result = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else
+            {
+                if (u_stepSettings.z > 5.0)
+                {
+                    result = vec3(0.0, 1.0, 0.0);
+                }
+            }
+
+            gl_FragColor = vec4(result, 1.0);
         }
     `,
 
@@ -244,6 +270,7 @@ let shaderData = {
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
+            stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings")
         }
         
     },
@@ -713,6 +740,9 @@ function renderFrame()
 
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
+
+    // Set step settings uniform
+    ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
 
     // Set sky color uniform
     ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
