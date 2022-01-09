@@ -2,7 +2,6 @@ let canvas = null;
 let ctx = null;
 let nearColorInput = null;
 let farColorInput = null;
-let renderButton = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
@@ -86,8 +85,6 @@ let shaderData = {
     
         varying highp vec4 v_untransVertexPosition;
         
-        uniform float u_time;
-        uniform float u_duration;
         uniform float u_dimension;
         uniform float u_rowLength;
 
@@ -220,56 +217,10 @@ let shaderData = {
             if ((rd.x > -0.0001) && (rd.x < 0.0001)) {rd.x = 0.0;}
             if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
-            // Move ray origin through negative z space
-            vec3 ro = vec3(0.0, 0.0, (u_time / u_duration) * -1.0);
+            // Ray origin
+            vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            float t = 0.200;
-            float lightAbsorption = 0.5;
-            float step = 0.010;
-            float brightness = 0.0;
-            float accumulatedDensity = 0.0;
-            
-            for (int i=0; i<10; i++)
-            {
-                vec3 currentPos = ro + rd * t;
-                float density = clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos)));
-                float brightness2 = 0.0;
-
-                if (density > 0.0)
-                {
-                    float accumulatedDensity2 = density;
-                    float t2 = step;
-
-                    // Compute accumulated density between currentPos and direction of sun for 4 steps
-                    for (int j=0; j<4; j++)
-                    {
-                        accumulatedDensity2 += clamp(0.0, 1.0, noise3D(wrapVolumeCoords(currentPos + sunDir * t2)));
-                        if (accumulatedDensity2 >= 1.0)
-                        {
-                            accumulatedDensity2 = 1.0;
-                            break;
-                        }
-
-                        t2 += step;
-                    }
-
-                    // Compute brightness at this point
-                    brightness2 = exp(-1.0 * lightAbsorption * accumulatedDensity2);
-                }
-
-                // Composite new brightness with existing brightness and density
-                brightness = clamp(0.0, 1.0, brightness + brightness2 * density);
-
-                // Accumulate density
-                accumulatedDensity += density;
-
-                t += step;
-            }
-
-            vec3 color1 = u_farColor;
-            vec3 color2 = u_nearColor;
-
-            gl_FragColor = vec4(mix(color1, color2, brightness), 1.0);
+            gl_FragColor = vec4(u_farColor, 1.0);
         }
     `,
 
@@ -288,10 +239,8 @@ let shaderData = {
 
             projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
             worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-            time: ctx.getUniformLocation(this.program, "u_time"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
-            duration: ctx.getUniformLocation(this.program, "u_duration"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             nearColor: ctx.getUniformLocation(this.program, "u_nearColor"),
             farColor: ctx.getUniformLocation(this.program, "u_farColor")
@@ -435,9 +384,6 @@ function main()
     nearColorInput = document.getElementById("nearColorInput");
     farColorInput = document.getElementById("farColorInput");
 
-    //Get render button
-    renderButton = document.getElementById("renderButton");
-
     //Add mouse event listeners
     //canvas.addEventListener("mousemove", updateMouse);
     //canvas.addEventListener("mouseleave", mouseLeave);
@@ -445,9 +391,6 @@ function main()
     //Add color picker event listeners
     nearColorInput.addEventListener("change", updateNearColor);
     farColorInput.addEventListener("change", updateFarColor);
-
-    //Add button event listener
-    renderButton.addEventListener("click", buttonHandler);
 
     createShaderProgram(shaderData);
 
@@ -568,7 +511,7 @@ function main()
     requestAnimationFrame(newFrame);*/
 
     //Render single frame
-    renderFrame(0.0, texture);
+    renderFrame();
 }
 
 /**
@@ -719,7 +662,7 @@ function loadArrayToTexture(width, height, data)
     return texture;
 }
 
-function renderFrame(currentTime, texture)
+function renderFrame()
 {
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -757,14 +700,8 @@ function renderFrame(currentTime, texture)
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
     ctx.uniform1i(shaderData.uniforms.sampler, 0);
 
-    // Set time uniform
-    ctx.uniform1f(shaderData.uniforms.time, currentTime);
-
     // Set dimension uniform
     ctx.uniform1f(shaderData.uniforms.dimension, dimension);
-
-    // Set duration uniform
-    ctx.uniform1f(shaderData.uniforms.duration, animationDuration);
 
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
@@ -903,8 +840,6 @@ function yawRight(angle) {
  */
 function hexToColor(hex, colorVec) {
 
-    console.log(hex);
-
     let charIndex = 1; // Skip first character [0] which is just '#'
     let rgbIndex = 0;
 
@@ -988,18 +923,14 @@ function updateNearColor(event) {
 
     console.log("Near color value: " + event.target.value);
     hexToColor(event.target.value, nearColor);
+    renderFrame();
 }
 
 function updateFarColor(event) {
 
     console.log("Far color value: " + event.target.value);
     hexToColor(event.target.value, farColor);
-}
-
-function buttonHandler(event) {
-
-    renderFrame(0.0, texture);
-    console.log("New scene rendered");
+    renderFrame();
 }
 
 window.onload = main;
