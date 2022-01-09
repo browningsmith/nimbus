@@ -1,5 +1,8 @@
 let canvas = null;
 let ctx = null;
+let tminInput = null;
+let tmaxInput = null;
+let stepSizeInput = null;
 let skyColorInput = null;
 
 let po2 = 4;
@@ -23,6 +26,9 @@ const projectionMatrix = mat4.create();
 
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
+
+//tmin tmax and step size
+const stepSettings = vec3.fromValues(0.0, 2.0, 0.01);
 
 //Sky color
 const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
@@ -374,12 +380,22 @@ function main()
         return;
     }
 
-    //Get color pickers
-    skyColorInput = document.getElementById("skyColorInput");
-
     //Add mouse event listeners
     //canvas.addEventListener("mousemove", updateMouse);
     //canvas.addEventListener("mouseleave", mouseLeave);
+
+    //Get tmin tmax and set size inputs
+    tminInput = document.getElementById("tminInput");
+    tmaxInput = document.getElementById("tmaxInput");
+    stepSizeInput = document.getElementById("stepSizeInput");
+
+    //Add event listeners for tmin tmax and step size
+    tminInput.addEventListener("change", updateTmin);
+    tmaxInput.addEventListener("change", updateTmax);
+    stepSizeInput.addEventListener("change", updateStepSize);
+
+    //Get color pickers
+    skyColorInput = document.getElementById("skyColorInput");
 
     //Add color picker event listeners
     skyColorInput.addEventListener("change", updateSkyColor);
@@ -502,7 +518,7 @@ function main()
 
     requestAnimationFrame(newFrame);*/
 
-    //Render single frame
+    //Render first scene
     renderFrame();
 }
 
@@ -908,10 +924,27 @@ function hexToColor(hex, colorVec) {
     }
 }
 
+function updateTmin(event) {
+
+    stepSettings[0] = Number(tminInput.value);
+    renderFrame();
+}
+
+function updateTmax(event) {
+
+    stepSettings[1] = Number(tmaxInput.value);
+    renderFrame();
+}
+
+function updateStepSize(event) {
+
+    stepSettings[2] = Number(stepSizeInput.value);
+    renderFrame();
+}
+
 function updateSkyColor(event) {
 
-    console.log("Sky color value: " + event.target.value);
-    hexToColor(event.target.value, skyColor);
+    hexToColor(skyColorInput.value, skyColor);
     renderFrame();
 }
 
