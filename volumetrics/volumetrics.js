@@ -1,7 +1,6 @@
 let canvas = null;
 let ctx = null;
-let nearColorInput = null;
-let farColorInput = null;
+let skyColorInput = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
@@ -25,11 +24,8 @@ const projectionMatrix = mat4.create();
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
 
-//Near color
-const nearColor = vec3.fromValues(1.0, 1.0, 1.0);
-
-//Far color
-const farColor = vec3.fromValues(0.0, 0.0, 0.0);
+//Sky color
+const skyColor = vec3.fromValues(0.0, 0.0, 0.0);
 
 // Player (camera)
 let player = {
@@ -88,8 +84,7 @@ let shaderData = {
         uniform float u_dimension;
         uniform float u_rowLength;
 
-        uniform vec3 u_farColor;
-        uniform vec3 u_nearColor;
+        uniform vec3 u_skyColor;
 
         uniform sampler2D u_sampler;
 
@@ -220,7 +215,7 @@ let shaderData = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            gl_FragColor = vec4(u_farColor, 1.0);
+            gl_FragColor = vec4(u_skyColor, 1.0);
         }
     `,
 
@@ -242,8 +237,7 @@ let shaderData = {
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
-            nearColor: ctx.getUniformLocation(this.program, "u_nearColor"),
-            farColor: ctx.getUniformLocation(this.program, "u_farColor")
+            skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
         }
         
     },
@@ -381,16 +375,14 @@ function main()
     }
 
     //Get color pickers
-    nearColorInput = document.getElementById("nearColorInput");
-    farColorInput = document.getElementById("farColorInput");
+    skyColorInput = document.getElementById("skyColorInput");
 
     //Add mouse event listeners
     //canvas.addEventListener("mousemove", updateMouse);
     //canvas.addEventListener("mouseleave", mouseLeave);
 
     //Add color picker event listeners
-    nearColorInput.addEventListener("change", updateNearColor);
-    farColorInput.addEventListener("change", updateFarColor);
+    skyColorInput.addEventListener("change", updateSkyColor);
 
     createShaderProgram(shaderData);
 
@@ -706,11 +698,8 @@ function renderFrame()
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
-    // Set near color uniform
-    ctx.uniform3fv(shaderData.uniforms.nearColor, nearColor);
-
-    // Set far color uniform
-    ctx.uniform3fv(shaderData.uniforms.farColor, farColor);
+    // Set sky color uniform
+    ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
@@ -919,17 +908,10 @@ function hexToColor(hex, colorVec) {
     }
 }
 
-function updateNearColor(event) {
+function updateSkyColor(event) {
 
-    console.log("Near color value: " + event.target.value);
-    hexToColor(event.target.value, nearColor);
-    renderFrame();
-}
-
-function updateFarColor(event) {
-
-    console.log("Far color value: " + event.target.value);
-    hexToColor(event.target.value, farColor);
+    console.log("Sky color value: " + event.target.value);
+    hexToColor(event.target.value, skyColor);
     renderFrame();
 }
 
