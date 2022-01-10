@@ -32,11 +32,20 @@ const projectionMatrix = mat4.create();
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
 
+//noise slope and offset
+const noiseSettings = vec3.fromValues(1.0, 0.0, 0.0);
+
 //tmin tmax and step size
 const stepSettings = vec3.fromValues(0.0, 2.0, 0.02);
 
 //Sky color
 const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
+
+//sun tmax and step size
+const sunStepSettings = vec3.fromValues(0.3, 0.02, 0.0);
+
+// Beers law light absorption factor
+let lightAbsorption = 6.0;
 
 // Player (camera)
 let player = {
@@ -394,21 +403,43 @@ function main()
     //canvas.addEventListener("mousemove", updateMouse);
     //canvas.addEventListener("mouseleave", mouseLeave);
 
+    //Get noise settings inputs
+    noiseSlopeInput = document.getElementById("noiseSlopeInput");
+    noiseOffsetInput = document.getElementById("noiseOffsetInput");
+
+    //Add event listeners for noise settings
+    noiseSlopeInput.addEventListener("change", inputChangeHandler);
+    noiseOffsetInput.addEventListener("change", inputChangeHandler);
+
     //Get tmin tmax and set size inputs
     tminInput = document.getElementById("tminInput");
     tmaxInput = document.getElementById("tmaxInput");
     stepSizeInput = document.getElementById("stepSizeInput");
 
     //Add event listeners for tmin tmax and step size
-    tminInput.addEventListener("change", updateTmin);
-    tmaxInput.addEventListener("change", updateTmax);
-    stepSizeInput.addEventListener("change", updateStepSize);
+    tminInput.addEventListener("change", inputChangeHandler);
+    tmaxInput.addEventListener("change", inputChangeHandler);
+    stepSizeInput.addEventListener("change", inputChangeHandler);
 
-    //Get color pickers
+    //Get sky color
     skyColorInput = document.getElementById("skyColorInput");
 
-    //Add color picker event listeners
-    skyColorInput.addEventListener("change", updateSkyColor);
+    //Add event listener to sky color
+    skyColorInput.addEventListener("change", inputChangeHandler);
+
+    //Get sun tmax and step size inputs
+    tsunMaxInput = document.getElementById("tsunMaxInput");
+    sunStepSizeInput = document.getElementById("sunStepSizeInput");
+
+    //Add event listeners to sun step settings
+    tsunMaxInput.addEventListener("change", inputChangeHandler);
+    sunStepSizeInput.addEventListener("change", inputChangeHandler);
+
+    // Get light absorption input
+    lightAbsorptionInput = document.getElementById("lightAbsorptionInput");
+
+    // Add event listener to light absorption
+    lightAbsorptionInput.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(shaderData);
 
@@ -529,6 +560,7 @@ function main()
     requestAnimationFrame(newFrame);*/
 
     //Render first scene
+    fetchSettings();
     renderFrame();
 }
 
@@ -937,28 +969,46 @@ function hexToColor(hex, colorVec) {
     }
 }
 
-function updateTmin(event) {
+function inputChangeHandler(event)
+{
+    fetchSettings();
+    renderFrame();
+}
 
+/**
+ * Function: fetchSettings
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: Fetches the values of all input tags and puts them in to
+ * their respective variable locations, to be passed to the shader
+ */
+function fetchSettings()
+{
+    // Noise slope and offset
+    noiseSettings[0] = Number(noiseSlopeInput.value);
+    noiseSettings[1] = Number(noiseOffsetInput.value);
+    console.log(noiseSettings);
+
+    // tmin tmax and step size
     stepSettings[0] = Number(tminInput.value);
-    renderFrame();
-}
-
-function updateTmax(event) {
-
     stepSettings[1] = Number(tmaxInput.value);
-    renderFrame();
-}
-
-function updateStepSize(event) {
-
     stepSettings[2] = Number(stepSizeInput.value);
-    renderFrame();
-}
+    console.log(stepSettings);
 
-function updateSkyColor(event) {
-
+    // sky color
     hexToColor(skyColorInput.value, skyColor);
-    renderFrame();
+    console.log(skyColor);
+
+    // sun tmax and step size
+    sunStepSettings[0] = Number(tsunMaxInput.value);
+    sunStepSettings[1] = Number(sunStepSizeInput.value);
+    console.log(sunStepSettings);
+
+    // light absorption
+    lightAbsorption = Number(lightAbsorptionInput.value);
+    console.log(lightAbsorption);
 }
 
 window.onload = main;
