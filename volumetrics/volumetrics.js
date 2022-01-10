@@ -28,7 +28,7 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //tmin tmax and step size
-const stepSettings = vec3.fromValues(0.0, 2.0, 0.01);
+const stepSettings = vec3.fromValues(0.0, 2.0, 0.02);
 
 //Sky color
 const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
@@ -208,6 +208,33 @@ let shaderData = {
 
             return coord;
         }
+
+        vec4 raymarchLoop(vec3 ro, vec3 rd, float tmin, float tmax, float stepSize)
+        {
+            vec4 totalColor = vec4(0.0);
+            float t = tmin;
+
+            for (int i=0; i<1000; i++)
+            {
+                float density = clamp( noise3D(wrapVolumeCoords(ro + rd*t)), 0.0, 1.0);
+                if (density > 0.01)
+                {
+                    vec4 currentColor = vec4(mix(vec3(1.0, 1.0, 1.0), vec3(0.0,0.0, 0.0), density), density);
+
+                    currentColor.rbg *= currentColor.a;
+                    totalColor += currentColor*(1.0 - totalColor.a);
+                }
+
+                t += stepSize;
+
+                if (t>tmax || totalColor.a > 0.99)
+                {
+                    break;
+                }
+            }
+
+            return clamp(totalColor, 0.0, 1.0);
+        }
         
         void main()
         {
@@ -223,31 +250,13 @@ let shaderData = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            vec3 result = vec3(1.0, 0.0, 0.0);
+            vec3 finalColor = u_skyColor;
 
-            if (gl_FragCoord.x < 200.0)
-            {
-                if (u_stepSettings.x > 5.0)
-                {
-                    result = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 400.0)
-            {
-                if (u_stepSettings.y > 5.0)
-                {
-                    result = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else
-            {
-                if (u_stepSettings.z > 5.0)
-                {
-                    result = vec3(0.0, 1.0, 0.0);
-                }
-            }
+            vec4 cloudColor = raymarchLoop(ro, rd, u_stepSettings.x, u_stepSettings.y, u_stepSettings.z);
 
-            gl_FragColor = vec4(result, 1.0);
+            finalColor = finalColor*(1.0 - cloudColor.a) + cloudColor.rgb;
+
+            gl_FragColor = vec4(finalColor, 1.0);
         }
     `,
 
