@@ -1,9 +1,14 @@
 let canvas = null;
 let ctx = null;
+let noiseSlopeInput = null;
+let noiseOffsetInput = null;
 let tminInput = null;
 let tmaxInput = null;
 let stepSizeInput = null;
 let skyColorInput = null;
+let tsunMaxInput = null;
+let sunStepSizeInput = null;
+let lightAbsorptionInput = null;
 
 let po2 = 4;
 let dimension = Math.pow(2, po2);
@@ -208,33 +213,6 @@ let shaderData = {
 
             return coord;
         }
-
-        vec4 raymarchLoop(vec3 ro, vec3 rd, float tmin, float tmax, float stepSize)
-        {
-            vec4 totalColor = vec4(0.0);
-            float t = tmin;
-
-            for (int i=0; i<1000; i++)
-            {
-                float density = clamp( noise3D(wrapVolumeCoords(ro + rd*t)), 0.0, 1.0);
-                if (density > 0.01)
-                {
-                    vec4 currentColor = vec4(mix(vec3(1.0, 1.0, 1.0), vec3(0.0,0.0, 0.0), density), density);
-
-                    currentColor.rbg *= currentColor.a;
-                    totalColor += currentColor*(1.0 - totalColor.a);
-                }
-
-                t += stepSize;
-
-                if (t>tmax || totalColor.a > 0.99)
-                {
-                    break;
-                }
-            }
-
-            return clamp(totalColor, 0.0, 1.0);
-        }
         
         void main()
         {
@@ -251,10 +229,6 @@ let shaderData = {
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
             vec3 finalColor = u_skyColor;
-
-            vec4 cloudColor = raymarchLoop(ro, rd, u_stepSettings.x, u_stepSettings.y, u_stepSettings.z);
-
-            finalColor = finalColor*(1.0 - cloudColor.a) + cloudColor.rgb;
 
             gl_FragColor = vec4(finalColor, 1.0);
         }
