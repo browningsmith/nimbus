@@ -243,68 +243,7 @@ let shaderData = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            vec3 finalColor = vec3(1.0, 0.0, 0.0);
-
-            if (gl_FragCoord.x < 20.0)
-            {
-                if (u_noiseSettings.x > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 40.0)
-            {
-                if (u_noiseSettings.y > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 60.0)
-            {
-                if (u_stepSettings.x > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 80.0)
-            {
-                if (u_stepSettings.y > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 100.0)
-            {
-                if (u_stepSettings.z > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 120.0)
-            {
-                finalColor = u_skyColor;
-            }
-            else if (gl_FragCoord.x < 140.0)
-            {
-                if (u_sunStepSettings.x > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else if (gl_FragCoord.x < 160.0)
-            {
-                if (u_sunStepSettings.y > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
-            else
-            {
-                if (u_lightAbsorption > 5.0)
-                {
-                    finalColor = vec3(0.0, 1.0, 0.0);
-                }
-            }
+            vec3 finalColor = u_skyColor;
 
             gl_FragColor = vec4(finalColor, 1.0);
         }
