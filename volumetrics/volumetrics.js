@@ -103,12 +103,18 @@ let shaderData = {
         
         uniform float u_dimension;
         uniform float u_rowLength;
+        uniform sampler2D u_sampler;
 
-        uniform vec3 u_stepSettings; // [0] tmin, [1] tmax, [2] stepSize
+        // other noise settings
+        uniform vec3 u_noiseSettings; // .x slope, .y offset
+
+        uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
         uniform vec3 u_skyColor;
 
-        uniform sampler2D u_sampler;
+        uniform vec3 u_sunStepSettings; // .x sun tmax, .y stepSize
+
+        uniform float u_lightAbsorption;
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         { 
@@ -237,7 +243,68 @@ let shaderData = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            vec3 finalColor = u_skyColor;
+            vec3 finalColor = vec3(1.0, 0.0, 0.0);
+
+            if (gl_FragCoord.x < 20.0)
+            {
+                if (u_noiseSettings.x > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 40.0)
+            {
+                if (u_noiseSettings.y > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 60.0)
+            {
+                if (u_stepSettings.x > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 80.0)
+            {
+                if (u_stepSettings.y > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 100.0)
+            {
+                if (u_stepSettings.z > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 120.0)
+            {
+                finalColor = u_skyColor;
+            }
+            else if (gl_FragCoord.x < 140.0)
+            {
+                if (u_sunStepSettings.x > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else if (gl_FragCoord.x < 160.0)
+            {
+                if (u_sunStepSettings.y > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
+            else
+            {
+                if (u_lightAbsorption > 5.0)
+                {
+                    finalColor = vec3(0.0, 1.0, 0.0);
+                }
+            }
 
             gl_FragColor = vec4(finalColor, 1.0);
         }
@@ -258,11 +325,14 @@ let shaderData = {
 
             projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
             worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-            sampler: ctx.getUniformLocation(this.program, "u_sampler"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
+            sampler: ctx.getUniformLocation(this.program, "u_sampler"),
+            noiseSettings: ctx.getUniformLocation(this.program, "u_noiseSettings"),
+            stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
-            stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings")
+            sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
+            lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"), 
         }
         
     },
@@ -756,11 +826,20 @@ function renderFrame()
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
+    // Set noise settings uniform
+    ctx.uniform3fv(shaderData.uniforms.noiseSettings, noiseSettings);
+
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
 
     // Set sky color uniform
     ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
+
+    // Set sun step settings uniform
+    ctx.uniform3fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
+
+    // Set light absorption uniform
+    ctx.uniform1f(shaderData.uniforms.lightAbsorption, lightAbsorption);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
