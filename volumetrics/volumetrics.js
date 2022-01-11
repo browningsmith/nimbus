@@ -36,7 +36,7 @@ const skyBoxRotationMatrix = mat4.create();
 const noiseSettings = vec3.fromValues(1.0, 0.0, 0.0);
 
 //tmin tmax and step size
-const stepSettings = vec3.fromValues(0.0, 2.0, 0.02);
+const stepSettings = vec3.fromValues(2.0, 2.3, 0.02);
 
 //Sky color
 const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
@@ -45,7 +45,7 @@ const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
 const sunStepSettings = vec3.fromValues(0.3, 0.02, 0.0);
 
 // Beers law light absorption factor
-let lightAbsorption = 6.0;
+let lightAbsorption = 1.0;
 
 // Player (camera)
 let player = {
@@ -228,10 +228,83 @@ let shaderData = {
 
             return coord;
         }
+
+        vec4 raymarching(
+            vec3 ro,
+            vec3 rd,
+            float noiseSlope,
+            float noiseOffset,
+            float tmin,
+            float tmax,
+            float stepSize,
+            vec3 sunDir,
+            float tsunMax,
+            float sunStepSize,
+            float lightAbsorption
+        )
+        {
+            vec4 cloudColor = vec4(0.0);
+            float t = tmin;
+
+            for (int i=0; i<1000; i++)
+            {
+                vec3 currentPos = ro + rd*t;
+                
+                float density = clamp(noise3D(wrapVolumeCoords(currentPos))*noiseSlope + noiseOffset, 0.0, 1.0);
+
+                // If inside a cloud
+                if (density > 0.01)
+                {
+                    float tsun = 0.0;
+                    float densityToSun = density;
+
+                    for (int j=0; j<1000; j++)
+                    {
+                        densityToSun += clamp(noise3D(wrapVolumeCoords(currentPos + -1.0*sunDir*tsun)), 0.0, 1.0);
+                        densityToSun = clamp(densityToSun, 0.0, 1.0);
+
+                        tsun += sunStepSize;
+
+                        if (densityToSun >= 1.0)
+                        {
+                            densityToSun = 1.0;
+                            break;
+                        }
+
+                        if (tsun > tsunMax)
+                        {
+                            break;
+                        }
+                    }
+
+                    float brightness = exp(-1.0 * lightAbsorption * densityToSun);
+                    vec4 pointColor = vec4(mix(vec3(0.0), vec3(1.0), brightness), density);
+
+                    pointColor.rgb *= pointColor.a;
+                    cloudColor += pointColor*(1.0 - cloudColor.a);
+                    clamp(cloudColor, 0.0, 1.0);
+                }
+
+                t += stepSize;
+
+                if (cloudColor.a >= 1.0)
+                {
+                    cloudColor.a = 1.0;
+                    break;
+                }
+                
+                if (t > tmax)
+                {
+                    break;
+                }
+            }
+
+            return cloudColor;
+        }
         
         void main()
         {
-            vec3 sunDir = vec3(1.0, 0.0, 0.0);
+            vec3 sunDir = vec3(0.0, -1.0, 0.0);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
@@ -244,6 +317,24 @@ let shaderData = {
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
             vec3 finalColor = u_skyColor;
+
+            vec4 cloudColoring = raymarching(
+
+                ro,
+                rd,
+                u_noiseSettings.x,
+                u_noiseSettings.y,
+                u_stepSettings.x,
+                u_stepSettings.y,
+                u_stepSettings.z,
+                sunDir,
+                u_sunStepSettings.x,
+                u_sunStepSettings.y,
+                u_lightAbsorption
+            );
+
+            finalColor = clamp(cloudColoring.rgb + finalColor*(1.0 - cloudColoring.a), 0.0, 1.0);
+            
 
             gl_FragColor = vec4(finalColor, 1.0);
         }
