@@ -255,12 +255,12 @@ let shaderData = {
                 // If inside a cloud
                 if (density > 0.01)
                 {
-                    float tsun = 0.0;
+                    float tsun = sunStepSize;
                     float densityToSun = density;
 
                     for (int j=0; j<1000; j++)
                     {
-                        densityToSun += clamp(noise3D(wrapVolumeCoords(currentPos + -1.0*sunDir*tsun)), 0.0, 1.0);
+                        densityToSun += clamp(noise3D(wrapVolumeCoords(currentPos + -1.0*sunDir*tsun))*noiseSlope + noiseOffset, 0.0, 1.0);
                         densityToSun = clamp(densityToSun, 0.0, 1.0);
 
                         tsun += sunStepSize;
@@ -304,7 +304,7 @@ let shaderData = {
         
         void main()
         {
-            vec3 sunDir = vec3(0.0, -1.0, 0.0);
+            vec3 sunDir = vec3(-1.0, 0.0, 0.0);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);

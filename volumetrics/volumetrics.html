@@ -38,28 +38,28 @@
         <canvas id="canvas" width="500" height="500"></canvas>
         <br>
         <label for="noiseSlopeInput">noise slope (-inf, inf)</label>
-        <input type="number" id="noiseSlopeInput" value="1.0" step="0.001">
+        <input type="number" id="noiseSlopeInput" value="10.0" step="0.01">
         <br>
         <label for="noiseOffsetInput">noise offset (-inf, inf)</label>
-        <input type="number" id="noiseOffsetInput" value="0.0" step="0.001">
+        <input type="number" id="noiseOffsetInput" value="-2.0" step="0.01">
         <br>
         <label for="tminInput">tmin (0.0, inf):</label>
-        <input type="number" id="tminInput" value="2.0" min="0.0" step="0.001">
+        <input type="number" id="tminInput" value="0.2" min="0.0" step="0.001">
         <br>
         <label for="tmaxInput">tmax (0.0, inf):</label>
-        <input type="number" id="tmaxInput" value="2.3" min="0.0" step="0.001">
+        <input type="number" id="tmaxInput" value="0.75" min="0.0" step="0.001">
         <br>
         <label for="stepSizeInput">step size (0.0, inf):</label>
-        <input type="number" id="stepSizeInput" value="0.02" min="0.0" step="0.001">
+        <input type="number" id="stepSizeInput" value="0.001" min="0.0" step="0.001">
         <br>
         <label for="skyColorInput">Sky Color:</label>
-        <input type="color" id="skyColorInput" value="#c3c0dc">
+        <input type="color" id="skyColorInput" value="#ffffff">
         <br>
         <label for="tsunMaxInput">max distance to march toward sun (0.0, inf):</label>
-        <input type="number" id="tsunMaxInput" value="0.3" min="0.0" step="0.001">
+        <input type="number" id="tsunMaxInput" value="0.004" min="0.0" step="0.001">
         <br>
         <label for="sunStepSizeInput">step size toward sun (0.0, inf)</label>
-        <input type="number" id="sunStepSizeInput" value="0.02" min="0.0" step="0.001">
+        <input type="number" id="sunStepSizeInput" value="0.001" min="0.0" step="0.001">
         <br>
         <label for="lightAbsorptionInput">Light Absorption (Beer's Law) (0.0, inf):</label>
         <input type="number" id="lightAbsorptionInput" value="1.0" min="0.0" step="0.001">
