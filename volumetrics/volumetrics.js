@@ -33,7 +33,7 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //noise slope and offset
-const noiseSettings = vec3.fromValues(1.0, 0.0, 0.0);
+const noiseSettings = vec2.fromValues(1.0, 0.0);
 
 //tmin tmax and step size
 const stepSettings = vec3.fromValues(2.0, 2.3, 0.02);
@@ -42,7 +42,7 @@ const stepSettings = vec3.fromValues(2.0, 2.3, 0.02);
 const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
 
 //sun tmax and step size
-const sunStepSettings = vec3.fromValues(0.3, 0.02, 0.0);
+const sunStepSettings = vec2.fromValues(0.3, 0.02);
 
 // Beers law light absorption factor
 let lightAbsorption = 1.0;
@@ -106,13 +106,13 @@ let shaderData = {
         uniform sampler2D u_sampler;
 
         // other noise settings
-        uniform vec3 u_noiseSettings; // .x slope, .y offset
+        uniform vec2 u_noiseSettings; // .x slope, .y offset
 
         uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
         uniform vec3 u_skyColor;
 
-        uniform vec3 u_sunStepSettings; // .x sun tmax, .y stepSize
+        uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
 
         uniform float u_lightAbsorption;
 
@@ -304,7 +304,7 @@ let shaderData = {
         
         void main()
         {
-            vec3 sunDir = vec3(-1.0, 0.0, 0.0);
+            vec3 sunDir = vec3(0.0, -1.0, 0.0);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
@@ -857,7 +857,7 @@ function renderFrame()
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
     // Set noise settings uniform
-    ctx.uniform3fv(shaderData.uniforms.noiseSettings, noiseSettings);
+    ctx.uniform2fv(shaderData.uniforms.noiseSettings, noiseSettings);
 
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
@@ -866,7 +866,7 @@ function renderFrame()
     ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
 
     // Set sun step settings uniform
-    ctx.uniform3fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
+    ctx.uniform2fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
 
     // Set light absorption uniform
     ctx.uniform1f(shaderData.uniforms.lightAbsorption, lightAbsorption);
