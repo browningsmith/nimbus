@@ -1,6 +1,7 @@
 let canvas = null;
 let ctx = null;
 let resetNoiseInput = null;
+let noiseScaleInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 let tminInput = null;
@@ -37,8 +38,8 @@ const projectionMatrix = mat4.create();
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
 
-//noise slope and offset
-const noiseSettings = vec2.create();
+//noise scale, slope and offset
+const noiseSettings = vec3.create();
 
 //tmin tmax and step size
 const stepSettings = vec3.create();
@@ -113,7 +114,7 @@ let shaderData = {
         uniform sampler2D u_sampler;
 
         // other noise settings
-        uniform vec2 u_noiseSettings; // .x slope, .y offset
+        uniform vec3 u_noiseSettings; // .x scale, .y slope, .z offset
 
         uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
@@ -336,8 +337,8 @@ let shaderData = {
 
                 ro,
                 rd,
-                u_noiseSettings.x,
                 u_noiseSettings.y,
+                u_noiseSettings.z,
                 u_stepSettings.x,
                 u_stepSettings.y,
                 u_stepSettings.z,
@@ -521,11 +522,13 @@ function main()
 
     //Get noise settings inputs
     resetNoiseInput = document.getElementById("resetNoiseInput");
+    noiseScaleInput = document.getElementById("noiseScaleInput");
     noiseSlopeInput = document.getElementById("noiseSlopeInput");
     noiseOffsetInput = document.getElementById("noiseOffsetInput");
 
     //Add event listeners for noise settings
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
+    noiseScaleInput.addEventListener("click", inputChangeHandler);
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
@@ -823,7 +826,7 @@ function renderFrame()
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
     // Set noise settings uniform
-    ctx.uniform2fv(shaderData.uniforms.noiseSettings, noiseSettings);
+    ctx.uniform3fv(shaderData.uniforms.noiseSettings, noiseSettings);
 
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
@@ -1071,8 +1074,9 @@ function resetNoiseHandler(event)
 function fetchSettings()
 {
     // Noise slope and offset
-    noiseSettings[0] = Number(noiseSlopeInput.value);
-    noiseSettings[1] = Number(noiseOffsetInput.value);
+    noiseSettings[0] = Number(noiseScaleInput.value);
+    noiseSettings[1] = Number(noiseSlopeInput.value);
+    noiseSettings[2] = Number(noiseOffsetInput.value);
     console.log(noiseSettings);
 
     // tmin tmax and step size
