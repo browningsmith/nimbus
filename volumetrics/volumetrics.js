@@ -238,6 +238,11 @@ let shaderData = {
             return coord;
         }
 
+        float sampleDensity(vec3 stu, float slope, float offset)
+        {
+            return clamp(noise3D(wrapVolumeCoords(stu))*slope + offset, 0.0, 1.0);
+        }
+
         vec4 raymarching(
             vec3 ro,
             vec3 rd,
@@ -259,7 +264,7 @@ let shaderData = {
             {
                 vec3 currentPos = ro + rd*t;
                 
-                float density = clamp(noise3D(wrapVolumeCoords(currentPos))*noiseSlope + noiseOffset, 0.0, 1.0);
+                float density = sampleDensity(currentPos, noiseSlope, noiseOffset);
 
                 // If inside a cloud
                 if (density > 0.01)
@@ -269,7 +274,7 @@ let shaderData = {
 
                     for (int j=0; j<1000; j++)
                     {
-                        densityToSun += clamp(noise3D(wrapVolumeCoords(currentPos + -1.0*sunDir*tsun))*noiseSlope + noiseOffset, 0.0, 1.0);
+                        densityToSun += sampleDensity(currentPos + -1.0*sunDir*tsun, noiseSlope, noiseOffset);
                         densityToSun = clamp(densityToSun, 0.0, 1.0);
 
                         tsun += sunStepSize;
