@@ -3,6 +3,8 @@ let ctx = null;
 let resetNoiseInput = null;
 let noiseScaleInput = null;
 let noiseXInput = null;
+let noiseYInput = null;
+let noiseZInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 let tminInput = null;
@@ -246,14 +248,17 @@ let shaderData = {
             return coord;
         }
 
-        float sampleDensity(vec3 stu, float scale, float slope, float offset)
+        float sampleDensity(vec3 stu, float scale, vec3 translation, float slope, float offset)
         {
-            return clamp(noise3D(wrapVolumeCoords(stu*scale))*slope + offset, 0.0, 1.0);
+            return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope + offset, 0.0, 1.0);
         }
 
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
             float noiseScale = u_noiseInputSettings.w;
+            float xTranslation = u_noiseInputSettings.x;
+            float yTranslation = u_noiseInputSettings.y;
+            float zTranslation = u_noiseInputSettings.z;
             float noiseSlope = u_noiseSettings.x;
             float noiseOffset = u_noiseSettings.y;
             float tmin = u_stepSettings.x;
@@ -270,7 +275,7 @@ let shaderData = {
             {
                 vec3 currentPos = ro + rd*t;
                 
-                float density = sampleDensity(currentPos, noiseScale, noiseSlope, noiseOffset);
+                float density = sampleDensity(currentPos, noiseScale, vec3(xTranslation, yTranslation, zTranslation), noiseSlope, noiseOffset);
 
                 // If inside a cloud
                 if (density > 0.01)
@@ -280,7 +285,7 @@ let shaderData = {
 
                     for (int j=0; j<1000; j++)
                     {
-                        densityToSun += sampleDensity(currentPos + -1.0*sunDir*tsun, noiseScale, noiseSlope, noiseOffset);
+                        densityToSun += sampleDensity(currentPos + -1.0*sunDir*tsun, noiseScale, vec3(xTranslation, yTranslation, zTranslation), noiseSlope, noiseOffset);
                         densityToSun = clamp(densityToSun, 0.0, 1.0);
 
                         tsun += sunStepSize;
@@ -517,6 +522,8 @@ function main()
     resetNoiseInput = document.getElementById("resetNoiseInput");
     noiseScaleInput = document.getElementById("noiseScaleInput");
     noiseXInput = document.getElementById("noiseXInput");
+    noiseYInput = document.getElementById("noiseYInput");
+    noiseZInput = document.getElementById("noiseZInput");
     noiseSlopeInput = document.getElementById("noiseSlopeInput");
     noiseOffsetInput = document.getElementById("noiseOffsetInput");
 
@@ -524,6 +531,8 @@ function main()
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
     noiseScaleInput.addEventListener("change", inputChangeHandler);
     noiseXInput.addEventListener("change", inputChangeHandler);
+    noiseYInput.addEventListener("change", inputChangeHandler);
+    noiseZInput.addEventListener("change", inputChangeHandler);
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
@@ -1073,6 +1082,8 @@ function fetchSettings()
 {
     // Noise input settings
     noiseInputSettings[0] = Number(noiseXInput.value);
+    noiseInputSettings[1] = Number(noiseYInput.value);
+    noiseInputSettings[2] = Number(noiseZInput.value);
     noiseInputSettings[3] = Number(noiseScaleInput.value);
     
     // Noise slope and offset
