@@ -3,6 +3,7 @@ let ctx = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 let tminInput = null;
+let densityFalloffInput = null;
 let tmaxInput = null;
 let stepSizeInput = null;
 let skyColorInput = null;
