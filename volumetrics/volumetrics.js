@@ -34,6 +34,20 @@ let noise3ZInput = null;
 let noise3SlopeInput = null;
 let noise3OffsetInput = null;
 
+let noise4ScaleInput = null;
+let noise4XInput = null;
+let noise4YInput = null;
+let noise4ZInput = null;
+let noise4SlopeInput = null;
+let noise4OffsetInput = null;
+
+let noise5ScaleInput = null;
+let noise5XInput = null;
+let noise5YInput = null;
+let noise5ZInput = null;
+let noise5SlopeInput = null;
+let noise5OffsetInput = null;
+
 let po2 = 4;
 let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
@@ -88,6 +102,18 @@ const noise3InputSettings = vec4.create();
 
 //noise3 slope and offset
 const noise3OutputSettings = vec2.create();
+
+//noise4 scale and translation settings
+const noise4InputSettings = vec4.create();
+
+//noise4 slope and offset
+const noise4OutputSettings = vec2.create();
+
+//noise5 scale and translation settings
+const noise5InputSettings = vec4.create();
+
+//noise5 slope and offset
+const noise5OutputSettings = vec2.create();
 
 // Player (camera)
 let player = {
@@ -164,6 +190,18 @@ let shaderData = {
 
         // noise3 output settings
         uniform vec2 u_noise3OutputSettings; // .x slope, .y offset
+
+        // noise4 input settings
+        uniform vec4 u_noise4InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
+
+        // noise4 output settings
+        uniform vec2 u_noise4OutputSettings; // .x slope, .y offset
+
+        // noise5 input settings
+        uniform vec4 u_noise5InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
+
+        // noise5 output settings
+        uniform vec2 u_noise5OutputSettings; // .x slope, .y offset
 
         uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
@@ -306,15 +344,17 @@ let shaderData = {
             // Sample layer 3
             density += sampleDensity(stu, u_noise3InputSettings.w, u_noise3InputSettings.xyz, u_noise3OutputSettings.x, u_noise3OutputSettings.y);
 
+            // Sample layer 4
+            density += sampleDensity(stu, u_noise4InputSettings.w, u_noise4InputSettings.xyz, u_noise4OutputSettings.x, u_noise4OutputSettings.y);
+
+            // Sample layer 5
+            density += sampleDensity(stu, u_noise5InputSettings.w, u_noise5InputSettings.xyz, u_noise5OutputSettings.x, u_noise5OutputSettings.y);
+
             return clamp(density, 0.0, 1.0);
         }
 
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
-            float noiseScale = u_noise1InputSettings.w;
-            vec3 translation = u_noise1InputSettings.xyz;
-            float noiseSlope = u_noise1OutputSettings.x;
-            float noiseOffset = u_noise1OutputSettings.y;
             float tmin = u_stepSettings.x;
             float tmax = u_stepSettings.y;
             float stepSize = u_stepSettings.z;
@@ -323,6 +363,7 @@ let shaderData = {
             float lightAbsorption = u_lightAbsorption;
             
             vec4 cloudColor = vec4(0.0);
+            //float t = tmin + stepSize*(texture2D(u_sampler, fract(v_untransVertexPosition.xy * 2048.0)).r);
             float t = tmin;
 
             for (int i=0; i<1000; i++)
@@ -334,7 +375,7 @@ let shaderData = {
                 // If inside a cloud
                 if (density > 0.01)
                 {
-                    float tsun = sunStepSize;
+                    float tsun = 0.0;
                     float densityToSun = density;
 
                     for (int j=0; j<1000; j++)
@@ -383,7 +424,7 @@ let shaderData = {
         
         void main()
         {
-            vec3 sunDir = vec3(0.0, -1.0, 0.0);
+            vec3 sunDir = vec3(0.0, -0.5, 0.5);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
@@ -430,6 +471,10 @@ let shaderData = {
             noise2OutputSettings: ctx.getUniformLocation(this.program, "u_noise2OutputSettings"),
             noise3InputSettings: ctx.getUniformLocation(this.program, "u_noise3InputSettings"),
             noise3OutputSettings: ctx.getUniformLocation(this.program, "u_noise3OutputSettings"),
+            noise4InputSettings: ctx.getUniformLocation(this.program, "u_noise4InputSettings"),
+            noise4OutputSettings: ctx.getUniformLocation(this.program, "u_noise4OutputSettings"),
+            noise5InputSettings: ctx.getUniformLocation(this.program, "u_noise5InputSettings"),
+            noise5OutputSettings: ctx.getUniformLocation(this.program, "u_noise5OutputSettings"),
             stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
             darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
@@ -630,6 +675,18 @@ function main()
     noise3ZInput = document.getElementById("noise3ZInput");
     noise3SlopeInput = document.getElementById("noise3SlopeInput");
     noise3OffsetInput = document.getElementById("noise3OffsetInput");
+    noise4ScaleInput = document.getElementById("noise4ScaleInput");
+    noise4XInput = document.getElementById("noise4XInput");
+    noise4YInput = document.getElementById("noise4YInput");
+    noise4ZInput = document.getElementById("noise4ZInput");
+    noise4SlopeInput = document.getElementById("noise4SlopeInput");
+    noise4OffsetInput = document.getElementById("noise4OffsetInput");
+    noise5ScaleInput = document.getElementById("noise5ScaleInput");
+    noise5XInput = document.getElementById("noise5XInput");
+    noise5YInput = document.getElementById("noise5YInput");
+    noise5ZInput = document.getElementById("noise5ZInput");
+    noise5SlopeInput = document.getElementById("noise5SlopeInput");
+    noise5OffsetInput = document.getElementById("noise5OffsetInput");
 
     //Add event listeners for noise settings
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
@@ -651,6 +708,18 @@ function main()
     noise3ZInput.addEventListener("change", inputChangeHandler);
     noise3SlopeInput.addEventListener("change", inputChangeHandler);
     noise3OffsetInput.addEventListener("change", inputChangeHandler);
+    noise4ScaleInput.addEventListener("change", inputChangeHandler);
+    noise4XInput.addEventListener("change", inputChangeHandler);
+    noise4YInput.addEventListener("change", inputChangeHandler);
+    noise4ZInput.addEventListener("change", inputChangeHandler);
+    noise4SlopeInput.addEventListener("change", inputChangeHandler);
+    noise4OffsetInput.addEventListener("change", inputChangeHandler);
+    noise5ScaleInput.addEventListener("change", inputChangeHandler);
+    noise5XInput.addEventListener("change", inputChangeHandler);
+    noise5YInput.addEventListener("change", inputChangeHandler);
+    noise5ZInput.addEventListener("change", inputChangeHandler);
+    noise5SlopeInput.addEventListener("change", inputChangeHandler);
+    noise5OffsetInput.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(shaderData);
 
@@ -928,6 +997,18 @@ function renderFrame()
 
     // Set noise3 outputs uniform
     ctx.uniform2fv(shaderData.uniforms.noise3OutputSettings, noise3OutputSettings);
+
+    // Set noise4 inputs uniform
+    ctx.uniform4fv(shaderData.uniforms.noise4InputSettings, noise4InputSettings);
+
+    // Set noise4 outputs uniform
+    ctx.uniform2fv(shaderData.uniforms.noise4OutputSettings, noise4OutputSettings);
+
+    // Set noise5 inputs uniform
+    ctx.uniform4fv(shaderData.uniforms.noise5InputSettings, noise5InputSettings);
+
+    // Set noise5 outputs uniform
+    ctx.uniform2fv(shaderData.uniforms.noise5OutputSettings, noise5OutputSettings);
 
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
@@ -1244,6 +1325,34 @@ function fetchSettings()
     noise3OutputSettings[1] = Number(noise3OffsetInput.value);
     console.log("Noise3 Output Settings:");
     console.log(noise3OutputSettings);
+
+    // Noise4 input settings
+    noise4InputSettings[0] = Number(noise4XInput.value);
+    noise4InputSettings[1] = Number(noise4YInput.value);
+    noise4InputSettings[2] = Number(noise4ZInput.value);
+    noise4InputSettings[3] = Number(noise4ScaleInput.value);
+    console.log("Noise4 Input Settings:");
+    console.log(noise4InputSettings);
+    
+    // Noise4 output settings
+    noise4OutputSettings[0] = Number(noise4SlopeInput.value);
+    noise4OutputSettings[1] = Number(noise4OffsetInput.value);
+    console.log("Noise4 Output Settings:");
+    console.log(noise4OutputSettings);
+
+    // Noise5 input settings
+    noise5InputSettings[0] = Number(noise5XInput.value);
+    noise5InputSettings[1] = Number(noise5YInput.value);
+    noise5InputSettings[2] = Number(noise5ZInput.value);
+    noise5InputSettings[3] = Number(noise5ScaleInput.value);
+    console.log("Noise5 Input Settings:");
+    console.log(noise5InputSettings);
+    
+    // Noise5 output settings
+    noise5OutputSettings[0] = Number(noise5SlopeInput.value);
+    noise5OutputSettings[1] = Number(noise5OffsetInput.value);
+    console.log("Noise5 Output Settings:");
+    console.log(noise5OutputSettings);
 }
 
 window.onload = main;
