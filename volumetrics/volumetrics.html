@@ -36,20 +36,7 @@
     <body>
 
         <canvas id="canvas" width="500" height="500"></canvas>
-        <button id="resetNoiseInput">Reset Noise</button>
-        <label for="noiseScaleInput">noise scale (-inf, inf):</label>
-        <input type="number" id="noiseScaleInput" value="1.0" step="0.01">
-        <label for="noiseXInput">noise translation (x) (-inf, inf):</label>
-        <input type="number" id="noiseXInput" value="0.0" step="0.001">
-        <label for="noiseYInput">noise translation (y) (-inf, inf):</label>
-        <input type="number" id="noiseYInput" value="0.0" step="0.001">
-        <label for="noiseZInput">noise translation (z) (-inf, inf):</label>
-        <input type="number" id="noiseZInput" value="0.0" step="0.001">
-        <br>
-        <label for="noiseSlopeInput">noise slope (-inf, inf):</label>
-        <input type="number" id="noiseSlopeInput" value="10.0" step="0.01">
-        <label for="noiseOffsetInput">noise offset (-inf, inf):</label>
-        <input type="number" id="noiseOffsetInput" value="-2.0" step="0.01">
+
         <br>
         <label for="tminInput">tmin (0.0, inf):</label>
         <input type="number" id="tminInput" value="0.2" min="0.0" step="0.001">
@@ -74,5 +61,22 @@
         <br>
         <label for="lightAbsorptionInput">Light Absorption (Beer's Law) (0.0, inf):</label>
         <input type="number" id="lightAbsorptionInput" value="1.0" min="0.0" step="0.001">
+        <br>
+
+        <button id="resetNoiseInput">Reset Noise</button>
+        <br>
+        <label for="noise1ScaleInput">Noise1 scale (-inf, inf):</label>
+        <input type="number" id="noise1ScaleInput" value="1.0" step="0.01">
+        <label for="noise1XInput">Noise1 translation (x) (-inf, inf):</label>
+        <input type="number" id="noise1XInput" value="0.0" step="0.001">
+        <label for="noise1YInput">Noise1 translation (y) (-inf, inf):</label>
+        <input type="number" id="noise1YInput" value="0.0" step="0.001">
+        <label for="noise1ZInput">Noise1 translation (z) (-inf, inf):</label>
+        <input type="number" id="noise1ZInput" value="0.0" step="0.001">
+        <br>
+        <label for="noise1SlopeInput">Noise1 slope (-inf, inf):</label>
+        <input type="number" id="noise1SlopeInput" value="1.0" step="0.01">
+        <label for="noise1OffsetInput">Noise1 offset (-inf, inf):</label>
+        <input type="number" id="noise1OffsetInput" value="0.0" step="0.01">
     </body>
 </html>
