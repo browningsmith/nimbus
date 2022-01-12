@@ -1,5 +1,6 @@
 let canvas = null;
 let ctx = null;
+let resetNoiseInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 let tminInput = null;
@@ -18,6 +19,7 @@ let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
 let texture = null;
+let textureDimension = 0;
 
 const piOver2 = Math.PI / 2.0;
 
@@ -513,10 +515,12 @@ function main()
     //canvas.addEventListener("mouseleave", mouseLeave);
 
     //Get noise settings inputs
+    resetNoiseInput = document.getElementById("resetNoiseInput");
     noiseSlopeInput = document.getElementById("noiseSlopeInput");
     noiseOffsetInput = document.getElementById("noiseOffsetInput");
 
     //Add event listeners for noise settings
+    resetNoiseInput.addEventListener("click", resetNoiseHandler);
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
@@ -571,93 +575,13 @@ function main()
     {
         rowLength = Math.pow(2, (po2+1) / 2);
     }
-    let textureDimension = rowLength * dimension;
+    textureDimension = rowLength * dimension;
     console.log("po2: " + po2);
     console.log("volume dimension: " + dimension);
     console.log("tile layout in rows of: " + rowLength);
     console.log("texture dimension: " + textureDimension);
     
-
-    let textureData = new Array(textureDimension * textureDimension * 4);
-
-    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
-    {
-        textureData[i    ] = Math.floor(Math.random() * 256.0);
-        textureData[i + 1] = Math.floor(Math.random() * 256.0);
-        textureData[i + 2] = Math.floor(Math.random() * 256.0);
-        textureData[i + 3] = 255;
-    }
-
-
-    /*let colorIndex = 0; // 0 red, 1 green, 2 yellow, 3 blue
-    for (let z = 0; z < dimension; z++)
-    {
-        // Unpack z index into tile x and y
-        let tileX = z;
-        let tileY = 0;
-        while (tileX >= rowLength)
-        {
-            tileX -= rowLength;
-            tileY++;
-        }
-
-        // Reset intensity
-        //let intensity = 255;
-        //let dropFactor = 255 / (dimension * dimension);
-
-        for (let y = 0; y < dimension; y++)
-        {
-            for (let x = 0; x < dimension; x++)
-            {
-                // Construct texture index
-                let xx = tileX * dimension + x;
-                let yy = tileY * dimension + y;
-                let i = (yy * textureDimension + xx) * 4;
-                //console.log(i);
-
-                let intensity = Math.floor(Math.random() * 256.0);
-
-                switch (colorIndex)
-                {
-                    case 0:
-                        textureData[i    ] = Math.floor(intensity);
-                        textureData[i + 1] = 0;
-                        textureData[i + 2] = 0;
-                        break;
-
-                    case 1:
-                        textureData[i    ] = 0;
-                        textureData[i + 1] = Math.floor(intensity);
-                        textureData[i + 2] = 0;
-                        break;
-
-                    case 2:
-                        textureData[i    ] = Math.floor(intensity);
-                        textureData[i + 1] = Math.floor(intensity);
-                        textureData[i + 2] = 0;
-                        break;
-
-                    default:
-                        textureData[i    ] = 0;
-                        textureData[i + 1] = 0;
-                        textureData[i + 2] = Math.floor(intensity);
-                }
-                textureData[i + 3] = 255;
-
-                //intensity -= dropFactor;
-            }
-        }
-
-
-        // Switch color index
-        colorIndex++;
-        if (colorIndex > 3)
-        {
-            colorIndex = 0;
-        }
-    }*/
-    
-    texture = loadArrayToTexture(textureDimension, textureDimension, textureData);
+    loadTexture();
 
     // Animation loop
     /*function newFrame(currentTime)
@@ -793,36 +717,60 @@ function main()
 }
 
 /**
- * Function: loadArrayToTexture
+ * Function: loadTexture
  * 
- * Input: int width, int height, int[] data
- * Output: 
+ * Input: None
+ * Output: None
  * 
- * Description: 
+ * Description: Creates a new texture to be used for generating perlin noise
  */
-function loadArrayToTexture(width, height, data)
+function loadTexture()
 {
-    let texture = ctx.createTexture();
+    texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
-
-    ctx.texImage2D(
-        ctx.TEXTURE_2D,
-        0, // LOD
-        ctx.RGBA, // internal format
-        width, // Width
-        height, // Height
-        0, // Border
-        ctx.RGBA, // source format
-        ctx.UNSIGNED_BYTE, // source type
-        new Uint8Array(data)
-    );
 
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
 
-    return texture;
+    // Load random noise into texture
+    loadNewNoise();
+}
+
+/**
+ * Function: loadNewNoise
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: Resets the data in the texture used to generate perlin noise
+ */
+function loadNewNoise()
+{
+    let textureData = new Array(textureDimension * textureDimension * 4);
+
+    for (let i = 0; i < textureDimension * textureDimension * 4; i += 4)
+    {
+        textureData[i    ] = Math.floor(Math.random() * 256.0);
+        textureData[i + 1] = Math.floor(Math.random() * 256.0);
+        textureData[i + 2] = Math.floor(Math.random() * 256.0);
+        textureData[i + 3] = 255;
+    }
+
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+
+    ctx.texImage2D(
+        ctx.TEXTURE_2D,
+        0, // LOD
+        ctx.RGBA, // internal format
+        textureDimension, // Width
+        textureDimension, // Height
+        0, // Border
+        ctx.RGBA, // source format
+        ctx.UNSIGNED_BYTE, // source type
+        new Uint8Array(textureData)
+    );
 }
 
 function renderFrame()
@@ -1095,6 +1043,13 @@ function hexToColor(hex, colorVec) {
 
 function inputChangeHandler(event)
 {
+    fetchSettings();
+    renderFrame();
+}
+
+function resetNoiseHandler(event)
+{
+    loadNewNoise();
     fetchSettings();
     renderFrame();
 }
