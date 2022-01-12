@@ -274,6 +274,19 @@ let shaderData = {
             return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope + offset, 0.0, 1.0);
         }
 
+        float sampleLayeredDensity(vec3 stu)
+        {
+            float density;
+
+            // Sample layer 1
+            density = sampleDensity(stu, u_noise1InputSettings.w, u_noise1InputSettings.xyz, u_noise1OutputSettings.x, u_noise1OutputSettings.y);
+
+            // Sample layer 2
+            density += sampleDensity(stu, u_noise2InputSettings.w, u_noise2InputSettings.xyz, u_noise2OutputSettings.x, u_noise2OutputSettings.y);
+
+            return clamp(density, 0.0, 1.0);
+        }
+
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
             float noiseScale = u_noise1InputSettings.w;
@@ -294,7 +307,7 @@ let shaderData = {
             {
                 vec3 currentPos = ro + rd*t;
                 
-                float density = sampleDensity(currentPos, noiseScale, translation, noiseSlope, noiseOffset);
+                float density = sampleLayeredDensity(currentPos);
 
                 // If inside a cloud
                 if (density > 0.01)
@@ -304,7 +317,7 @@ let shaderData = {
 
                     for (int j=0; j<1000; j++)
                     {
-                        densityToSun += sampleDensity(currentPos + -1.0*sunDir*tsun, noiseScale, translation, noiseSlope, noiseOffset);
+                        densityToSun += sampleLayeredDensity(currentPos + -1.0*sunDir*tsun);
                         densityToSun = clamp(densityToSun, 0.0, 1.0);
 
                         tsun += sunStepSize;
