@@ -2,6 +2,7 @@ let canvas = null;
 let ctx = null;
 let resetNoiseInput = null;
 let noiseScaleInput = null;
+let noiseXInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 let tminInput = null;
@@ -38,8 +39,11 @@ const projectionMatrix = mat4.create();
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
 
-//noise scale, slope and offset
-const noiseSettings = vec3.create();
+//noise scale and translation settings
+const noiseInputSettings = vec4.create();
+
+//noise slope and offset
+const noiseSettings = vec2.create();
 
 //tmin tmax and step size
 const stepSettings = vec3.create();
@@ -113,8 +117,11 @@ let shaderData = {
         uniform float u_rowLength;
         uniform sampler2D u_sampler;
 
+        // noise input settings
+        uniform vec4 u_noiseInputSettings; // .x x translation, .y y translation, .z z translation, .w scale
+
         // other noise settings
-        uniform vec3 u_noiseSettings; // .x scale, .y slope, .z offset
+        uniform vec2 u_noiseSettings; // .x slope, .y offset
 
         uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
@@ -246,9 +253,9 @@ let shaderData = {
 
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
-            float noiseScale = u_noiseSettings.x;
-            float noiseSlope = u_noiseSettings.y;
-            float noiseOffset = u_noiseSettings.z;
+            float noiseScale = u_noiseInputSettings.w;
+            float noiseSlope = u_noiseSettings.x;
+            float noiseOffset = u_noiseSettings.y;
             float tmin = u_stepSettings.x;
             float tmax = u_stepSettings.y;
             float stepSize = u_stepSettings.z;
@@ -358,6 +365,7 @@ let shaderData = {
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
+            noiseInputSettings: ctx.getUniformLocation(this.program, "u_noiseInputSettings"),
             noiseSettings: ctx.getUniformLocation(this.program, "u_noiseSettings"),
             stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
@@ -508,12 +516,14 @@ function main()
     //Get noise settings inputs
     resetNoiseInput = document.getElementById("resetNoiseInput");
     noiseScaleInput = document.getElementById("noiseScaleInput");
+    noiseXInput = document.getElementById("noiseXInput");
     noiseSlopeInput = document.getElementById("noiseSlopeInput");
     noiseOffsetInput = document.getElementById("noiseOffsetInput");
 
     //Add event listeners for noise settings
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
-    noiseScaleInput.addEventListener("click", inputChangeHandler);
+    noiseScaleInput.addEventListener("change", inputChangeHandler);
+    noiseXInput.addEventListener("change", inputChangeHandler);
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
@@ -810,8 +820,11 @@ function renderFrame()
     // Set tile layout dimension
     ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
 
+    // Set noise inputs uniform
+    ctx.uniform4fv(shaderData.uniforms.noiseInputSettings, noiseInputSettings);
+
     // Set noise settings uniform
-    ctx.uniform3fv(shaderData.uniforms.noiseSettings, noiseSettings);
+    ctx.uniform2fv(shaderData.uniforms.noiseSettings, noiseSettings);
 
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
@@ -1058,10 +1071,13 @@ function resetNoiseHandler(event)
  */
 function fetchSettings()
 {
+    // Noise input settings
+    noiseInputSettings[0] = Number(noiseXInput.value);
+    noiseInputSettings[3] = Number(noiseScaleInput.value);
+    
     // Noise slope and offset
-    noiseSettings[0] = Number(noiseScaleInput.value);
-    noiseSettings[1] = Number(noiseSlopeInput.value);
-    noiseSettings[2] = Number(noiseOffsetInput.value);
+    noiseSettings[0] = Number(noiseSlopeInput.value);
+    noiseSettings[1] = Number(noiseOffsetInput.value);
     console.log(noiseSettings);
 
     // tmin tmax and step size
