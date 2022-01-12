@@ -244,20 +244,17 @@ let shaderData = {
             return clamp(noise3D(wrapVolumeCoords(stu))*slope + offset, 0.0, 1.0);
         }
 
-        vec4 raymarching(
-            vec3 ro,
-            vec3 rd,
-            float noiseSlope,
-            float noiseOffset,
-            float tmin,
-            float tmax,
-            float stepSize,
-            vec3 sunDir,
-            float tsunMax,
-            float sunStepSize,
-            float lightAbsorption
-        )
+        vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
+            float noiseSlope = u_noiseSettings.y;
+            float noiseOffset = u_noiseSettings.z;
+            float tmin = u_stepSettings.x;
+            float tmax = u_stepSettings.y;
+            float stepSize = u_stepSettings.z;
+            float tsunMax = u_sunStepSettings.x;
+            float sunStepSize = u_sunStepSettings.y;
+            float lightAbsorption = u_lightAbsorption;
+            
             vec4 cloudColor = vec4(0.0);
             float t = tmin;
 
@@ -333,20 +330,7 @@ let shaderData = {
 
             vec3 finalColor = u_skyColor;
 
-            vec4 cloudColoring = raymarching(
-
-                ro,
-                rd,
-                u_noiseSettings.y,
-                u_noiseSettings.z,
-                u_stepSettings.x,
-                u_stepSettings.y,
-                u_stepSettings.z,
-                sunDir,
-                u_sunStepSettings.x,
-                u_sunStepSettings.y,
-                u_lightAbsorption
-            );
+            vec4 cloudColoring = raymarching(ro, rd, sunDir);
 
             finalColor = clamp(cloudColoring.rgb + finalColor*(1.0 - cloudColoring.a), 0.0, 1.0);
             
