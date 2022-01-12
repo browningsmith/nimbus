@@ -6,6 +6,8 @@ let tminInput = null;
 let tmaxInput = null;
 let stepSizeInput = null;
 let skyColorInput = null;
+let darkColorInput = null;
+let lightColorInput = null;
 let tsunMaxInput = null;
 let sunStepSizeInput = null;
 let lightAbsorptionInput = null;
@@ -33,16 +35,18 @@ const projectionMatrix = mat4.create();
 const skyBoxRotationMatrix = mat4.create();
 
 //noise slope and offset
-const noiseSettings = vec2.fromValues(1.0, 0.0);
+const noiseSettings = vec2.create();
 
 //tmin tmax and step size
-const stepSettings = vec3.fromValues(2.0, 2.3, 0.02);
+const stepSettings = vec3.create();
 
-//Sky color
-const skyColor = vec3.fromValues(195.0/256.0, 192.0/256.0, 220.0/256.0);
+//Colors
+const skyColor = vec3.create();
+const darkColor = vec3.create();
+const lightColor = vec3.create();
 
 //sun tmax and step size
-const sunStepSettings = vec2.fromValues(0.3, 0.02);
+const sunStepSettings = vec2.create();
 
 // Beers law light absorption factor
 let lightAbsorption = 1.0;
@@ -111,6 +115,8 @@ let shaderData = {
         uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
 
         uniform vec3 u_skyColor;
+        uniform vec3 u_darkColor;
+        uniform vec3 u_lightColor;
 
         uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
 
@@ -278,7 +284,7 @@ let shaderData = {
                     }
 
                     float brightness = exp(-1.0 * lightAbsorption * densityToSun);
-                    vec4 pointColor = vec4(mix(vec3(0.0), vec3(1.0), brightness), density);
+                    vec4 pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
 
                     pointColor.rgb *= pointColor.a;
                     cloudColor += pointColor*(1.0 - cloudColor.a);
@@ -361,6 +367,8 @@ let shaderData = {
             noiseSettings: ctx.getUniformLocation(this.program, "u_noiseSettings"),
             stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
+            darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
+            lightColor: ctx.getUniformLocation(this.program, "u_lightColor"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
             lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"), 
         }
@@ -521,11 +529,15 @@ function main()
     tmaxInput.addEventListener("change", inputChangeHandler);
     stepSizeInput.addEventListener("change", inputChangeHandler);
 
-    //Get sky color
+    //Get color inputs
     skyColorInput = document.getElementById("skyColorInput");
+    darkColorInput = document.getElementById("darkColorInput");
+    lightColorInput = document.getElementById("lightColorInput");
 
-    //Add event listener to sky color
+    //Add event listeners for colors
     skyColorInput.addEventListener("change", inputChangeHandler);
+    darkColorInput.addEventListener("change", inputChangeHandler);
+    lightColorInput.addEventListener("change", inputChangeHandler);
 
     //Get sun tmax and step size inputs
     tsunMaxInput = document.getElementById("tsunMaxInput");
@@ -862,8 +874,10 @@ function renderFrame()
     // Set step settings uniform
     ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
 
-    // Set sky color uniform
+    // Set color uniforms
     ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
+    ctx.uniform3fv(shaderData.uniforms.darkColor, darkColor);
+    ctx.uniform3fv(shaderData.uniforms.lightColor, lightColor);
 
     // Set sun step settings uniform
     ctx.uniform2fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
@@ -1106,9 +1120,13 @@ function fetchSettings()
     stepSettings[2] = Number(stepSizeInput.value);
     console.log(stepSettings);
 
-    // sky color
+    // colors
     hexToColor(skyColorInput.value, skyColor);
+    hexToColor(darkColorInput.value, darkColor);
+    hexToColor(lightColorInput.value, lightColor);
     console.log(skyColor);
+    console.log(darkColor);
+    console.log(lightColor);
 
     // sun tmax and step size
     sunStepSettings[0] = Number(tsunMaxInput.value);
