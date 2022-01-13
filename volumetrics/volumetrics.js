@@ -7,6 +7,9 @@ let stepSizeInput = null;
 let skyColorInput = null;
 let darkColorInput = null;
 let lightColorInput = null;
+let sunXInput = null;
+let sunYInput = null;
+let sunZInput = null;
 let tsunMaxInput = null;
 let sunStepSizeInput = null;
 let lightAbsorptionInput = null;
@@ -71,13 +74,16 @@ const projectionMatrix = mat4.create();
 //Skybox rotation matrix
 const skyBoxRotationMatrix = mat4.create();
 
-//tmin tmax and step size
-const stepSettings = vec3.create();
+//tmin falloff tmax and step size
+const stepSettings = vec4.create();
 
 //Colors
 const skyColor = vec3.create();
 const darkColor = vec3.create();
 const lightColor = vec3.create();
+
+// sun direction
+const sunDir = vec3.create();
 
 //sun tmax and step size
 const sunStepSettings = vec2.create();
@@ -203,11 +209,13 @@ let shaderData = {
         // noise5 output settings
         uniform vec2 u_noise5OutputSettings; // .x slope, .y offset
 
-        uniform vec3 u_stepSettings; // .x tmin, .y tmax, .z stepSize
+        uniform vec4 u_stepSettings; // .x tmin, .y densityFalloff, .z tmax, .w stepSize
 
         uniform vec3 u_skyColor;
         uniform vec3 u_darkColor;
         uniform vec3 u_lightColor;
+
+        uniform vec3 u_sunDir;
 
         uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
 
@@ -356,21 +364,33 @@ let shaderData = {
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
         {
             float tmin = u_stepSettings.x;
-            float tmax = u_stepSettings.y;
-            float stepSize = u_stepSettings.z;
+            float tdensityFalloff = u_stepSettings.y;
+            float tmax = u_stepSettings.z;
+            float stepSize = u_stepSettings.w;
             float tsunMax = u_sunStepSettings.x;
             float sunStepSize = u_sunStepSettings.y;
             float lightAbsorption = u_lightAbsorption;
             
             vec4 cloudColor = vec4(0.0);
-            //float t = tmin + stepSize*(texture2D(u_sampler, fract(v_untransVertexPosition.xy * 2048.0)).r);
             float t = tmin;
 
-            for (int i=0; i<1000; i++)
+            // Calculate length vectors between which sampled density begins disappearing
+            float densityFalloffStart = length(ro + rd*tdensityFalloff);
+            float densityFalloffEnd = length(ro + rd*tmin);
+            float densityFalloffSize = densityFalloffStart - densityFalloffEnd;
+
+            for (int i=0; i<200; i++)
             {
                 vec3 currentPos = ro + rd*t;
+                float sampleDistance = length(currentPos);
+                
                 
                 float density = sampleLayeredDensity(currentPos);
+                // If within density falloff area
+                if (sampleDistance < densityFalloffStart)
+                {
+                    density = mix(0.0, density, (sampleDistance - densityFalloffEnd) / densityFalloffSize);
+                }
 
                 // If inside a cloud
                 if (density > 0.01)
@@ -378,10 +398,23 @@ let shaderData = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
-                    for (int j=0; j<1000; j++)
+                    for (int j=0; j<200; j++)
                     {
-                        densityToSun += sampleLayeredDensity(currentPos + -1.0*sunDir*tsun);
-                        densityToSun = clamp(densityToSun, 0.0, 1.0);
+                        vec3 newPos = currentPos + -1.0*sunDir*tsun;
+                        sampleDistance = length(newPos);
+                        // If sample is further than falloff end, then there is a density
+                        if (sampleDistance >= densityFalloffEnd)
+                        {
+                            float newDensity = sampleLayeredDensity(newPos);
+                            // If within density falloff area
+                            if (sampleDistance < densityFalloffStart)
+                            {
+                                newDensity = mix(0.0, newDensity, (sampleDistance - densityFalloffEnd) / densityFalloffSize);
+                            }
+                            
+                            densityToSun += newDensity;
+                            densityToSun = clamp(densityToSun, 0.0, 1.0);
+                        }
 
                         tsun += sunStepSize;
 
@@ -424,7 +457,7 @@ let shaderData = {
         
         void main()
         {
-            vec3 sunDir = vec3(0.0, -0.5, 0.5);
+            vec3 sunDir = normalize(u_sunDir);
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_untransVertexPosition.xyz);
@@ -479,6 +512,7 @@ let shaderData = {
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
             darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
             lightColor: ctx.getUniformLocation(this.program, "u_lightColor"),
+            sunDir: ctx.getUniformLocation(this.program, "u_sunDir"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
             lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"), 
         }
@@ -621,13 +655,15 @@ function main()
     //canvas.addEventListener("mousemove", updateMouse);
     //canvas.addEventListener("mouseleave", mouseLeave);
 
-    //Get tmin tmax and set size inputs
+    //Get tmin densityfalloff tmax and set size inputs
     tminInput = document.getElementById("tminInput");
+    densityFalloffInput = document.getElementById("densityFalloffInput");
     tmaxInput = document.getElementById("tmaxInput");
     stepSizeInput = document.getElementById("stepSizeInput");
 
-    //Add event listeners for tmin tmax and step size
+    //Add event listeners for tmin densityfalloff tmax and step size
     tminInput.addEventListener("change", inputChangeHandler);
+    densityFalloffInput.addEventListener("change", inputChangeHandler);
     tmaxInput.addEventListener("change", inputChangeHandler);
     stepSizeInput.addEventListener("change", inputChangeHandler);
 
@@ -640,6 +676,16 @@ function main()
     skyColorInput.addEventListener("change", inputChangeHandler);
     darkColorInput.addEventListener("change", inputChangeHandler);
     lightColorInput.addEventListener("change", inputChangeHandler);
+
+    // Get sun direction inputs
+    sunXInput = document.getElementById("sunXInput");
+    sunYInput = document.getElementById("sunYInput");
+    sunZInput = document.getElementById("sunZInput");
+    
+    // Add event listeners for sun direction
+    sunXInput.addEventListener("change", inputChangeHandler);
+    sunYInput.addEventListener("change", inputChangeHandler);
+    sunZInput.addEventListener("change", inputChangeHandler);
 
     //Get sun tmax and step size inputs
     tsunMaxInput = document.getElementById("tsunMaxInput");
@@ -1011,12 +1057,15 @@ function renderFrame()
     ctx.uniform2fv(shaderData.uniforms.noise5OutputSettings, noise5OutputSettings);
 
     // Set step settings uniform
-    ctx.uniform3fv(shaderData.uniforms.stepSettings, stepSettings);
+    ctx.uniform4fv(shaderData.uniforms.stepSettings, stepSettings);
 
     // Set color uniforms
     ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
     ctx.uniform3fv(shaderData.uniforms.darkColor, darkColor);
     ctx.uniform3fv(shaderData.uniforms.lightColor, lightColor);
+
+    // Set sun direction uniform
+    ctx.uniform3fv(shaderData.uniforms.sunDir, sunDir);
 
     // Set sun step settings uniform
     ctx.uniform2fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
@@ -1257,10 +1306,11 @@ function resetNoiseHandler(event)
  */
 function fetchSettings()
 {
-    // tmin tmax and step size
+    // tmin densityfalloff tmax and step size
     stepSettings[0] = Number(tminInput.value);
-    stepSettings[1] = Number(tmaxInput.value);
-    stepSettings[2] = Number(stepSizeInput.value);
+    stepSettings[1] = Number(densityFalloffInput.value);
+    stepSettings[2] = Number(tmaxInput.value);
+    stepSettings[3] = Number(stepSizeInput.value);
     console.log("Step Settings:");
     console.log(stepSettings);
 
@@ -1272,6 +1322,13 @@ function fetchSettings()
     console.log(skyColor);
     console.log(darkColor);
     console.log(lightColor);
+
+    // Sun direction
+    sunDir[0] = Number(sunXInput.value);
+    sunDir[1] = Number(sunYInput.value);
+    sunDir[2] = Number(sunZInput.value);
+    console.log("Sun Direction:");
+    console.log(sunDir);
 
     // sun tmax and step size
     sunStepSettings[0] = Number(tsunMaxInput.value);
