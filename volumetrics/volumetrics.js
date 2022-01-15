@@ -584,6 +584,25 @@ let cloudShader = {
     },
 };
 
+let frameBufferModel = {
+
+    vertexCoordinates: [
+
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+        1.0, 1.0, -1.0,
+        -1.0, 1.0, -1.0,
+    ],
+
+    elementIndices: [
+
+        0, 2, 3,
+        0, 1, 2,
+    ],
+
+    elementCount: 6,
+};
+
 let skyBoxModels = {
     nzPlane: {
 
