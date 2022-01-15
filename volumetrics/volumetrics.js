@@ -210,17 +210,15 @@ let cloudShader = {
 
     vertexShaderCode: `
     
-        attribute vec4 a_vertexPosition;
+        attribute vec4 a_viewportVertexPosition; // Position to render to the viewport/framebuffer
+        attribute vec4 a_panelVertexPosition; // Position in space of the skybox panel
 
-        uniform mat4 u_projectionMatrix;
-        uniform mat4 u_worldViewMatrix;
-
-        varying highp vec4 v_untransVertexPosition;
+        varying highp vec4 v_vertexPosition;
 
         void main(void)
         {
-            v_untransVertexPosition = a_vertexPosition;
-            gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition;
+            v_vertexPosition = a_panelVertexPosition;
+            gl_Position = a_viewportVertexPosition;
         }
     `,
 
@@ -230,7 +228,7 @@ let cloudShader = {
     
         precision highp float;
     
-        varying highp vec4 v_untransVertexPosition;
+        varying highp vec4 v_vertexPosition;
         
         uniform float u_dimension;
         uniform float u_rowLength;
@@ -523,7 +521,7 @@ let cloudShader = {
             vec3 sunDir = normalize(u_sunDir);
             
             // Direction of ray is origin to vertex coordinates
-            vec3 rd = normalize(v_untransVertexPosition.xyz);
+            vec3 rd = normalize(v_vertexPosition.xyz);
 
             // This prevents a strange cross artifact forming in the center
             if ((rd.x > -0.0001) && (rd.x < 0.0001)) {rd.x = 0.0;}
@@ -552,12 +550,11 @@ let cloudShader = {
         //Get location of attributes and uniforms, store in the ShaderData object
         this.attributes = {
 
-            vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            viewportVertexPosition: ctx.getAttribLocation(this.program, "a_viewportVertexPosition"),
+            panelVertexPosition: ctx.getAttribLocation(this.program, "a_panelVertexPosition"),
         };
         this.uniforms = {
 
-            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
-            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
@@ -1376,14 +1373,14 @@ function renderClouds()
     // Set fog level uniform
     ctx.uniform1f(cloudShader.uniforms.fog, fog);
 
-    // For each panel of the skybox
+    // For each panel of the skybox render the clouds
     for (panel in skyBoxModels)
     {
         
     }
 }
 
-function renderPanelTexture(texture)
+function renderPanelTexture(panel)
 {
     // Attach correct texture to frame buffer
 
