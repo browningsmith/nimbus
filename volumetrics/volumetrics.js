@@ -786,8 +786,8 @@ function main()
     }
 
     //Add mouse event listeners
-    //canvas.addEventListener("mousemove", updateMouse);
-    //canvas.addEventListener("mouseleave", mouseLeave);
+    canvas.addEventListener("mousemove", updateMouse);
+    canvas.addEventListener("mouseleave", mouseLeave);
 
     //Get tmin densityfalloff tmax and set size inputs
     tminInput = document.getElementById("tminInput");
@@ -946,21 +946,17 @@ function main()
     loadNoiseTexture();
 
     // Animation loop
-    /*function newFrame(currentTime)
+    function newFrame(currentTime)
     {
         currentTime *= 0.001; // Convert to seconds
         currentTime = currentTime % animationDuration;
         
-        renderFrame(currentTime, texture);
+        renderFrame();
 
         requestAnimationFrame(newFrame);
     }
 
-    requestAnimationFrame(newFrame);*/
-
-    //Render first scene
-    fetchSettings();
-    renderClouds();
+    requestAnimationFrame(newFrame);
 }
 
 /**
@@ -1155,18 +1151,12 @@ function loadNewNoise()
  */
 function loadSkyboxTextures()
 {
-    //console.log("nzPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.nzPlane, 255, 0, 0);  // Forward red
-    //console.log("pxPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.pxPlane, 0, 255, 0);  // right green
-    //console.log("pzPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.pzPlane, 0, 0, 255);  // back blue
-    //console.log("nxPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.nxPlane, 255, 0, 255);  // left purple
-    //console.log("pyPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.pyPlane, 255, 255, 0);  // up yellow
-    //console.log("nyPlane");
-    loadSingleSkyboxTexture(skyBoxTextures.nyPlane, 0, 255, 255);  // down cyan
+    skyBoxTextures.nzPlane = loadSingleSkyboxTexture(255, 0, 0); // Forward red
+    skyBoxTextures.pxPlane = loadSingleSkyboxTexture(0, 255, 0); // right green
+    skyBoxTextures.pzPlane = loadSingleSkyboxTexture(0, 0, 255); // back blue
+    skyBoxTextures.nxPlane = loadSingleSkyboxTexture(255, 0, 255); // left purple
+    skyBoxTextures.pyPlane = loadSingleSkyboxTexture(255, 255, 0); // up yellow
+    skyBoxTextures.nyPlane = loadSingleSkyboxTexture(0, 255, 255); // down cyan  
 }
 
 /**
@@ -1177,9 +1167,9 @@ function loadSkyboxTextures()
  * 
  * Description: allocates space on the GPU for one skybox texture of the given color
  */
-function loadSingleSkyboxTexture(texture, red, green, blue)
+function loadSingleSkyboxTexture(red, green, blue)
 {
-    texture = ctx.createTexture();
+    let texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
 
     ctx.texImage2D(
@@ -1198,6 +1188,67 @@ function loadSingleSkyboxTexture(texture, red, green, blue)
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+
+    return texture;
+}
+
+function renderFrame()
+{
+    ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
+    ctx.canvas.height = ctx.canvas.clientHeight;
+
+    ctx.viewport(0, 0, ctx.canvas.width, ctx.canvas.height); //Resize viewport
+
+    //Clear the canvas
+    ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
+    ctx.clearDepth(1.0); //set clear depth to 1.0
+    ctx.clear(ctx.COLOR_BUFFER_BIT, ctx.DEPTH_BUFFER_BIT);
+
+    //Enable backface culling
+    ctx.enable(ctx.CULL_FACE);
+    ctx.cullFace(ctx.BACK);
+
+    //Tell WebGL to use the shader program
+    ctx.useProgram(skyBoxShader.program);
+
+    //Compute projection matrix based on new window size
+    mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
+
+    //Set projection uniform
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.projectionMatrix, false, projectionMatrix);
+
+    // Compute skyBoxRotationMatrix
+    mat4.identity(skyBoxRotationMatrix);
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Second transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // First transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+
+    // Set world view uniform
+    ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+
+    // For each panel of the skybox
+    for (panel in skyBoxModels)
+    {
+        //Instruct WebGL how to pull out vertices
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
+        ctx.vertexAttribPointer(skyBoxShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+        ctx.enableVertexAttribArray(skyBoxShader.attributes.vertexPosition); //Enable the pointer to the buffer
+
+        //Instruct WebGL how to pull out texture coordinates
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.uv);
+        ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
+        ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
+
+        //Instruct WebGL on which texture to use
+        ctx.activeTexture(ctx.TEXTURE0);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
+
+        //Give WebGL the element array
+        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
+
+        //Draw triangles
+        ctx.drawElements(ctx.TRIANGLES, skyBoxModels[panel].elementCount, ctx.UNSIGNED_SHORT, 0);
+    }
 }
 
 function renderClouds()
@@ -1505,7 +1556,7 @@ function inputChangeHandler(event)
 {
     console.clear();
     fetchSettings();
-    renderClouds();
+    //renderClouds();
 }
 
 function resetNoiseHandler(event)
@@ -1513,7 +1564,7 @@ function resetNoiseHandler(event)
     console.clear();
     loadNewNoise();
     fetchSettings();
-    renderClouds();
+    //renderClouds();
 }
 
 /**
