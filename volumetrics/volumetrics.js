@@ -1,5 +1,7 @@
 let canvas = null;
 let ctx = null;
+let frameBuffer = null;
+
 let tminInput = null;
 let densityFalloffInput = null;
 let tmaxInput = null;
@@ -926,6 +928,9 @@ function main()
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
 
+    // Create the framebuffer
+    frameBuffer = ctx.createFramebuffer();
+
     // Load the framebuffer model
     loadFrameBufferModel();
 
@@ -1232,12 +1237,12 @@ function loadSingleSkyboxTexture(red, green, blue)
         ctx.TEXTURE_2D,
         0, // LOD
         ctx.RGBA, // internal format
-        1, // Width
-        1, // Height
+        1024, // Width
+        1024, // Height
         0, // Border
         ctx.RGBA, // source format
         ctx.UNSIGNED_BYTE, // source type
-        new Uint8Array([red, green, blue, 255])
+        null
     );
 
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
@@ -1252,6 +1257,8 @@ function renderFrame()
 {
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
+
+    ctx.bindFramebuffer(ctx.FRAMEBUFFER, null); // Bind rendering back to canvas
 
     ctx.viewport(0, 0, ctx.canvas.width, ctx.canvas.height); //Resize viewport
 
@@ -1383,6 +1390,7 @@ function renderClouds()
 function renderPanelTexture(panel)
 {
     // Attach correct texture to frame buffer
+    ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
     // Resize viewport to 1024 x 1024
     ctx.viewport(0, 0, 1024, 1024);
