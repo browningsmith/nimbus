@@ -595,6 +595,14 @@ let skyBoxModels = {
             -1.0, 1.0, -1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -602,6 +610,8 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
 
     pxPlane: {
@@ -614,6 +624,14 @@ let skyBoxModels = {
             1.0, 1.0, -1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -621,6 +639,8 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
 
     pzPlane: {
@@ -633,6 +653,14 @@ let skyBoxModels = {
             1.0, 1.0, 1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -640,6 +668,8 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
 
     nxPlane: {
@@ -652,6 +682,14 @@ let skyBoxModels = {
             -1.0, 1.0, 1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -659,6 +697,8 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
 
     pyPlane: {
@@ -671,6 +711,14 @@ let skyBoxModels = {
             -1.0, 1.0, 1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -678,6 +726,8 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
 
     nyPlane: {
@@ -690,6 +740,14 @@ let skyBoxModels = {
             -1.0, -1.0, -1.0,
         ],
 
+        uvValues: [
+
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0,
+        ],
+
         elementIndices: [
 
             0, 2, 3,
@@ -697,8 +755,20 @@ let skyBoxModels = {
         ],
 
         elementCount: 6,
+
+        texture: null,
     },
-}
+};
+
+let skyBoxTextures = {
+
+    nzPlane: null,
+    pxPlane: null,
+    pzPlane: null,
+    nxPlane: null,
+    pyPlane: null,
+    nyPlane: null,
+};
 
 function main()
 {
@@ -846,6 +916,18 @@ function main()
         loadModel(skyBoxModels[panel]);
     }
 
+    // Load skybox textures
+    loadSkyboxTextures();
+
+    // Attach textures to the proper models
+    skyBoxModels.nzPlane.texture = skyBoxTextures.nzPlane;
+    skyBoxModels.pxPlane.texture = skyBoxTextures.pxPlane;
+    skyBoxModels.pzPlane.texture = skyBoxTextures.pzPlane;
+    skyBoxModels.nxPlane.texture = skyBoxTextures.nxPlane;
+    skyBoxModels.pyPlane.texture = skyBoxTextures.pyPlane;
+    skyBoxModels.nyPlane.texture = skyBoxTextures.nyPlane;
+    
+
     // Compute rowLength and textureDimension
     if (po2 % 2 == 0)
     {
@@ -979,6 +1061,15 @@ function main()
     //Pass in the vertex data
     ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.vertexCoordinates), ctx.STATIC_DRAW);
 
+    // Create pointer to a new buffer
+    let uvBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, uvBuffer);
+
+    // Pass in uv data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(model.uvValues), ctx.STATIC_DRAW);
+
 
     //Create pointer to a new buffer
     let elementIndicesBuffer = ctx.createBuffer();
@@ -992,6 +1083,7 @@ function main()
     model.buffers = {
 
         vertex: vertexBuffer,
+        uv: uvBuffer,
         elementIndices: elementIndicesBuffer,
     };
 }
@@ -1051,6 +1143,61 @@ function loadNewNoise()
         ctx.UNSIGNED_BYTE, // source type
         new Uint8Array(textureData)
     );
+}
+
+/**
+ * Function: loadSkyboxTextures
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: allocates space on the GPU for the skybox panel textures
+ */
+function loadSkyboxTextures()
+{
+    //console.log("nzPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.nzPlane, 255, 0, 0);  // Forward red
+    //console.log("pxPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.pxPlane, 0, 255, 0);  // right green
+    //console.log("pzPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.pzPlane, 0, 0, 255);  // back blue
+    //console.log("nxPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.nxPlane, 255, 0, 255);  // left purple
+    //console.log("pyPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.pyPlane, 255, 255, 0);  // up yellow
+    //console.log("nyPlane");
+    loadSingleSkyboxTexture(skyBoxTextures.nyPlane, 0, 255, 255);  // down cyan
+}
+
+/**
+ * Function: loadSingleSkyboxTexture
+ * 
+ * Input: WebGLTexture texture, int red, int green, int blue
+ * Output: None
+ * 
+ * Description: allocates space on the GPU for one skybox texture of the given color
+ */
+function loadSingleSkyboxTexture(texture, red, green, blue)
+{
+    texture = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+
+    ctx.texImage2D(
+        ctx.TEXTURE_2D,
+        0, // LOD
+        ctx.RGBA, // internal format
+        1, // Width
+        1, // Height
+        0, // Border
+        ctx.RGBA, // source format
+        ctx.UNSIGNED_BYTE, // source type
+        new Uint8Array([red, green, blue, 255])
+    );
+
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
 }
 
 function renderClouds()
