@@ -56,7 +56,7 @@ let po2 = 4;
 let dimension = Math.pow(2, po2);
 let rowLength = 0.0;
 let animationDuration = dimension * 1.0;
-let texture = null;
+let noiseBase = null;
 let textureDimension = 0;
 
 const piOver2 = Math.PI / 2.0;
@@ -861,7 +861,7 @@ function main()
     console.log("tile layout in rows of: " + rowLength);
     console.log("texture dimension: " + textureDimension);
     
-    loadTexture();
+    loadNoiseTexture();
 
     // Animation loop
     /*function newFrame(currentTime)
@@ -878,7 +878,7 @@ function main()
 
     //Render first scene
     fetchSettings();
-    renderFrame();
+    renderClouds();
 }
 
 /**
@@ -997,17 +997,17 @@ function main()
 }
 
 /**
- * Function: loadTexture
+ * Function: loadNoiseTexture
  * 
- * Input: None
+ * Input: WebGLTexture texture
  * Output: None
  * 
  * Description: Creates a new texture to be used for generating perlin noise
  */
-function loadTexture()
+function loadNoiseTexture()
 {
-    texture = ctx.createTexture();
-    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+    noiseBase = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, noiseBase);
 
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
@@ -1024,7 +1024,7 @@ function loadTexture()
  * Input: None
  * Output: None
  * 
- * Description: Resets the data in the texture used to generate perlin noise
+ * Description: Resets the data in the noise base used to generate perlin noise
  */
 function loadNewNoise()
 {
@@ -1038,7 +1038,7 @@ function loadNewNoise()
         textureData[i + 3] = 255;
     }
 
-    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+    ctx.bindTexture(ctx.TEXTURE_2D, noiseBase);
 
     ctx.texImage2D(
         ctx.TEXTURE_2D,
@@ -1053,7 +1053,7 @@ function loadNewNoise()
     );
 }
 
-function renderFrame()
+function renderClouds()
 {
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -1088,7 +1088,7 @@ function renderFrame()
 
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
-    ctx.bindTexture(ctx.TEXTURE_2D, texture);
+    ctx.bindTexture(ctx.TEXTURE_2D, noiseBase);
     ctx.uniform1i(cloudShader.uniforms.sampler, 0);
 
     // Set dimension uniform
@@ -1358,7 +1358,7 @@ function inputChangeHandler(event)
 {
     console.clear();
     fetchSettings();
-    renderFrame();
+    renderClouds();
 }
 
 function resetNoiseHandler(event)
@@ -1366,7 +1366,7 @@ function resetNoiseHandler(event)
     console.clear();
     loadNewNoise();
     fetchSettings();
-    renderFrame();
+    renderClouds();
 }
 
 /**
