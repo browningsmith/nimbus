@@ -615,10 +615,10 @@ let skyBoxModels = {
 
         uvValues: [
 
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -644,10 +644,10 @@ let skyBoxModels = {
 
         uvValues: [
 
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -673,10 +673,10 @@ let skyBoxModels = {
 
         uvValues: [
 
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -702,10 +702,10 @@ let skyBoxModels = {
 
         uvValues: [
 
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -723,18 +723,20 @@ let skyBoxModels = {
 
         vertexCoordinates: [
 
+            
             -1.0, 1.0, -1.0,
             1.0, 1.0, -1.0,
             1.0, 1.0, 1.0,
-            -1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0
+            
         ],
 
         uvValues: [
-
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
+            
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -760,10 +762,10 @@ let skyBoxModels = {
 
         uvValues: [
 
-            0.0, 1.0,
-            1.0, 1.0,
-            1.0, 0.0,
             0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0,
         ],
 
         elementIndices: [
@@ -970,11 +972,8 @@ function main()
     loadNoiseTexture();
 
     // Animation loop
-    function newFrame(currentTime)
+    function newFrame(now)
     {
-        currentTime *= 0.001; // Convert to seconds
-        currentTime = currentTime % animationDuration;
-        
         renderFrame();
 
         requestAnimationFrame(newFrame);
@@ -1254,7 +1253,7 @@ function loadSingleSkyboxTexture(red, green, blue)
 }
 
 function renderFrame()
-{
+{   
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -1380,17 +1379,22 @@ function renderClouds()
     // Set fog level uniform
     ctx.uniform1f(cloudShader.uniforms.fog, fog);
 
+    ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
+
     // For each panel of the skybox render the clouds
     for (panel in skyBoxModels)
     {
-        
+        renderPanelTexture(skyBoxModels[panel]);
     }
+
+    //renderPanelTexture(skyBoxModels.nzPlane);
+    //renderPanelTexture(skyBoxModels.pxPlane);
 }
 
 function renderPanelTexture(panel)
 {
     // Attach correct texture to frame buffer
-    ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
+    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
     // Resize viewport to 1024 x 1024
     ctx.viewport(0, 0, 1024, 1024);
@@ -1401,12 +1405,20 @@ function renderPanelTexture(panel)
     ctx.clear(ctx.COLOR_BUFFER_BIT, ctx.DEPTH_BUFFER_BIT);
 
     // Set camera direction uniform
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
+    ctx.vertexAttribPointer(cloudShader.attributes.panelVertexPosition, 3, ctx.FLOAT, false, 0, 0);
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.panelVertexPosition);
 
     // Instruct WebGL how to pull out vertices
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, frameBufferModel.buffers.vertex);
+    ctx.vertexAttribPointer(cloudShader.attributes.viewportVertexPosition, 3, ctx.FLOAT, false, 0, 0);
+    ctx.enableVertexAttribArray(skyBoxShader.attributes.viewportVertexPosition);
 
     // Give WebGL the element array
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, frameBufferModel.buffers.elementIndices);
 
     // Draw triangles
+    ctx.drawElements(ctx.TRIANGLES, frameBufferModel.elementCount, ctx.UNSIGNED_SHORT, 0);
 }
 
 /**
@@ -1604,7 +1616,7 @@ function inputChangeHandler(event)
 {
     console.clear();
     fetchSettings();
-    //renderClouds();
+    renderClouds();
 }
 
 function resetNoiseHandler(event)
@@ -1612,7 +1624,7 @@ function resetNoiseHandler(event)
     console.clear();
     loadNewNoise();
     fetchSettings();
-    //renderClouds();
+    renderClouds();
 }
 
 /**
