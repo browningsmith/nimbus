@@ -153,7 +153,60 @@ let player = {
     y: 0,
 };
 
-let shaderData = {
+let skyBoxShader = {
+
+    vertexShaderCode: `
+    
+        attribute vec4 a_vertexPosition;
+        attribute vec2 a_textureCoordinates;
+
+        uniform mat4 u_projectionMatrix;
+        uniform mat4 u_worldViewMatrix;
+
+        varying highp vec2 v_textureCoordinates;
+
+        void main(void)
+        {
+            gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition; // Calculate vertex position in frame
+            v_textureCoordinates = a_textureCoordinates;
+        }
+    `,
+
+    fragmentShaderCode: `
+    
+        varying highp vec2 v_textureCoordinates;
+
+        uniform sampler2D u_sampler;
+
+        void main(void)
+        {
+            gl_FragColor = texture2D(u_sampler, v_textureCoordinates); // The color of the texture mapped to the current point
+        }
+    `,
+
+    program: null,
+    attributes: null,
+    uniforms: null,
+
+    tieLocations: function() {
+
+        //Get location of attributes and uniforms, store in the ShaderData object
+        this.attributes = {
+
+            vertexPosition: ctx.getAttribLocation(this.program, "a_vertexPosition"),
+            textureCoordinates: ctx.getAttribLocation(this.program, "a_textureCoordinates"),
+        };
+        
+        this.uniforms = {
+
+            projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
+            worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
+            uSampler: ctx.getUniformLocation(this.program, "u_sampler"),
+        };
+    },
+};
+
+let cloudShader = {
 
     vertexShaderCode: `
     
@@ -784,7 +837,8 @@ function main()
     noise5SlopeInput.addEventListener("change", inputChangeHandler);
     noise5OffsetInput.addEventListener("change", inputChangeHandler);
 
-    createShaderProgram(shaderData);
+    createShaderProgram(skyBoxShader);
+    createShaderProgram(cloudShader);
 
     // Load skybox panels
     for (panel in skyBoxModels)
@@ -1016,13 +1070,13 @@ function renderFrame()
     ctx.cullFace(ctx.BACK);
 
     //Tell WebGL to use the shader program
-    ctx.useProgram(shaderData.program);
+    ctx.useProgram(cloudShader.program);
 
     //Compute projection matrix based on new window size
     mat4.perspective(projectionMatrix, 45 * Math.PI / 180, ctx.canvas.width / ctx.canvas.height, 0.1, 1000.0);
 
     //Set projection uniform
-    ctx.uniformMatrix4fv(shaderData.uniforms.projectionMatrix, false, projectionMatrix);
+    ctx.uniformMatrix4fv(cloudShader.uniforms.projectionMatrix, false, projectionMatrix);
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
@@ -1030,76 +1084,76 @@ function renderFrame()
     mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // First transform, rotate the whole world around y axis (in the opposite direction the player is facing)
 
     // Set world view uniform
-    ctx.uniformMatrix4fv(shaderData.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
+    ctx.uniformMatrix4fv(cloudShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
     //Instruct WebGL on which texture to use
     ctx.activeTexture(ctx.TEXTURE0);
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
-    ctx.uniform1i(shaderData.uniforms.sampler, 0);
+    ctx.uniform1i(cloudShader.uniforms.sampler, 0);
 
     // Set dimension uniform
-    ctx.uniform1f(shaderData.uniforms.dimension, dimension);
+    ctx.uniform1f(cloudShader.uniforms.dimension, dimension);
 
     // Set tile layout dimension
-    ctx.uniform1f(shaderData.uniforms.rowLength, rowLength);
+    ctx.uniform1f(cloudShader.uniforms.rowLength, rowLength);
 
     // Set noise1 inputs uniform
-    ctx.uniform4fv(shaderData.uniforms.noise1InputSettings, noise1InputSettings);
+    ctx.uniform4fv(cloudShader.uniforms.noise1InputSettings, noise1InputSettings);
 
     // Set noise1 outputs uniform
-    ctx.uniform2fv(shaderData.uniforms.noise1OutputSettings, noise1OutputSettings);
+    ctx.uniform2fv(cloudShader.uniforms.noise1OutputSettings, noise1OutputSettings);
 
     // Set noise2 inputs uniform
-    ctx.uniform4fv(shaderData.uniforms.noise2InputSettings, noise2InputSettings);
+    ctx.uniform4fv(cloudShader.uniforms.noise2InputSettings, noise2InputSettings);
 
     // Set noise2 outputs uniform
-    ctx.uniform2fv(shaderData.uniforms.noise2OutputSettings, noise2OutputSettings);
+    ctx.uniform2fv(cloudShader.uniforms.noise2OutputSettings, noise2OutputSettings);
 
     // Set noise3 inputs uniform
-    ctx.uniform4fv(shaderData.uniforms.noise3InputSettings, noise3InputSettings);
+    ctx.uniform4fv(cloudShader.uniforms.noise3InputSettings, noise3InputSettings);
 
     // Set noise3 outputs uniform
-    ctx.uniform2fv(shaderData.uniforms.noise3OutputSettings, noise3OutputSettings);
+    ctx.uniform2fv(cloudShader.uniforms.noise3OutputSettings, noise3OutputSettings);
 
     // Set noise4 inputs uniform
-    ctx.uniform4fv(shaderData.uniforms.noise4InputSettings, noise4InputSettings);
+    ctx.uniform4fv(cloudShader.uniforms.noise4InputSettings, noise4InputSettings);
 
     // Set noise4 outputs uniform
-    ctx.uniform2fv(shaderData.uniforms.noise4OutputSettings, noise4OutputSettings);
+    ctx.uniform2fv(cloudShader.uniforms.noise4OutputSettings, noise4OutputSettings);
 
     // Set noise5 inputs uniform
-    ctx.uniform4fv(shaderData.uniforms.noise5InputSettings, noise5InputSettings);
+    ctx.uniform4fv(cloudShader.uniforms.noise5InputSettings, noise5InputSettings);
 
     // Set noise5 outputs uniform
-    ctx.uniform2fv(shaderData.uniforms.noise5OutputSettings, noise5OutputSettings);
+    ctx.uniform2fv(cloudShader.uniforms.noise5OutputSettings, noise5OutputSettings);
 
     // Set step settings uniform
-    ctx.uniform4fv(shaderData.uniforms.stepSettings, stepSettings);
+    ctx.uniform4fv(cloudShader.uniforms.stepSettings, stepSettings);
 
     // Set color uniforms
-    ctx.uniform3fv(shaderData.uniforms.skyColor, skyColor);
-    ctx.uniform3fv(shaderData.uniforms.darkColor, darkColor);
-    ctx.uniform3fv(shaderData.uniforms.lightColor, lightColor);
+    ctx.uniform3fv(cloudShader.uniforms.skyColor, skyColor);
+    ctx.uniform3fv(cloudShader.uniforms.darkColor, darkColor);
+    ctx.uniform3fv(cloudShader.uniforms.lightColor, lightColor);
 
     // Set sun direction uniform
-    ctx.uniform3fv(shaderData.uniforms.sunDir, sunDir);
+    ctx.uniform3fv(cloudShader.uniforms.sunDir, sunDir);
 
     // Set sun step settings uniform
-    ctx.uniform2fv(shaderData.uniforms.sunStepSettings, sunStepSettings);
+    ctx.uniform2fv(cloudShader.uniforms.sunStepSettings, sunStepSettings);
 
     // Set light absorption uniform
-    ctx.uniform1f(shaderData.uniforms.lightAbsorption, lightAbsorption);
+    ctx.uniform1f(cloudShader.uniforms.lightAbsorption, lightAbsorption);
 
     // Set fog level uniform
-    ctx.uniform1f(shaderData.uniforms.fog, fog);
+    ctx.uniform1f(cloudShader.uniforms.fog, fog);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
         //Instruct WebGL how to pull out vertices
         ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
-        ctx.vertexAttribPointer(shaderData.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
-        ctx.enableVertexAttribArray(shaderData.attributes.vertexPosition); //Enable the pointer to the buffer
+        ctx.vertexAttribPointer(cloudShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
+        ctx.enableVertexAttribArray(cloudShader.attributes.vertexPosition); //Enable the pointer to the buffer
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
