@@ -588,10 +588,10 @@ let frameBufferModel = {
 
     vertexCoordinates: [
 
-        -1.0, -1.0, -1.0,
-        1.0, -1.0, -1.0,
-        1.0, 1.0, -1.0,
-        -1.0, 1.0, -1.0,
+        -1.0, -1.0, 0.0,
+        1.0, -1.0, 0.0,
+        1.0, 1.0, 0.0,
+        -1.0, 1.0, 0.0,
     ],
 
     elementIndices: [
@@ -929,6 +929,9 @@ function main()
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
 
+    // Load the framebuffer model
+    loadFrameBufferModel();
+
     // Load skybox panels
     for (panel in skyBoxModels)
     {
@@ -1052,6 +1055,43 @@ function main()
     }
 
     return newShader;
+}
+
+/**
+ * Function: loadFrameBufferModel
+ * 
+ * Input: None,
+ * Output: None
+ * 
+ * Description: This function creates buffers for the frameBufferModel vertices and
+ *              element indices
+ */
+
+function loadFrameBufferModel()
+{
+    //Create pointer to a new buffer
+    let vertexBuffer = ctx.createBuffer();
+
+    //Bind buffer to array buffer
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+
+    //Pass in the vertex data
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(frameBufferModel.vertexCoordinates), ctx.STATIC_DRAW);
+
+    //Create pointer to a new buffer
+    let elementIndicesBuffer = ctx.createBuffer();
+
+    //Bind the buffer to element buffer
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elementIndicesBuffer);
+
+    //Pass in element index data
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(frameBufferModel.elementIndices), ctx.STATIC_DRAW);
+
+    frameBufferModel.buffers = {
+
+        vertex: vertexBuffer,
+        elementIndices: elementIndicesBuffer,
+    };
 }
 
 /**
