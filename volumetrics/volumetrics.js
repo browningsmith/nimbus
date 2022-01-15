@@ -13,6 +13,7 @@ let sunZInput = null;
 let tsunMaxInput = null;
 let sunStepSizeInput = null;
 let lightAbsorptionInput = null;
+let fogInput = null;
 
 let resetNoiseInput = null;
 
@@ -90,6 +91,9 @@ const sunStepSettings = vec2.create();
 
 // Beers law light absorption factor
 let lightAbsorption = 1.0;
+
+// Fog
+let fog = 1.0;
 
 //noise1 scale and translation settings
 const noise1InputSettings = vec4.create();
@@ -220,6 +224,8 @@ let shaderData = {
         uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
 
         uniform float u_lightAbsorption;
+
+        uniform float u_fog;
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         { 
@@ -361,7 +367,7 @@ let shaderData = {
             return clamp(density, 0.0, 1.0);
         }
 
-        vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir)
+        vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir, vec3 skyColor)
         {
             float tmin = u_stepSettings.x;
             float tdensityFalloff = u_stepSettings.y;
@@ -370,6 +376,7 @@ let shaderData = {
             float tsunMax = u_sunStepSettings.x;
             float sunStepSize = u_sunStepSettings.y;
             float lightAbsorption = u_lightAbsorption;
+            float fog = u_fog;
             
             vec4 cloudColor = vec4(0.0);
             float t = tmin;
@@ -433,6 +440,9 @@ let shaderData = {
                     float brightness = exp(-1.0 * lightAbsorption * densityToSun);
                     vec4 pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
 
+                    // Fog
+                    pointColor.rgb = mix(skyColor, pointColor.rgb, exp(-1.0*fog*t));
+
                     pointColor.rgb *= pointColor.a;
                     cloudColor += pointColor*(1.0 - cloudColor.a);
                     clamp(cloudColor, 0.0, 1.0);
@@ -471,7 +481,7 @@ let shaderData = {
 
             vec3 finalColor = u_skyColor;
 
-            vec4 cloudColoring = raymarching(ro, rd, sunDir);
+            vec4 cloudColoring = raymarching(ro, rd, sunDir, finalColor);
 
             finalColor = clamp(cloudColoring.rgb + finalColor*(1.0 - cloudColoring.a), 0.0, 1.0);
             
@@ -514,7 +524,8 @@ let shaderData = {
             lightColor: ctx.getUniformLocation(this.program, "u_lightColor"),
             sunDir: ctx.getUniformLocation(this.program, "u_sunDir"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
-            lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"), 
+            lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"),
+            fog: ctx.getUniformLocation(this.program, "u_fog")
         }
         
     },
@@ -700,6 +711,12 @@ function main()
 
     // Add event listener to light absorption
     lightAbsorptionInput.addEventListener("change", inputChangeHandler);
+
+    // Get fog input
+    fogInput = document.getElementById("fogInput");
+
+    // Add event listener for fog level
+    fogInput.addEventListener("change", inputChangeHandler);
 
     //Get noise settings inputs
     resetNoiseInput = document.getElementById("resetNoiseInput");
@@ -1073,6 +1090,9 @@ function renderFrame()
     // Set light absorption uniform
     ctx.uniform1f(shaderData.uniforms.lightAbsorption, lightAbsorption);
 
+    // Set fog level uniform
+    ctx.uniform1f(shaderData.uniforms.fog, fog);
+
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
@@ -1340,6 +1360,11 @@ function fetchSettings()
     lightAbsorption = Number(lightAbsorptionInput.value);
     console.log("Light Absorption Factor:");
     console.log(lightAbsorption);
+
+    // fog
+    fog = Number(fogInput.value);
+    console.log("Fog:");
+    console.log(fog);
 
     // Noise1 input settings
     noise1InputSettings[0] = Number(noise1XInput.value);
