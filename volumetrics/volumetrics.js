@@ -439,7 +439,7 @@ let cloudShader = {
             float densityFalloffEnd = length(ro + rd*tmin);
             float densityFalloffSize = densityFalloffStart - densityFalloffEnd;
 
-            for (int i=0; i<200; i++)
+            for (int i=0; i<100; i++)
             {
                 vec3 currentPos = ro + rd*t;
                 float sampleDistance = length(currentPos);
@@ -458,7 +458,7 @@ let cloudShader = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
-                    for (int j=0; j<200; j++)
+                    for (int j=0; j<4; j++)
                     {
                         vec3 newPos = currentPos + -1.0*sunDir*tsun;
                         sampleDistance = length(newPos);
