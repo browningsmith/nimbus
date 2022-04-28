@@ -177,7 +177,7 @@ let player = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    speed: 10.0,
+    speed: 6.75, // 6.75 mps (running speed)
 
     rightSpeed: 0.0,
     upSpeed: 0.0,
@@ -213,11 +213,11 @@ let player = {
     upVec: vec3.fromValues(0.0, 1.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 
-    accelRate: 30.0,
+    accelRate: 100.0,
     isPressingAccelerate: false,
     isAutoDecelActive: false,
     forwardAccel: 0.0,
-    forwardSpeed: 0.0,
+    forwardSpeed: 200.0,
 
     isPressingYaw: false,
     yawAccelRate: 30.0 * Math.PI / 180.0,
