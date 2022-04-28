@@ -1262,7 +1262,7 @@ function moveForward(amount) {
     player.x += player.forwardVec[0] * amount;
     player.z += player.forwardVec[2] * amount;
 
-    if (player.z < -0.8)
+    /*if (player.z < -0.8)
     {
         player.z = -0.8;
     }
@@ -1278,7 +1278,7 @@ function moveForward(amount) {
     if (player.x > 4.8)
     {
         player.x = 4.8;
-    }
+    }*/
 }
 
 /**
@@ -1295,7 +1295,7 @@ function moveRight(amount) {
     player.x += player.rightVec[0] * amount;
     player.z += player.rightVec[2] * amount;
 
-    if (player.z < -0.8)
+    /*if (player.z < -0.8)
     {
         player.z = -0.8;
     }
@@ -1311,7 +1311,7 @@ function moveRight(amount) {
     if (player.x > 4.8)
     {
         player.x = 4.8;
-    }
+    }*/
 }
 
 /**
@@ -1328,14 +1328,14 @@ function moveUp(amount) {
 
     player.y += amount;
 
-    if (player.y < 0.0)
+    /*if (player.y < 0.0)
     {
         player.y = 0.0;
     }
     if (player.y > 0.0)
     {
         player.y = 0.0;
-    }
+    }*/
 }
 
 /**
