@@ -1397,7 +1397,7 @@ function renderPanelTexture(panel)
     ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
     // Resize viewport to 1024 x 1024
-    ctx.viewport(256, 256, 128, 128);
+    ctx.viewport(0, 0, 1024, 1024);
 
     // Clear frame buffer
     ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
