@@ -439,7 +439,7 @@ let cloudShader = {
             float densityFalloffEnd = length(ro + rd*tmin);
             float densityFalloffSize = densityFalloffStart - densityFalloffEnd;
 
-            for (int i=0; i<50; i++)
+            for (int i=0; i<200; i++)
             {
                 vec3 currentPos = ro + rd*t;
                 float sampleDistance = length(currentPos);
@@ -458,7 +458,7 @@ let cloudShader = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
-                    for (int j=0; j<4; j++)
+                    for (int j=0; j<50; j++)
                     {
                         vec3 newPos = currentPos + -1.0*sunDir*tsun;
                         sampleDistance = length(newPos);
@@ -1397,7 +1397,7 @@ function renderPanelTexture(panel)
     ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
     // Resize viewport to 1024 x 1024
-    ctx.viewport(0, 0, 1024, 1024);
+    ctx.viewport(0, 0, 128, 128);
 
     // Clear frame buffer
     ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
