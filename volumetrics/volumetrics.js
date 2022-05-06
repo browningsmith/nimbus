@@ -1272,6 +1272,8 @@ function requestNewSkybox()
 
 function renderFrame()
 {   
+    renderClouds(); // This will render a portion of new clouds to the skybox if an update was requested
+    
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -1333,6 +1335,47 @@ function renderFrame()
 
 function renderClouds()
 {
+    // If new skybox was requested, reset to false and reset renderingSkyboxPanelIndex to 0
+    if (newSkyboxRequested)
+    {
+        renderingSkyboxPanelIndex = 0;
+        newSkyboxRequested = false;
+    }
+
+    //If renderingSkyboxPanelIndex is less than 0, reset to 0
+    if (renderingSkyboxPanelIndex < 0)
+    {
+        renderingSkyboxPanelIndex = 0;
+        console.warn("rendering skybox panel index was found to be less than 0 and was reset to 0");
+    }
+
+    
+    // select skybox panel to render next
+    let panelToRender = null;
+    switch (renderingSkyboxPanelIndex)
+    {
+        case 0:
+            panelToRender = skyBoxModels.nzPlane;
+            break;
+        case 1:
+            panelToRender = skyBoxModels.pxPlane;
+            break;
+        case 2:
+            panelToRender = skyBoxModels.pzPlane;
+            break;
+        case 3:
+            panelToRender = skyBoxModels.nxPlane;
+            break;
+        case 4:
+            panelToRender = skyBoxModels.pyPlane;
+            break;
+        case 5:
+            panelToRender = skyBoxModels.nyPlane;
+            break;
+        default:      //Any other number, exit the function
+            return;
+    }
+    
     //Tell WebGL to use the cloud shader program
     ctx.useProgram(cloudShader.program);
 
@@ -1399,14 +1442,9 @@ function renderClouds()
 
     ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
-    // For each panel of the skybox render the clouds
-    for (panel in skyBoxModels)
-    {
-        renderPanelTexture(skyBoxModels[panel]);
-    }
-
-    //renderPanelTexture(skyBoxModels.nzPlane);
-    //renderPanelTexture(skyBoxModels.pxPlane);
+    // Render the selected panel
+    renderPanelTexture(panelToRender);
+    renderingSkyboxPanelIndex++;
 }
 
 function renderPanelTexture(panel)
@@ -1415,7 +1453,7 @@ function renderPanelTexture(panel)
     ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
     // Resize viewport to 1024 x 1024
-    ctx.viewport(0, 0, 128, 128);
+    ctx.viewport(0, 0, 1024, 1024);
 
     // Clear frame buffer
     ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
@@ -1634,7 +1672,7 @@ function inputChangeHandler(event)
 {
     console.clear();
     fetchSettings();
-    renderClouds();
+    requestNewSkybox();
 }
 
 function resetNoiseHandler(event)
@@ -1642,7 +1680,7 @@ function resetNoiseHandler(event)
     console.clear();
     loadNewNoise();
     fetchSettings();
-    renderClouds();
+    requestNewSkybox();
 }
 
 /**
