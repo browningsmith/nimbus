@@ -61,6 +61,9 @@ let animationDuration = dimension * 1.0;
 let noiseBase = null;
 let textureDimension = 0;
 
+let newSkyboxRequested = false; // Initialize as no new skybox requested
+let renderingSkyboxPanelIndex = 6; // Initialize as all panels have been rendered
+
 const piOver2 = Math.PI / 2.0;
 
 // 3d vector of zeroes
@@ -809,7 +812,7 @@ function main()
     canvas.addEventListener("mousemove", updateMouse);
     canvas.addEventListener("mouseleave", mouseLeave);
 
-    //Get tmin densityfalloff tmax and set size inputs
+    //Get tmin densityfalloff tmax and step size inputs
     tminInput = document.getElementById("tminInput");
     densityFalloffInput = document.getElementById("densityFalloffInput");
     tmaxInput = document.getElementById("tmaxInput");
@@ -1250,6 +1253,21 @@ function loadSingleSkyboxTexture(red, green, blue)
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
 
     return texture;
+}
+
+/**
+ * Function: requestNewSkybox
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: Resets newSkyboxRequested to true so that the animation loop can begin
+ * rendering a new skybox with presumably a new configuration of settings
+ */
+
+function requestNewSkybox()
+{
+    newSkyboxRequested = true;
 }
 
 function renderFrame()
