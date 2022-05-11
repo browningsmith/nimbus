@@ -155,6 +155,9 @@ let player = {
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 };
 
+let skyboxRotation = 0.0; // Angle of rotation around y axis before camera angle is applied, to mimic clouds moving in a circle
+let skyboxRotationSpeed = 0.02; // Angle skybox should rotate every frame/second/etc
+
 /**
  * Object: lastMousePosition
  * 
@@ -989,12 +992,24 @@ function main()
     
     fetchSettings();
 
+    let previousTimeStamp = 0.0;
+    let deltaT = 0.0;
+
     // Whether or not we are on the first animation frame, see below
     let firstFrame = true;
 
     // Animation loop
     function newFrame(now)
     {
+        //Get change in time
+        now *= 0.001; //Convert to seconds
+
+        deltaT = now - previousTimeStamp;
+        previousTimeStamp = now;
+
+        // Update skybox rotation
+        skyboxRotation += skyboxRotationSpeed * deltaT;
+        
         renderFrame();
 
         // This bit of code is here because for some reason the clouds on the negative z skybox panel do not render on the very first frame, so I need to call requestNewSkybox again at least once in the animation loop. This is a temporary fix
@@ -1326,8 +1341,9 @@ function renderFrame()
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Second transform, rotate the whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // First transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // Second transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, skyboxRotation * -1.0, YAXIS); // First transform, rotate the skybox around y axis based on skyboxRotation
 
     // Set world view uniform
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
