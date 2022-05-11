@@ -988,12 +988,21 @@ function main()
     loadNoiseTexture();
     
     fetchSettings();
-    requestNewSkybox();
+
+    // Whether or not we are on the first animation frame, see below
+    let firstFrame = true;
 
     // Animation loop
     function newFrame(now)
     {
         renderFrame();
+
+        // This bit of code is here because for some reason the clouds on the negative z skybox panel do not render on the very first frame, so I need to call requestNewSkybox again at least once in the animation loop. This is a temporary fix
+        if (firstFrame)
+        {
+            requestNewSkybox();
+            firstFrame = false;
+        }
 
         requestAnimationFrame(newFrame);
     }
