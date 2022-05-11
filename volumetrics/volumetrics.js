@@ -61,9 +61,6 @@ let animationDuration = dimension * 1.0;
 let noiseBase = null;
 let textureDimension = 0;
 
-let newSkyboxRequested = false; // Initialize as no new skybox requested
-let renderingSkyboxPanelIndex = 6; // Initialize as all panels have been rendered
-
 const piOver2 = Math.PI / 2.0;
 
 // 3d vector of zeroes
@@ -129,6 +126,22 @@ const noise5InputSettings = vec4.create();
 
 //noise5 slope and offset
 const noise5OutputSettings = vec2.create();
+
+// Maximums and defaults for skybox rendering stages
+const SKYBOX_TILE_SIZE = 128;
+const MAX_LIGHTNING_STAGES = 1;
+const MAX_Y_TILES = 8;
+const MAX_X_TILES = 8;
+
+// Variables to keep track of which stage the skybox rendering is in
+let skyboxRenderingStage = {
+
+    newSkyboxRequested: false,
+    lightning: MAX_LIGHTNING_STAGES,
+    panel: 6,
+    y: MAX_Y_TILES,
+    x: MAX_X_TILES,
+};
 
 // Player (camera)
 let player = {
@@ -973,6 +986,9 @@ function main()
     console.log("texture dimension: " + textureDimension);
     
     loadNoiseTexture();
+    
+    fetchSettings();
+    requestNewSkybox();
 
     // Animation loop
     function newFrame(now)
@@ -1267,12 +1283,12 @@ function loadSingleSkyboxTexture(red, green, blue)
 
 function requestNewSkybox()
 {
-    newSkyboxRequested = true;
+    skyboxRenderingStage.newSkyboxRequested = true;
 }
 
 function renderFrame()
 {   
-    renderClouds(); // This will render a portion of new clouds to the skybox if an update was requested
+    renderNewSkybox(); // This will render a portion of new clouds to the skybox if an update was requested
     
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
@@ -1333,26 +1349,30 @@ function renderFrame()
     }
 }
 
-function renderClouds()
+function renderNewSkybox()
 {
-    // If new skybox was requested, reset to false and reset renderingSkyboxPanelIndex to 0
-    if (newSkyboxRequested)
+    // If new skybox was requested, reset all rendering stages to 0
+    if (skyboxRenderingStage.newSkyboxRequested)
     {
-        renderingSkyboxPanelIndex = 0;
-        newSkyboxRequested = false;
+        
+        skyboxRenderingStage.lightning = 0;
+        skyboxRenderingStage.panel = 0;
+        skyboxRenderingStage.y = 0;
+        skyboxRenderingStage.x = 0;
+        skyboxRenderingStage.newSkyboxRequested = false;
     }
 
-    //If renderingSkyboxPanelIndex is less than 0, reset to 0
-    if (renderingSkyboxPanelIndex < 0)
+    // Error checking
+    if (skyboxRenderingStage.panel < 0)
     {
-        renderingSkyboxPanelIndex = 0;
+        skyboxRenderingStage.panel = 0;
         console.warn("rendering skybox panel index was found to be less than 0 and was reset to 0");
     }
 
     
     // select skybox panel to render next
     let panelToRender = null;
-    switch (renderingSkyboxPanelIndex)
+    switch (skyboxRenderingStage.panel)
     {
         case 0:
             panelToRender = skyBoxModels.nzPlane;
@@ -1444,7 +1464,7 @@ function renderClouds()
 
     // Render the selected panel
     renderPanelTexture(panelToRender);
-    renderingSkyboxPanelIndex++;
+    skyboxRenderingStage.panel++;
 }
 
 function renderPanelTexture(panel)
