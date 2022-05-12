@@ -625,25 +625,6 @@ let cloudShader = {
     },
 };
 
-let frameBufferModel = {
-
-    vertexCoordinates: [
-
-        -1.0, -1.0, 0.0,
-        1.0, -1.0, 0.0,
-        1.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0,
-    ],
-
-    elementIndices: [
-
-        0, 2, 3,
-        0, 1, 2,
-    ],
-
-    elementCount: 6,
-};
-
 let skyBoxModels = {
     nzPlane: {
 
@@ -975,9 +956,6 @@ function main()
     // Create the framebuffer
     frameBuffer = ctx.createFramebuffer();
 
-    // Load the framebuffer model
-    loadFrameBufferModel();
-
     // Load skybox panels
     for (panel in skyBoxModels)
     {
@@ -1111,43 +1089,6 @@ function main()
     }
 
     return newShader;
-}
-
-/**
- * Function: loadFrameBufferModel
- * 
- * Input: None,
- * Output: None
- * 
- * Description: This function creates buffers for the frameBufferModel vertices and
- *              element indices
- */
-
-function loadFrameBufferModel()
-{
-    //Create pointer to a new buffer
-    let vertexBuffer = ctx.createBuffer();
-
-    //Bind buffer to array buffer
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
-
-    //Pass in the vertex data
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(frameBufferModel.vertexCoordinates), ctx.STATIC_DRAW);
-
-    //Create pointer to a new buffer
-    let elementIndicesBuffer = ctx.createBuffer();
-
-    //Bind the buffer to element buffer
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elementIndicesBuffer);
-
-    //Pass in element index data
-    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(frameBufferModel.elementIndices), ctx.STATIC_DRAW);
-
-    frameBufferModel.buffers = {
-
-        vertex: vertexBuffer,
-        elementIndices: elementIndicesBuffer,
-    };
 }
 
 /**
@@ -1586,15 +1527,15 @@ function renderPanelTexture(xIndex, yIndex, panel)
     
 
     // Instruct WebGL how to pull out vertices
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, frameBufferModel.buffers.vertex);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels.nzPlane.buffers.vertex);
     ctx.vertexAttribPointer(cloudShader.attributes.viewportVertexPosition, 3, ctx.FLOAT, false, 0, 0);
     ctx.enableVertexAttribArray(cloudShader.attributes.viewportVertexPosition);
 
     // Give WebGL the element array
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, frameBufferModel.buffers.elementIndices);
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels.nzPlane.buffers.elementIndices);
 
     // Draw triangles
-    ctx.drawElements(ctx.TRIANGLES, frameBufferModel.elementCount, ctx.UNSIGNED_SHORT, 0);
+    ctx.drawElements(ctx.TRIANGLES, skyBoxModels.nzPlane.elementCount, ctx.UNSIGNED_SHORT, 0);
 }
 
 /**
