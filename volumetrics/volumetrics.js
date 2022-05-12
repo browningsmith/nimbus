@@ -126,6 +126,9 @@ const noise5InputSettings = vec4.create();
 //noise5 slope and offset
 const noise5OutputSettings = vec2.create();
 
+//tile coordinates uniform
+const tileCoordinates = vec4.create();
+
 // Maximums and defaults for skybox rendering stages
 const SKYBOX_TILE_SIZE = 128;
 const MAX_LIGHTNING_STAGES = 1;
@@ -231,13 +234,33 @@ let cloudShader = {
     vertexShaderCode: `
     
         attribute vec4 a_viewportVertexPosition; // Position to render to the viewport/framebuffer
-        attribute vec4 a_panelVertexPosition; // Position in space of the skybox panel
+
+        uniform vec4 u_tileCoordinates; // Uniform representing the pixel coordinates of the tile to be rendered
+                                        // .x: lower x coordinate
+                                        // .y: lower y coordinate
+                                        // .z: upper x coordinate
+                                        // .w: upper y coordinate
+        uniform mat4 u_rotationMatrix; // Matrix rotate v_vertexPosition to point to the correct skybox panel
 
         varying highp vec4 v_vertexPosition;
 
         void main(void)
         {
-            v_vertexPosition = a_panelVertexPosition;
+            // Map x and y values of u_tileCoordinates to x and y values of a_viewportVertexPosition
+            v_vertexPosition = vec4(0.0, 0.0, -1.0, 1.0);
+            if (a_viewportVertexPosition.x < 0.0) { v_vertexPosition.x = u_tileCoordinates.x; }
+            else { v_vertexPosition.x = u_tileCoordinates.z; }
+            if (a_viewportVertexPosition.y < 0.0) { v_vertexPosition.y = u_tileCoordinates.y; }
+            else { v_vertexPosition.y = u_tileCoordinates.w; }
+
+            // Transform x and y coordinates to clip space
+            v_vertexPosition.x = clamp((v_vertexPosition.x / 1024.0) * 2.0 - 1.0, -1.0, 1.0);
+            v_vertexPosition.y = clamp((v_vertexPosition.y / 1024.0) * 2.0 - 1.0, -1.0, 1.0);
+
+            // Rotate to face correct panel
+            v_vertexPosition = u_rotationMatrix * v_vertexPosition;
+            
+
             gl_Position = a_viewportVertexPosition;
         }
     `,
@@ -571,10 +594,11 @@ let cloudShader = {
         this.attributes = {
 
             viewportVertexPosition: ctx.getAttribLocation(this.program, "a_viewportVertexPosition"),
-            panelVertexPosition: ctx.getAttribLocation(this.program, "a_panelVertexPosition"),
         };
         this.uniforms = {
 
+            tileCoordinates: ctx.getUniformLocation(this.program, "u_tileCoordinates"),
+            rotationMatrix: ctx.getUniformLocation(this.program, "u_rotationMatrix"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
@@ -1436,31 +1460,39 @@ function renderNewSkybox()
     }
 
     
-    // select skybox panel to render to
+    // select skybox panel to render to and set rotation matrix
     let panelToRender = null;
+    mat4.identity(skyBoxRotationMatrix);
     switch (skyboxRenderingStage.panel)
     {
         case 0:
             panelToRender = skyBoxModels.nzPlane;
+            // No rotation
             break;
         case 1:
             panelToRender = skyBoxModels.pxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, YAXIS);
             break;
         case 2:
             panelToRender = skyBoxModels.pzPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, Math.PI, YAXIS);
             break;
         case 3:
             panelToRender = skyBoxModels.nxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, YAXIS);
             break;
         case 4:
             panelToRender = skyBoxModels.pyPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, XAXIS);
             break;
         case 5:
             panelToRender = skyBoxModels.nyPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, XAXIS);
             break;
         default:      //Any other number, exit the function
             return;
     }
+    
     
     //Tell WebGL to use the cloud shader program
     ctx.useProgram(cloudShader.program);
@@ -1469,6 +1501,9 @@ function renderNewSkybox()
     ctx.activeTexture(ctx.TEXTURE0);
     ctx.bindTexture(ctx.TEXTURE_2D, noiseBase);
     ctx.uniform1i(cloudShader.uniforms.sampler, 0);
+
+    // Set rotation uniform
+    ctx.uniformMatrix4fv(cloudShader.uniforms.rotationMatrix, false, skyBoxRotationMatrix);
 
     // Set dimension uniform
     ctx.uniform1f(cloudShader.uniforms.dimension, noiseBaseDimension);
@@ -1541,10 +1576,14 @@ function renderPanelTexture(xIndex, yIndex, panel)
     // Resize viewport to the current tile we are rendering to
     ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
 
-    // Set camera direction uniform
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
-    ctx.vertexAttribPointer(cloudShader.attributes.panelVertexPosition, 3, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(cloudShader.attributes.panelVertexPosition);
+    /* TODO */
+    // Set tileCoordinates uniform
+    tileCoordinates[0] = xIndex * SKYBOX_TILE_SIZE;
+    tileCoordinates[1] = yIndex * SKYBOX_TILE_SIZE;
+    tileCoordinates[2] = (xIndex + 1.0) * SKYBOX_TILE_SIZE;
+    tileCoordinates[3] = (yIndex + 1.0) * SKYBOX_TILE_SIZE;
+    ctx.uniform4fv(cloudShader.uniforms.tileCoordinates, tileCoordinates);
+    
 
     // Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, frameBufferModel.buffers.vertex);
