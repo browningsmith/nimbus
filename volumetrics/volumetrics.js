@@ -458,6 +458,9 @@ let cloudShader = {
             // Sample layer 5
             density += sampleDensity(stu, 16.0, vec3(0.6), 0.0625, 0.0);
 
+            // Sample layer 6
+            density += sampleDensity(stu, 32.0, vec3(0.22), 0.03125, 0.0);
+
             return clamp(density, 0.0, 1.0);
         }
 
