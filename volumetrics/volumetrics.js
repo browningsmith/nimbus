@@ -1536,18 +1536,18 @@ function renderPanelTexture(xIndex, yIndex, panel)
     // Attach correct texture to frame buffer
     ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
-    // Resize viewport to 1024 x 1024
+    // Resize viewport to the current tile we are rendering to
     ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
 
     // Set camera direction uniform
     ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
     ctx.vertexAttribPointer(cloudShader.attributes.panelVertexPosition, 3, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(skyBoxShader.attributes.panelVertexPosition);
+    ctx.enableVertexAttribArray(cloudShader.attributes.panelVertexPosition);
 
     // Instruct WebGL how to pull out vertices
     ctx.bindBuffer(ctx.ARRAY_BUFFER, frameBufferModel.buffers.vertex);
     ctx.vertexAttribPointer(cloudShader.attributes.viewportVertexPosition, 3, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(skyBoxShader.attributes.viewportVertexPosition);
+    ctx.enableVertexAttribArray(cloudShader.attributes.viewportVertexPosition);
 
     // Give WebGL the element array
     ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, frameBufferModel.buffers.elementIndices);
