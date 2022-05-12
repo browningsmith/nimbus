@@ -444,19 +444,19 @@ let cloudShader = {
             float density;
 
             // Sample layer 1
-            density = sampleDensity(stu, u_noise1InputSettings.w, u_noise1InputSettings.xyz, u_noise1OutputSettings.x, u_noise1OutputSettings.y);
+            density = sampleDensity(stu, 1.0, vec3(0.0), 1.0, 0.0);
 
             // Sample layer 2
-            density += sampleDensity(stu, u_noise2InputSettings.w, u_noise2InputSettings.xyz, u_noise2OutputSettings.x, u_noise2OutputSettings.y);
+            density += sampleDensity(stu, 2.0, vec3(0.15), 0.5, 0.0);
 
             // Sample layer 3
-            density += sampleDensity(stu, u_noise3InputSettings.w, u_noise3InputSettings.xyz, u_noise3OutputSettings.x, u_noise3OutputSettings.y);
+            density += sampleDensity(stu, 4.0, vec3(0.3), 0.25, 0.0);
 
             // Sample layer 4
-            density += sampleDensity(stu, u_noise4InputSettings.w, u_noise4InputSettings.xyz, u_noise4OutputSettings.x, u_noise4OutputSettings.y);
+            density += sampleDensity(stu, 8.0, vec3(0.45), 0.125, 0.0);
 
             // Sample layer 5
-            density += sampleDensity(stu, u_noise5InputSettings.w, u_noise5InputSettings.xyz, u_noise5OutputSettings.x, u_noise5OutputSettings.y);
+            density += sampleDensity(stu, 16.0, vec3(0.6), 0.0625, 0.0);
 
             return clamp(density, 0.0, 1.0);
         }
