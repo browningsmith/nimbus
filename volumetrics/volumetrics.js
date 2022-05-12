@@ -54,12 +54,11 @@ let noise5ZInput = null;
 let noise5SlopeInput = null;
 let noise5OffsetInput = null;
 
-let po2 = 4;
-let dimension = Math.pow(2, po2);
-let rowLength = 0.0;
-let animationDuration = dimension * 1.0;
+// Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
-let textureDimension = 0;
+let noiseBaseDimension = 16; // 16x16 pixel tiles
+let noiseBaseRowLength = 4; // Laid out in a 4x4 grid of 16x16 pixel tiles
+let textureDimension = 64; //2D Dimension of full noiseBase texture (noiseBaseDimension * noiseBaseRowLength)
 
 const piOver2 = Math.PI / 2.0;
 
@@ -961,7 +960,7 @@ function main()
         loadModel(skyBoxModels[panel]);
     }
 
-    // Load skybox textures
+    // Load space for skybox textures
     loadSkyboxTextures();
 
     // Attach textures to the proper models
@@ -972,24 +971,11 @@ function main()
     skyBoxModels.pyPlane.texture = skyBoxTextures.pyPlane;
     skyBoxModels.nyPlane.texture = skyBoxTextures.nyPlane;
     
-
-    // Compute rowLength and textureDimension
-    if (po2 % 2 == 0)
-    {
-        rowLength = Math.pow(2, po2 / 2);
-    }
-    else
-    {
-        rowLength = Math.pow(2, (po2+1) / 2);
-    }
-    textureDimension = rowLength * dimension;
-    console.log("po2: " + po2);
-    console.log("volume dimension: " + dimension);
-    console.log("tile layout in rows of: " + rowLength);
-    console.log("texture dimension: " + textureDimension);
     
+    // Load the noiseBase texture
     loadNoiseTexture();
     
+    // Fetch other settings from webpage
     fetchSettings();
 
     let previousTimeStamp = 0.0;
@@ -1430,10 +1416,10 @@ function renderNewSkybox()
     ctx.uniform1i(cloudShader.uniforms.sampler, 0);
 
     // Set dimension uniform
-    ctx.uniform1f(cloudShader.uniforms.dimension, dimension);
+    ctx.uniform1f(cloudShader.uniforms.dimension, noiseBaseDimension);
 
     // Set tile layout dimension
-    ctx.uniform1f(cloudShader.uniforms.rowLength, rowLength);
+    ctx.uniform1f(cloudShader.uniforms.rowLength, noiseBaseRowLength);
 
     // Set noise1 inputs uniform
     ctx.uniform4fv(cloudShader.uniforms.noise1InputSettings, noise1InputSettings);
