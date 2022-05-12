@@ -1411,16 +1411,16 @@ function renderNewSkybox()
             // No rotation
             break;
         case 1:
-            panelToRender = skyBoxModels.pxPlane;
-            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, YAXIS);
+            panelToRender = skyBoxModels.nxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, YAXIS);
             break;
         case 2:
             panelToRender = skyBoxModels.pzPlane;
             mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, Math.PI, YAXIS);
             break;
         case 3:
-            panelToRender = skyBoxModels.nxPlane;
-            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, YAXIS);
+            panelToRender = skyBoxModels.pxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, YAXIS);
             break;
         case 4:
             panelToRender = skyBoxModels.pyPlane;
