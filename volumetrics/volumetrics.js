@@ -1373,15 +1373,68 @@ function renderNewSkybox()
         skyboxRenderingStage.newSkyboxRequested = false;
     }
 
-    // Error checking
+    // If last lightning stage was already rendered, early exit
+    if (skyboxRenderingStage.lightning >= MAX_LIGHTNING_STAGES)
+    {
+        return;
+    }
+
+    // Error checking:
+
+    // If x is below 0, reset to 0 and warn console
+    if (skyboxRenderingStage.x < 0)
+    {
+        console.error("The x index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.x);
+        skyboxRenderingStage.x = 0;
+        console.log("x index reset to 0");
+    }
+    if (skyboxRenderingStage.y < 0)
+    {
+        console.error("The y index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.y);
+        skyboxRenderingStage.y = 0;
+        console.log("y index reset to 0");
+    }
     if (skyboxRenderingStage.panel < 0)
     {
+        console.error("The panel index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.panel);
         skyboxRenderingStage.panel = 0;
-        console.warn("rendering skybox panel index was found to be less than 0 and was reset to 0");
+        console.log("panel index reset to 0");
+    }
+    if (skyboxRenderingStage.lightning < 0)
+    {
+        console.error("The lightning index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.lightning);
+        skyboxRenderingStage.lightning = 0;
+        console.log("lightning index reset to 0");
+    }
+
+    // Incrementing:
+
+    // If x index is at maximum, reset to 0 and increment y index
+    if (skyboxRenderingStage.x >= MAX_X_TILES)
+    {
+        skyboxRenderingStage.y++;
+        skyboxRenderingStage.x = 0;
+    }
+    // If y index is at maximum, reset to 0 and increment panel index
+    if (skyboxRenderingStage.y >= MAX_Y_TILES)
+    {
+        skyboxRenderingStage.panel++;
+        skyboxRenderingStage.y = 0;
+    }
+    // If panel index is at maximum, reset to 0 and increment lightning index
+    if (skyboxRenderingStage.panel >= 6)
+    {
+        skyboxRenderingStage.lightning++;
+        skyboxRenderingStage.panel = 0;
+    }
+    // If lightning index is at maximum, exit the rendering function
+    if (skyboxRenderingStage.lightning >= MAX_LIGHTNING_STAGES)
+    {
+        return;
     }
 
     
-    // select skybox panel to render next
+    // select skybox panel to render to
     let panelToRender = null;
     switch (skyboxRenderingStage.panel)
     {
@@ -1474,22 +1527,17 @@ function renderNewSkybox()
     ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
     // Render the selected panel
-    renderPanelTexture(panelToRender);
-    skyboxRenderingStage.panel++;
+    renderPanelTexture(skyboxRenderingStage.x, skyboxRenderingStage.y, panelToRender);
+    skyboxRenderingStage.x++;
 }
 
-function renderPanelTexture(panel)
+function renderPanelTexture(xIndex, yIndex, panel)
 {
     // Attach correct texture to frame buffer
     ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
 
     // Resize viewport to 1024 x 1024
-    ctx.viewport(0, 0, 1024, 1024);
-
-    // Clear frame buffer
-    ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
-    ctx.clearDepth(1.0); //set clear depth to 1.0
-    ctx.clear(ctx.COLOR_BUFFER_BIT, ctx.DEPTH_BUFFER_BIT);
+    ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
 
     // Set camera direction uniform
     ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
