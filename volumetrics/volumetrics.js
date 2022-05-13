@@ -19,12 +19,12 @@ let fogInput = null;
 
 let resetNoiseInput = null;
 
-let noise1ScaleInput = null;
-let noise1XInput = null;
-let noise1YInput = null;
-let noise1ZInput = null;
-let noise1SlopeInput = null;
-let noise1OffsetInput = null;
+let noiseScaleInput = null;
+let noiseXInput = null;
+let noiseYInput = null;
+let noiseZInput = null;
+let noiseSlopeInput = null;
+let noiseOffsetInput = null;
 
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
@@ -68,11 +68,11 @@ let lightAbsorption = 1.0;
 // Fog
 let fog = 1.0;
 
-//noise1 scale and translation settings
-const noise1InputSettings = vec4.create();
+//noise scale and translation settings
+const noiseInputSettings = vec4.create();
 
-//noise1 slope and offset
-const noise1OutputSettings = vec2.create();
+//noise slope and offset
+const noiseOutputSettings = vec2.create();
 
 //tile coordinates uniform
 const tileCoordinates = vec4.create();
@@ -225,11 +225,11 @@ let cloudShader = {
         uniform float u_rowLength;
         uniform sampler2D u_sampler;
 
-        // noise1 input settings
-        uniform vec4 u_noise1InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
+        // noise input settings
+        uniform vec4 u_noiseInputSettings; // .x x translation, .y y translation, .z z translation, .w scale
 
-        // noise1 output settings
-        uniform vec2 u_noise1OutputSettings; // .x slope, .y offset
+        // noise output settings
+        uniform vec2 u_noiseOutputSettings; // .x slope, .y offset
 
         uniform vec4 u_stepSettings; // .x tmin, .y densityFalloff, .z tmax, .w stepSize
 
@@ -529,8 +529,8 @@ let cloudShader = {
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
-            noise1InputSettings: ctx.getUniformLocation(this.program, "u_noise1InputSettings"),
-            noise1OutputSettings: ctx.getUniformLocation(this.program, "u_noise1OutputSettings"),
+            noiseInputSettings: ctx.getUniformLocation(this.program, "u_noiseInputSettings"),
+            noiseOutputSettings: ctx.getUniformLocation(this.program, "u_noiseOutputSettings"),
             stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
             darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
@@ -805,21 +805,21 @@ function main()
 
     //Get noise settings inputs
     resetNoiseInput = document.getElementById("resetNoiseInput");
-    noise1ScaleInput = document.getElementById("noise1ScaleInput");
-    noise1XInput = document.getElementById("noise1XInput");
-    noise1YInput = document.getElementById("noise1YInput");
-    noise1ZInput = document.getElementById("noise1ZInput");
-    noise1SlopeInput = document.getElementById("noise1SlopeInput");
-    noise1OffsetInput = document.getElementById("noise1OffsetInput");
+    noiseScaleInput = document.getElementById("noiseScaleInput");
+    noiseXInput = document.getElementById("noiseXInput");
+    noiseYInput = document.getElementById("noiseYInput");
+    noiseZInput = document.getElementById("noiseZInput");
+    noiseSlopeInput = document.getElementById("noiseSlopeInput");
+    noiseOffsetInput = document.getElementById("noiseOffsetInput");
     
     //Add event listeners for noise settings
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
-    noise1ScaleInput.addEventListener("change", inputChangeHandler);
-    noise1XInput.addEventListener("change", inputChangeHandler);
-    noise1YInput.addEventListener("change", inputChangeHandler);
-    noise1ZInput.addEventListener("change", inputChangeHandler);
-    noise1SlopeInput.addEventListener("change", inputChangeHandler);
-    noise1OffsetInput.addEventListener("change", inputChangeHandler);
+    noiseScaleInput.addEventListener("change", inputChangeHandler);
+    noiseXInput.addEventListener("change", inputChangeHandler);
+    noiseYInput.addEventListener("change", inputChangeHandler);
+    noiseZInput.addEventListener("change", inputChangeHandler);
+    noiseSlopeInput.addEventListener("change", inputChangeHandler);
+    noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -1323,11 +1323,11 @@ function renderNewSkybox()
     // Set tile layout dimension
     ctx.uniform1f(cloudShader.uniforms.rowLength, noiseBaseRowLength);
 
-    // Set noise1 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise1InputSettings, noise1InputSettings);
+    // Set noise inputs uniform
+    ctx.uniform4fv(cloudShader.uniforms.noiseInputSettings, noiseInputSettings);
 
-    // Set noise1 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise1OutputSettings, noise1OutputSettings);
+    // Set noise outputs uniform
+    ctx.uniform2fv(cloudShader.uniforms.noiseOutputSettings, noiseOutputSettings);
 
     // Set step settings uniform
     ctx.uniform4fv(cloudShader.uniforms.stepSettings, stepSettings);
@@ -1641,19 +1641,19 @@ function fetchSettings()
     console.log("Fog:");
     console.log(fog);
 
-    // Noise1 input settings
-    noise1InputSettings[0] = Number(noise1XInput.value);
-    noise1InputSettings[1] = Number(noise1YInput.value);
-    noise1InputSettings[2] = Number(noise1ZInput.value);
-    noise1InputSettings[3] = Number(noise1ScaleInput.value);
-    console.log("Noise1 Input Settings:");
-    console.log(noise1InputSettings);
+    // Noise input settings
+    noiseInputSettings[0] = Number(noiseXInput.value);
+    noiseInputSettings[1] = Number(noiseYInput.value);
+    noiseInputSettings[2] = Number(noiseZInput.value);
+    noiseInputSettings[3] = Number(noiseScaleInput.value);
+    console.log("Noise Input Settings:");
+    console.log(noiseInputSettings);
     
-    // Noise1 output settings
-    noise1OutputSettings[0] = Number(noise1SlopeInput.value);
-    noise1OutputSettings[1] = Number(noise1OffsetInput.value);
-    console.log("Noise1 Output Settings:");
-    console.log(noise1OutputSettings);
+    // Noise output settings
+    noiseOutputSettings[0] = Number(noiseSlopeInput.value);
+    noiseOutputSettings[1] = Number(noiseOffsetInput.value);
+    console.log("Noise Output Settings:");
+    console.log(noiseOutputSettings);
 }
 
 window.onload = main;
