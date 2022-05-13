@@ -502,7 +502,7 @@ let cloudShader = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
-                    for (int j=0; j<50; j++)
+                    for (int j=0; j<5; j++)
                     {
                         vec3 newPos = currentPos + -1.0*sunDir*tsun;
                         sampleDistance = length(newPos);
