@@ -358,9 +358,9 @@ let cloudShader = {
             return coord;
         }
 
-        float sampleDensity(vec3 stu, float scale, vec3 translation, float slope, float offset)
+        float sampleDensity(vec3 stu, float scale, vec3 translation, float slope)
         {
-            return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope + offset, 0.0, 1.0);
+            return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope, 0.0, 1.0);
         }
 
         float sampleLayeredDensity(vec3 stu)
@@ -368,28 +368,33 @@ let cloudShader = {
             float density;
 
             // Sample layer 1
-            density = sampleDensity(stu, 1.0, vec3(0.0), 1.0, 0.0);
+            density = sampleDensity(stu, 1.0, vec3(0.0), 1.0);
 
             // Sample layer 2
-            density += sampleDensity(stu, 2.0, vec3(0.15), 0.5, 0.0);
+            density += sampleDensity(stu, 2.0, vec3(0.15), 0.5);
 
             // Sample layer 3
-            density += sampleDensity(stu, 4.0, vec3(0.3), 0.25, 0.0);
+            density += sampleDensity(stu, 4.0, vec3(0.3), 0.25);
 
             // Sample layer 4
-            density += sampleDensity(stu, 8.0, vec3(0.45), 0.125, 0.0);
+            density += sampleDensity(stu, 8.0, vec3(0.45), 0.125);
 
             // Sample layer 5
-            density += sampleDensity(stu, 16.0, vec3(0.6), 0.0625, 0.0);
+            density += sampleDensity(stu, 16.0, vec3(0.6), 0.0625);
 
             // Sample layer 6
-            density += sampleDensity(stu, 32.0, vec3(0.22), 0.03125, 0.0);
+            density += sampleDensity(stu, 32.0, vec3(0.22), 0.03125);
 
             return clamp(density, 0.0, 1.0);
         }
 
         vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir, vec3 skyColor)
         {
+            float noiseScale = u_noiseInputSettings.w;
+            vec3 noiseTranslation = u_noiseInputSettings.xyz;
+            float noiseSlope = u_noiseOutputSettings.x;
+            float noiseOffset = u_noiseOutputSettings.y;
+            
             float tmin = u_stepSettings.x;
             float tdensityFalloff = u_stepSettings.y;
             float tmax = u_stepSettings.z;
@@ -413,7 +418,7 @@ let cloudShader = {
                 float sampleDistance = length(currentPos);
                 
                 
-                float density = sampleLayeredDensity(currentPos);
+                float density = clamp(sampleLayeredDensity(currentPos*noiseScale + noiseTranslation)*noiseSlope + noiseOffset, 0.0, 1.0);
                 // If within density falloff area
                 if (sampleDistance < densityFalloffStart)
                 {
@@ -433,7 +438,7 @@ let cloudShader = {
                         // If sample is further than falloff end, then there is a density
                         if (sampleDistance >= densityFalloffEnd)
                         {
-                            float newDensity = sampleLayeredDensity(newPos);
+                            float newDensity = clamp(sampleLayeredDensity(newPos*noiseScale + noiseTranslation)*noiseSlope + noiseOffset, 0.0, 1.0);
                             // If within density falloff area
                             if (sampleDistance < densityFalloffStart)
                             {
