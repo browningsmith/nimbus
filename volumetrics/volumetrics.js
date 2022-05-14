@@ -28,6 +28,13 @@ let noiseZInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 
+let lightning1ColorInput = null;
+let lightning1XInput = null;
+let lightning1YInput = null;
+let lightning1ZInput = null;
+let lightning1Falloff = null;
+let lightning1End = null;
+
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
 let noiseBaseDimension = 16; // 16x16 pixel tiles
@@ -79,6 +86,18 @@ const noiseInputSettings = vec4.create();
 
 //noise slope and offset
 const noiseOutputSettings = vec2.create();
+
+//Lightning position and brightness uniforms
+const lightningSettings = [
+
+        {
+
+            color: vec3.create(),
+            source: vec3.create(),
+            falloff: 0.05,
+            end: 0.1,
+        },
+];
 
 //tile coordinates uniform
 const tileCoordinates = vec4.create();
@@ -841,6 +860,22 @@ function main()
     noiseZInput.addEventListener("change", inputChangeHandler);
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
+
+    // Get lightning settings inputs
+    lightning1ColorInput = document.getElementById("lightning1ColorInput");
+    lightning1XInput = document.getElementById("lightning1XInput");
+    lightning1YInput = document.getElementById("lightning1YInput");
+    lightning1ZInput = document.getElementById("lightning1ZInput");
+    lightning1Falloff = document.getElementById("lightning1Falloff");
+    lightning1End = document.getElementById("lightning1End");
+
+    // Add event listeners for lightning settings
+    lightning1ColorInput.addEventListener("change", inputChangeHandler);
+    lightning1XInput.addEventListener("change", inputChangeHandler);
+    lightning1YInput.addEventListener("change", inputChangeHandler);
+    lightning1ZInput.addEventListener("change", inputChangeHandler);
+    lightning1Falloff.addEventListener("change", inputChangeHandler);
+    lightning1End.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -1686,6 +1721,29 @@ function fetchSettings()
     noiseOutputSettings[1] = Number(noiseOffsetInput.value);
     console.log("Noise Output Settings:");
     console.log(noiseOutputSettings);
+
+    /*let lightning1ColorInput = null;
+    let lightning1XInput = null;
+    let lightning1YInput = null;
+    let lightning1ZInput = null;
+    let lightning1Falloff = null;
+    let lightning1End = null;*/
+
+    // Lightning 1 settings
+    hexToColor(lightning1ColorInput.value, lightningSettings[0].color);
+    console.log("Lightning 1 color:");
+    console.log(lightningSettings[0].color);
+    lightningSettings[0].source[0] = Number(lightning1XInput.value);
+    lightningSettings[0].source[1] = Number(lightning1YInput.value);
+    lightningSettings[0].source[2] = Number(lightning1ZInput.value);
+    console.log("Lightning 1 Source:");
+    console.log(lightningSettings[0].source);
+    lightningSettings[0].falloff = Number(lightning1Falloff.value);
+    console.log("Lightning 1 Falloff Start:");
+    console.log(lightningSettings[0].falloff);
+    lightningSettings[0].end = Number(lightning1End.value);
+    console.log("Lightning 1 End:");
+    console.log(lightningSettings[0].end);
 }
 
 window.onload = main;
