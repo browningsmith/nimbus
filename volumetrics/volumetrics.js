@@ -104,7 +104,7 @@ const tileCoordinates = vec4.create();
 
 // Maximums and defaults for skybox rendering stages
 const SKYBOX_TILE_SIZE = 128;
-const MAX_LIGHTNING_STAGES = 2;
+const MAX_LIGHTNING_STAGES = 100;
 const MAX_Y_TILES = 8;
 const MAX_X_TILES = 8;
 
