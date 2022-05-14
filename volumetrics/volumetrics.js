@@ -104,7 +104,7 @@ const tileCoordinates = vec4.create();
 
 // Maximums and defaults for skybox rendering stages
 const SKYBOX_TILE_SIZE = 128;
-const MAX_LIGHTNING_STAGES = 1;
+const MAX_LIGHTNING_STAGES = 2;
 const MAX_Y_TILES = 8;
 const MAX_X_TILES = 8;
 
@@ -760,12 +760,12 @@ let skyBoxModels = {
 
 let skyBoxTextures = {
 
-    nzPlane: null,
-    pxPlane: null,
-    pzPlane: null,
-    nxPlane: null,
-    pyPlane: null,
-    nyPlane: null,
+    nzPlane: [null],
+    pxPlane: [null],
+    pzPlane: [null],
+    nxPlane: [null],
+    pyPlane: [null],
+    nyPlane: [null],
 };
 
 function main()
@@ -1134,12 +1134,22 @@ function loadNewNoise()
  */
 function loadSkyboxTextures()
 {
-    skyBoxTextures.nzPlane = loadSingleSkyboxTexture(255, 0, 0); // Forward red
-    skyBoxTextures.pxPlane = loadSingleSkyboxTexture(0, 255, 0); // right green
-    skyBoxTextures.pzPlane = loadSingleSkyboxTexture(0, 0, 255); // back blue
-    skyBoxTextures.nxPlane = loadSingleSkyboxTexture(255, 0, 255); // left purple
-    skyBoxTextures.pyPlane = loadSingleSkyboxTexture(255, 255, 0); // up yellow
-    skyBoxTextures.nyPlane = loadSingleSkyboxTexture(0, 255, 255); // down cyan  
+    //skyBoxTextures.nzPlane = loadSingleSkyboxTexture(255, 0, 0); // Forward red
+    //skyBoxTextures.pxPlane = loadSingleSkyboxTexture(0, 255, 0); // right green
+    //skyBoxTextures.pzPlane = loadSingleSkyboxTexture(0, 0, 255); // back blue
+    //skyBoxTextures.nxPlane = loadSingleSkyboxTexture(255, 0, 255); // left purple
+    //skyBoxTextures.pyPlane = loadSingleSkyboxTexture(255, 255, 0); // up yellow
+    //skyBoxTextures.nyPlane = loadSingleSkyboxTexture(0, 255, 255); // down cyan
+
+    for (let i=0; i<MAX_LIGHTNING_STAGES; i++)
+    {
+        skyBoxTextures.nzPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pxPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pzPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.nxPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pyPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.nyPlane[i] = loadSingleSkyboxTexture();
+    }
 }
 
 /**
@@ -1150,7 +1160,7 @@ function loadSkyboxTextures()
  * 
  * Description: allocates space on the GPU for one skybox texture of the given color
  */
-function loadSingleSkyboxTexture(red, green, blue)
+function loadSingleSkyboxTexture()
 {
     let texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
@@ -1243,7 +1253,7 @@ function renderFrame()
 
         //Instruct WebGL on which texture to use
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[0]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
         //Give WebGL the element array
@@ -1419,7 +1429,7 @@ function renderNewSkybox()
 function renderPanelTexture(xIndex, yIndex, panel)
 {
     // Attach correct texture to frame buffer
-    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
+    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture[0], 0);
 
     // Resize viewport to the current tile we are rendering to
     ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
