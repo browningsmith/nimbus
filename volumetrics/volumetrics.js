@@ -9,6 +9,8 @@ let stepSizeInput = null;
 let skyColorInput = null;
 let darkColorInput = null;
 let lightColorInput = null;
+let sunColorInput = null;
+let sunIntensityInput = null;
 let sunXInput = null;
 let sunYInput = null;
 let sunZInput = null;
@@ -55,6 +57,10 @@ const stepSettings = vec4.create();
 const skyColor = vec3.create();
 const darkColor = vec3.create();
 const lightColor = vec3.create();
+const sunColor = vec3.create();
+
+// sun intensity (inversed due to pow function)
+let sunIntensity = 4.0;
 
 // sun direction
 const sunDir = vec3.create();
@@ -237,6 +243,8 @@ let cloudShader = {
         uniform vec3 u_darkColor;
         uniform vec3 u_lightColor;
 
+        uniform vec3 u_sunColor;
+        uniform float u_sunIntensityFactor;
         uniform vec3 u_sunDir;
 
         uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
@@ -498,14 +506,16 @@ let cloudShader = {
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_vertexPosition.xyz);
 
-            // This prevents a strange cross artifact forming in the center
+            // This prevents a strange cross artifact forming in the center due to rounding error
             if ((rd.x > -0.0001) && (rd.x < 0.0001)) {rd.x = 0.0;}
             if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            vec3 finalColor = u_skyColor;
+            // Compute overall background sky color by putting in the sun
+            float sunIntensityAtPoint = clamp(dot(sunDir * -1.0, rd), 0.0, 1.0);
+            vec3 finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
 
             vec4 cloudColoring = raymarching(ro, rd, sunDir, finalColor);
 
@@ -540,6 +550,8 @@ let cloudShader = {
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
             darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
             lightColor: ctx.getUniformLocation(this.program, "u_lightColor"),
+            sunColor: ctx.getUniformLocation(this.program, "u_sunColor"),
+            sunIntensity: ctx.getUniformLocation(this.program, "u_sunIntensityFactor"),
             sunDir: ctx.getUniformLocation(this.program, "u_sunDir"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
             lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"),
@@ -778,12 +790,16 @@ function main()
     darkColorInput.addEventListener("change", inputChangeHandler);
     lightColorInput.addEventListener("change", inputChangeHandler);
 
-    // Get sun direction inputs
+    // Get sun settings inputs
+    sunColorInput = document.getElementById("sunColorInput");
+    sunIntensityInput = document.getElementById("sunIntensityInput");
     sunXInput = document.getElementById("sunXInput");
     sunYInput = document.getElementById("sunYInput");
     sunZInput = document.getElementById("sunZInput");
     
-    // Add event listeners for sun direction
+    // Add event listeners for sun settings
+    sunColorInput.addEventListener("change", inputChangeHandler);
+    sunIntensityInput.addEventListener("change", inputChangeHandler);
     sunXInput.addEventListener("change", inputChangeHandler);
     sunYInput.addEventListener("change", inputChangeHandler);
     sunZInput.addEventListener("change", inputChangeHandler);
@@ -1341,6 +1357,10 @@ function renderNewSkybox()
     ctx.uniform3fv(cloudShader.uniforms.skyColor, skyColor);
     ctx.uniform3fv(cloudShader.uniforms.darkColor, darkColor);
     ctx.uniform3fv(cloudShader.uniforms.lightColor, lightColor);
+    ctx.uniform3fv(cloudShader.uniforms.sunColor, sunColor);
+
+    // Set sun intensity uniform
+    ctx.uniform1f(cloudShader.uniforms.sunIntensity, sunIntensity);
 
     // Set sun direction uniform
     ctx.uniform3fv(cloudShader.uniforms.sunDir, sunDir);
@@ -1618,10 +1638,17 @@ function fetchSettings()
     hexToColor(skyColorInput.value, skyColor);
     hexToColor(darkColorInput.value, darkColor);
     hexToColor(lightColorInput.value, lightColor);
+    hexToColor(sunColorInput.value, sunColor);
     console.log("Color Settings:");
     console.log(skyColor);
     console.log(darkColor);
     console.log(lightColor);
+    console.log(sunColor);
+
+    // Sun intensity
+    sunIntensity = Number(sunIntensityInput.value);
+    console.log("Sun Intensity Factor:");
+    console.log(sunIntensity);
 
     // Sun direction
     sunDir[0] = Number(sunXInput.value);
