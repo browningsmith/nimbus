@@ -87,6 +87,9 @@ const noiseInputSettings = vec4.create();
 //noise slope and offset
 const noiseOutputSettings = vec2.create();
 
+// Flag whether this is a lightning render or regular sky render
+let isLightningStage = 0.0;
+
 //Lightning position and brightness uniforms
 const lightningSettings = [
 
@@ -104,7 +107,7 @@ const tileCoordinates = vec4.create();
 
 // Maximums and defaults for skybox rendering stages
 const SKYBOX_TILE_SIZE = 128;
-const MAX_LIGHTNING_STAGES = 100;
+const MAX_LIGHTNING_STAGES = 5;
 const MAX_Y_TILES = 8;
 const MAX_X_TILES = 8;
 
@@ -1253,7 +1256,7 @@ function renderFrame()
 
         //Instruct WebGL on which texture to use
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[0]);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[1]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
         //Give WebGL the element array
@@ -1422,14 +1425,14 @@ function renderNewSkybox()
     ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
     // Render the selected panel
-    renderPanelTexture(skyboxRenderingStage.x, skyboxRenderingStage.y, panelToRender);
+    renderPanelTexture(skyboxRenderingStage.x, skyboxRenderingStage.y, panelToRender, skyboxRenderingStage.lightning);
     skyboxRenderingStage.x++;
 }
 
-function renderPanelTexture(xIndex, yIndex, panel)
+function renderPanelTexture(xIndex, yIndex, panel, lightningIndex)
 {
     // Attach correct texture to frame buffer
-    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture[0], 0);
+    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture[lightningIndex], 0);
 
     // Resize viewport to the current tile we are rendering to
     ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
