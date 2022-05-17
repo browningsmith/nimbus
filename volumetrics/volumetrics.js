@@ -97,8 +97,7 @@ const lightningSettings = [
 
             color: vec3.create(),
             source: vec3.create(),
-            falloff: 0.05,
-            end: 0.1,
+            fallEnd: vec2.create(),
         },
 ];
 
@@ -1256,7 +1255,7 @@ function renderFrame()
 
         //Instruct WebGL on which texture to use
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[1]);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[0]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
         //Give WebGL the element array
@@ -1753,10 +1752,10 @@ function fetchSettings()
     console.log(lightningSettings[0].source);
     lightningSettings[0].falloff = Number(lightning1Falloff.value);
     console.log("Lightning 1 Falloff Start:");
-    console.log(lightningSettings[0].falloff);
+    console.log(lightningSettings[0].fallEnd[0]);
     lightningSettings[0].end = Number(lightning1End.value);
     console.log("Lightning 1 End:");
-    console.log(lightningSettings[0].end);
+    console.log(lightningSettings[0].fallEnd[1]);
 }
 
 window.onload = main;
