@@ -93,12 +93,11 @@ let isLightningStage = 0.0;
 //Lightning position and brightness uniforms
 const lightningSettings = [
 
-        {
-
-            color: vec3.create(),
-            source: vec3.create(),
-            fallEnd: vec2.create(),
-        },
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
 ];
 
 //tile coordinates uniform
@@ -273,6 +272,11 @@ let cloudShader = {
         uniform float u_lightAbsorption;
 
         uniform float u_fog;
+
+        uniform float u_isLightningStage; // Whether we are doing a lighting stage, > 0.0 for true
+        uniform vec3 u_lightningColor;
+        uniform vec3 u_lightningSource;
+        uniform vec2 u_lightningFallEnd; // .x lightning falloff start, .y lightning end
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         { 
@@ -576,7 +580,11 @@ let cloudShader = {
             sunDir: ctx.getUniformLocation(this.program, "u_sunDir"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
             lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"),
-            fog: ctx.getUniformLocation(this.program, "u_fog")
+            fog: ctx.getUniformLocation(this.program, "u_fog"),
+            isLightningStage: ctx.getUniformLocation(this.program, "u_isLightningStage"),
+            lightningColor: ctx.getUniformLocation(this.program, "u_lightningColor"),
+            lightningSource: ctx.getUniformLocation(this.program, "u_lightningSource"),
+            lightningFallEnd: ctx.getUniformLocation(this.program, "u_lightningFallEnd"),
         }
         
     },
@@ -1421,6 +1429,14 @@ function renderNewSkybox()
     // Set fog level uniform
     ctx.uniform1f(cloudShader.uniforms.fog, fog);
 
+    // Set isLightningStage uniform
+    ctx.uniform1f(cloudShader.uniforms.isLightningStage, isLightningStage);
+
+    // Set lightning uniforms
+    ctx.uniform3fv(cloudShader.uniforms.lightningColor, lightningSettings[skyboxRenderingStage.lightning].color);
+    ctx.uniform3fv(cloudShader.uniforms.lightningSource, lightningSettings[skyboxRenderingStage.lightning].source);
+    ctx.uniform2fv(cloudShader.uniforms.lightningFallEnd, lightningSettings[skyboxRenderingStage.lightning].fallEnd);
+
     ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
     // Render the selected panel
@@ -1649,14 +1665,14 @@ function hexToColor(hex, colorVec) {
 
 function inputChangeHandler(event)
 {
-    console.clear();
+    //console.clear();
     fetchSettings();
     requestNewSkybox();
 }
 
 function resetNoiseHandler(event)
 {
-    console.clear();
+    //console.clear();
     loadNewNoise();
     fetchSettings();
     requestNewSkybox();
@@ -1750,10 +1766,10 @@ function fetchSettings()
     lightningSettings[0].source[2] = Number(lightning1ZInput.value);
     console.log("Lightning 1 Source:");
     console.log(lightningSettings[0].source);
-    lightningSettings[0].falloff = Number(lightning1Falloff.value);
+    lightningSettings[0].fallEnd[0] = Number(lightning1Falloff.value);
     console.log("Lightning 1 Falloff Start:");
     console.log(lightningSettings[0].fallEnd[0]);
-    lightningSettings[0].end = Number(lightning1End.value);
+    lightningSettings[0].fallEnd[1] = Number(lightning1End.value);
     console.log("Lightning 1 End:");
     console.log(lightningSettings[0].fallEnd[1]);
 }
