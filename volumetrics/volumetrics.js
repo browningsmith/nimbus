@@ -167,7 +167,7 @@ let skyBoxShader = {
 
         void main(void)
         {
-            gl_Position = u_projectionMatrix * u_worldViewMatrix * a_vertexPosition; // Calculate vertex position in frame
+            gl_Position = a_vertexPosition; // Calculate vertex position in frame
             v_textureCoordinates = a_textureCoordinates;
         }
     `,
@@ -1257,29 +1257,56 @@ function renderFrame()
     // Set world view uniform
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
-    // For each panel of the skybox
-    for (panel in skyBoxModels)
+    // Render the appropriate panel
     {
-        //Instruct WebGL how to pull out vertices
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.vertex);
+        let panel = skyBoxModels.nzPlane;
+        
+        // Select the appropriate panel to render
+        switch (displayingPanel)
+        {
+            case 0.0:
+                panel = skyBoxModels.nzPlane;
+                break;
+            case 1.0:
+                panel = skyBoxModels.pxPlane;
+                break;
+            case 2.0:
+                panel = skyBoxModels.pzPlane;
+                break;
+            case 3.0:
+                panel = skyBoxModels.nxPlane;
+                break;
+            case 4.0:
+                panel = skyBoxModels.pyPlane;
+                break;
+            case 5.0:
+                panel = skyBoxModels.nyPlane;
+                break;
+            default:
+                panel = skyBoxModels.nzPlane;   
+        }
+        
+        
+        //Instruct WebGL how to pull out vertices of only nzPanel
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels.nzPlane.buffers.vertex);
         ctx.vertexAttribPointer(skyBoxShader.attributes.vertexPosition, 3, ctx.FLOAT, false, 0, 0); //Pull out 3 values at a time, no offsets
         ctx.enableVertexAttribArray(skyBoxShader.attributes.vertexPosition); //Enable the pointer to the buffer
 
         //Instruct WebGL how to pull out texture coordinates
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels[panel].buffers.uv);
+        ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.uv);
         ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
 
         //Instruct WebGL on which texture to use
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[0]);
+        ctx.bindTexture(ctx.TEXTURE_2D, panel.texture[0]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
         //Give WebGL the element array
-        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
+        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, panel.buffers.elementIndices);
 
         //Draw triangles
-        ctx.drawElements(ctx.TRIANGLES, skyBoxModels[panel].elementCount, ctx.UNSIGNED_SHORT, 0);
+        ctx.drawElements(ctx.TRIANGLES, panel.elementCount, ctx.UNSIGNED_SHORT, 0);
     }
 }
 
