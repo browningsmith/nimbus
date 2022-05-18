@@ -15,8 +15,8 @@
 
         canvas {
 
-            width: 100%;
-            height: 100%;
+            width: 1024px;
+            height: 1024px;
         }
 
         html, body {
@@ -43,28 +43,28 @@
         <label for="densityFalloffInput">density falloff start (0.0, inf):</label>
         <input type="number" id="densityFalloffInput" value="0.23" min="0.0" step="0.001">
         <label for="tmaxInput">tmax (0.0, inf):</label>
-        <input type="number" id="tmaxInput" value="0.3" min="0.0" step="0.001">
+        <input type="number" id="tmaxInput" value="0.25" min="0.0" step="0.001">
         <label for="stepSizeInput">step size (0.0, inf):</label>
         <input type="number" id="stepSizeInput" value="0.001" min="0.0" step="0.001">
         <br>
         <label for="skyColorInput">Sky Color:</label>
-        <input type="color" id="skyColorInput" value="#000000">
+        <input type="color" id="skyColorInput" value="#454545">
         <label for="darkColorInput">Dark Cloud Color:</label>
-        <input type="color" id="darkColorInput" value="#000000">
+        <input type="color" id="darkColorInput" value="#454545">
         <label for="lightColorInput">Light Cloud Color:</label>
-        <input type="color" id="lightColorInput" value="#383862">
+        <input type="color" id="lightColorInput" value="#ffffff">
         <br>
         <label for="sunColorInput">Sun Color:</label>
         <input type="color" id="sunColorInput" value="#ffffff">
         <label for="sunIntensityInput">Sun Intensity (inversed) (0.001, inf):</label>
-        <input type="number" id="sunIntensityInput" value="1000.0" min="0.001" step="0.1">
+        <input type="number" id="sunIntensityInput" value="4.0" min="0.001" step="0.1">
         <br>
         <label for="sunXInput">Sun Direction (X) (-1.0, 1.0):</label>
         <input type="number" id="sunXInput" value="0.0" min="-1.0" max="1.0" step="0.01">
         <label for="sunYInput">Sun Direction (Y) (-1.0, 1.0):</label>
         <input type="number" id="sunYInput" value="-1.0" min="-1.0" max="1.0" step="0.01">
         <label for="sunZInput">Sun Direction (Z) (-1.0, 1.0):</label>
-        <input type="number" id="sunZInput" value="0.0" min="-1.0" max="1.0" step="0.01">
+        <input type="number" id="sunZInput" value="1.0" min="-1.0" max="1.0" step="0.01">
         <br>
         <label for="tsunMaxInput">max distance to march toward sun (0.0, inf):</label>
         <input type="number" id="tsunMaxInput" value="0.015" min="0.0" step="0.001">
@@ -110,5 +110,8 @@
         <input type="number" id="lightning1Falloff" value="0.05" min="0.0" step="0.01">
         <label for="lightning1End">Lightning 1 end (0.0, inf):</label>
         <input type="number" id="lightning1End" value="0.1" min="0.0" step="0.01">
+
+        <label for="displayingPanelInput">Panel to display (0 nz, 1 px, 2 pz, 3 nx, 4 py, 5 ny, else nz):</label>
+        <input type="number" id="displayingPanelInput" value="0.0" min="0.0" max="5.0" step="1.0">
     </body>
 </html>

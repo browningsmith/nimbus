@@ -35,6 +35,9 @@ let lightning1ZInput = null;
 let lightning1Falloff = null;
 let lightning1End = null;
 
+let displayingPanelInput = null;
+let displayingPanel = 0.0;
+
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
 let noiseBaseDimension = 16; // 16x16 pixel tiles
@@ -887,6 +890,12 @@ function main()
     lightning1Falloff.addEventListener("change", inputChangeHandler);
     lightning1End.addEventListener("change", inputChangeHandler);
 
+    // Get displaying panel input
+    displayingPanelInput = document.getElementById("displayingPanelInput");
+
+    // Add event listener for displaying panel input
+    displayingPanelInput.addEventListener("change", switchDisplayPanel);
+
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
 
@@ -1676,6 +1685,38 @@ function resetNoiseHandler(event)
     loadNewNoise();
     fetchSettings();
     requestNewSkybox();
+}
+
+function switchDisplayPanel(event)
+{
+    // Get the new index of the panel to dispay
+    displayingPanel = Number(displayingPanelInput.value);
+    console.log("Index of panel to display: " + displayingPanel);
+
+    switch (displayingPanel)
+    {
+        case 0.0:
+            console.log("Displaying nz panel");
+            break;
+        case 1.0:
+            console.log("Displaying px panel");
+            break;
+        case 2.0:
+            console.log("Displaying pz panel");
+            break;
+        case 3.0:
+            console.log("Displaying nx panel");
+            break;
+        case 4.0:
+            console.log("Displaying py panel");
+            break;
+        case 5.0:
+            console.log("Displaying ny panel");
+            break;
+        default:
+            console.warn("Invalid panel index, displaying nz panel as default");
+            
+    }
 }
 
 /**
