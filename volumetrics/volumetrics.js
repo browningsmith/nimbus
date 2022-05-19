@@ -28,6 +28,8 @@ let noiseZInput = null;
 let noiseSlopeInput = null;
 let noiseOffsetInput = null;
 
+let displayStageInput = null;
+
 let lightning1ColorInput = null;
 let lightning1XInput = null;
 let lightning1YInput = null;
@@ -104,10 +106,10 @@ const lightningSettings = [
 const tileCoordinates = vec4.create();
 
 // Maximums and defaults for skybox rendering stages
-const SKYBOX_TILE_SIZE = 128;
+const SKYBOX_TILE_SIZE = 64;
 const MAX_LIGHTNING_STAGES = 5;
-const MAX_Y_TILES = 8;
-const MAX_X_TILES = 8;
+const MAX_Y_TILES = 16;
+const MAX_X_TILES = 16;
 
 // Variables to keep track of which stage the skybox rendering is in
 let skyboxRenderingStage = {
@@ -118,6 +120,8 @@ let skyboxRenderingStage = {
     y: MAX_Y_TILES,
     x: MAX_X_TILES,
 };
+
+let displayStage = 0.0;
 
 // Player (camera)
 let player = {
@@ -871,6 +875,10 @@ function main()
     noiseSlopeInput.addEventListener("change", inputChangeHandler);
     noiseOffsetInput.addEventListener("change", inputChangeHandler);
 
+    // Get display stage input and add event listener
+    displayStageInput = document.getElementById("displayStageInput");
+    displayStageInput.addEventListener("change", switchDisplayStage);
+
     // Get lightning settings inputs
     lightning1ColorInput = document.getElementById("lightning1ColorInput");
     lightning1XInput = document.getElementById("lightning1XInput");
@@ -1263,7 +1271,7 @@ function renderFrame()
 
         //Instruct WebGL on which texture to use
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[0]);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[displayStage]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
 
         //Give WebGL the element array
@@ -1676,6 +1684,12 @@ function resetNoiseHandler(event)
     loadNewNoise();
     fetchSettings();
     requestNewSkybox();
+}
+
+function switchDisplayStage(event)
+{
+    displayStage = Number(displayStageInput.value);
+    console.log("Displaying lighting stage: " + displayStage);
 }
 
 /**
