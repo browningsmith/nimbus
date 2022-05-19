@@ -90,7 +90,7 @@ const noiseInputSettings = vec4.create();
 const noiseOutputSettings = vec2.create();
 
 // Flag whether this is a lightning render or regular sky render
-let isLightningStage = 0.0;
+let isLightningStage = -1.0;
 
 //Lightning position and brightness uniforms
 const lightningSettings = [
@@ -106,10 +106,10 @@ const lightningSettings = [
 const tileCoordinates = vec4.create();
 
 // Maximums and defaults for skybox rendering stages
-const SKYBOX_TILE_SIZE = 64;
+const SKYBOX_TILE_SIZE = 128;
 const MAX_LIGHTNING_STAGES = 5;
-const MAX_Y_TILES = 16;
-const MAX_X_TILES = 16;
+const MAX_Y_TILES = 8;
+const MAX_X_TILES = 8;
 
 // Variables to keep track of which stage the skybox rendering is in
 let skyboxRenderingStage = {
@@ -277,7 +277,7 @@ let cloudShader = {
 
         uniform float u_fog;
 
-        uniform float u_isLightningStage; // Whether we are doing a lighting stage, > 0.0 for true
+        uniform float u_isLightningStage; // Whether we are doing a lighting stage, > 0.0 for true, < 0.0 for false
         uniform vec3 u_lightningColor;
         uniform vec3 u_lightningSource;
         uniform vec2 u_lightningFallEnd; // .x lightning falloff start, .y lightning end
@@ -530,6 +530,12 @@ let cloudShader = {
         
         void main()
         {
+            if (u_isLightningStage > 0.0)
+            {
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                return;
+            }
+            
             vec3 sunDir = normalize(u_sunDir);
             
             // Direction of ray is origin to vertex coordinates
@@ -1287,7 +1293,7 @@ function renderNewSkybox()
     // If new skybox was requested, reset all rendering stages to 0
     if (skyboxRenderingStage.newSkyboxRequested)
     {
-        
+        isLightningStage = -1.0;
         skyboxRenderingStage.lightning = 0;
         skyboxRenderingStage.panel = 0;
         skyboxRenderingStage.y = 0;
@@ -1343,10 +1349,11 @@ function renderNewSkybox()
         skyboxRenderingStage.panel++;
         skyboxRenderingStage.y = 0;
     }
-    // If panel index is at maximum, reset to 0 and increment lightning index
+    // If panel index is at maximum, reset to 0 and increment lightning index, also set isLightingStage to 1.0
     if (skyboxRenderingStage.panel >= 6)
     {
         skyboxRenderingStage.lightning++;
+        isLightningStage = 1.0;
         skyboxRenderingStage.panel = 0;
     }
     // If lightning index is at maximum, exit the rendering function
