@@ -95,10 +95,18 @@ let isLightningStage = -1.0;
 
 let lightning1Mixture = 0.0;
 
-//Lightning position and brightness uniforms
+//Lightning position and brightness uniforms, as well as flicker patterns
 const lightningSettings = [
 
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),
+    
+        flicker: {
+
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
@@ -1003,15 +1011,34 @@ function main()
 
         // Update skybox rotation
         skyboxRotation += skyboxRotationSpeed * deltaT;
+
+        // Process flicker pattern of lightning1
+        /*currentTime: 0.0,
+        sleep: 2.0,
+        max: 1.0,*/
+        {
+            let flicker = lightningSettings[0].flicker;
+
+            // Increment currentTime by deltaT
+            flicker.currentTime += deltaT;
+
+            // If full duration is passed, set a new pattern
+            if (flicker.currentTime >= flicker.sleep + 1.0)
+            {
+                flicker.currentTime = 0.0;
+                flicker.sleep = Math.random() * 10.0;
+                flicker.max = Math.random();
+                lightning1Mixture = 0.0;
+            }
+
+            // If outside of sleep segment, calculate a mixture for lightning1
+            if (flicker.currentTime >= flicker.sleep)
+            {
+                lightning1Mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
+            }
+        }
         
         renderFrame();
-
-        // This bit of code is here because for some reason the clouds on the negative z skybox panel do not render on the very first frame, so I need to call requestNewSkybox again at least once in the animation loop. This is a temporary fix
-        /*if (firstFrame)
-        {
-            requestNewSkybox();
-            firstFrame = false;
-        }*/
 
         requestAnimationFrame(newFrame);
     }
@@ -1316,7 +1343,7 @@ function renderFrame()
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
     // Get lightning1 mixture
-    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture*Math.random()*100.0/100.0);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
