@@ -93,12 +93,10 @@ const noiseOutputSettings = vec2.create();
 // Flag whether this is a lightning render or regular sky render
 let isLightningStage = -1.0;
 
-let lightning1Mixture = 0.0;
-
 //Lightning position and brightness uniforms, as well as flicker patterns
 const lightningSettings = [
 
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
     
         flicker: {
 
@@ -1028,13 +1026,13 @@ function main()
                 flicker.currentTime = 0.0;
                 flicker.sleep = Math.random() * 10.0;
                 flicker.max = Math.random();
-                lightning1Mixture = 0.0;
+                lightningSettings[0].mixture = 0.0;
             }
 
             // If outside of sleep segment, calculate a mixture for lightning1
             if (flicker.currentTime >= flicker.sleep)
             {
-                lightning1Mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
+                lightningSettings[0].mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
             }
         }
         
@@ -1343,7 +1341,7 @@ function renderFrame()
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
     // Get lightning1 mixture
-    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightningSettings[0].mixture);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
@@ -1792,8 +1790,8 @@ function switchDisplayStage(event)
 
 function fetchLightningMixture(event)
 {
-    lightning1Mixture = Number(lightning1MixtureInput.value);
-    console.log("Lightning 1 mixture: " + lightning1Mixture);
+    lightningSettings[0].mixture = Number(lightning1MixtureInput.value);
+    console.log("Lightning 1 mixture: " + lightningSettings[0].mixture);
 }
 
 /**
