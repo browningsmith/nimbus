@@ -99,7 +99,6 @@ const lightningSettings = [
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
 ];
 
 //tile coordinates uniform
@@ -425,7 +424,7 @@ let cloudShader = {
             return clamp(density, 0.0, 1.0);
         }
 
-        vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir, vec3 skyColor)
+        vec4 raymarching(vec3 ro, vec3 rd, vec3 lightDir, vec3 skyColor)
         {
             float noiseScale = u_noiseInputSettings.w;
             vec3 noiseTranslation = u_noiseInputSettings.xyz;
@@ -470,7 +469,7 @@ let cloudShader = {
 
                     for (int j=0; j<5; j++)
                     {
-                        vec3 newPos = currentPos + -1.0*sunDir*tsun;
+                        vec3 newPos = currentPos + -1.0*lightDir*tsun;
                         sampleDistance = length(newPos);
                         // If sample is further than falloff end, then there is a density
                         if (sampleDistance >= densityFalloffEnd)
@@ -529,14 +528,8 @@ let cloudShader = {
         }
         
         void main()
-        {
-            if (u_isLightningStage > 0.0)
-            {
-                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-                return;
-            }
-            
-            vec3 sunDir = normalize(u_sunDir);
+        {   
+            vec3 lightDir = normalize(u_sunDir); // Set lightDir as direction of the sunlight if not doing a lightning stage
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_vertexPosition.xyz);
@@ -549,10 +542,10 @@ let cloudShader = {
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
             // Compute overall background sky color by putting in the sun
-            float sunIntensityAtPoint = clamp(dot(sunDir * -1.0, rd), 0.0, 1.0);
+            float sunIntensityAtPoint = clamp(dot(lightDir * -1.0, rd), 0.0, 1.0);
             vec3 finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
 
-            vec4 cloudColoring = raymarching(ro, rd, sunDir, finalColor);
+            vec4 cloudColoring = raymarching(ro, rd, lightDir, finalColor);
 
             finalColor = clamp(cloudColoring.rgb + finalColor*(1.0 - cloudColoring.a), 0.0, 1.0);
             
@@ -1447,10 +1440,13 @@ function renderNewSkybox()
     // Set isLightningStage uniform
     ctx.uniform1f(cloudShader.uniforms.isLightningStage, isLightningStage);
 
-    // Set lightning uniforms
-    ctx.uniform3fv(cloudShader.uniforms.lightningColor, lightningSettings[skyboxRenderingStage.lightning].color);
-    ctx.uniform3fv(cloudShader.uniforms.lightningSource, lightningSettings[skyboxRenderingStage.lightning].source);
-    ctx.uniform2fv(cloudShader.uniforms.lightningFallEnd, lightningSettings[skyboxRenderingStage.lightning].fallEnd);
+    // If doing a lightning stage, Set lightning uniforms
+    if (isLightningStage > 0.0)
+    {
+        ctx.uniform3fv(cloudShader.uniforms.lightningColor, lightningSettings[skyboxRenderingStage.lightning - 1].color);
+        ctx.uniform3fv(cloudShader.uniforms.lightningSource, lightningSettings[skyboxRenderingStage.lightning - 1].source);
+        ctx.uniform2fv(cloudShader.uniforms.lightningFallEnd, lightningSettings[skyboxRenderingStage.lightning - 1].fallEnd);
+    }
 
     ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
 
