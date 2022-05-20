@@ -1316,7 +1316,7 @@ function renderFrame()
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
     // Get lightning1 mixture
-    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture*(Math.random() - 0.01));
+    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture*Math.random()*100.0/100.0);
 
     // For each panel of the skybox
     for (panel in skyBoxModels)
