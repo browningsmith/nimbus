@@ -51,6 +51,13 @@ let lightning3ZInput = null;
 let lightning3Falloff = null;
 let lightning3End = null;
 
+let lightning4ColorInput = null;
+let lightning4XInput = null;
+let lightning4YInput = null;
+let lightning4ZInput = null;
+let lightning4Falloff = null;
+let lightning4End = null;
+
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
 let noiseBaseDimension = 16; // 16x16 pixel tiles
@@ -136,7 +143,15 @@ const lightningSettings = [
             max: 1.0,
         },
     },
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+    
+        flicker: {
+
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
 ];
 
 //tile coordinates uniform
@@ -220,17 +235,20 @@ let skyBoxShader = {
         uniform sampler2D u_sampler1;
         uniform sampler2D u_sampler2;
         uniform sampler2D u_sampler3;
+        uniform sampler2D u_sampler4;
 
         uniform highp float u_mixture1;
         uniform highp float u_mixture2;
         uniform highp float u_mixture3;
+        uniform highp float u_mixture4;
 
         void main(void)
         {
             vec3 finalColor = texture2D(u_sampler0, v_textureCoordinates).xyz; // Get sunlit clouds (stage 0)
             finalColor = clamp(finalColor + texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0); // Get first lightning
             finalColor = clamp(finalColor + texture2D(u_sampler2, v_textureCoordinates).xyz * u_mixture2, 0.0, 1.0); // Get second lightning
-            finalColor = clamp(finalColor + texture2D(u_sampler3, v_textureCoordinates).xyz * u_mixture3, 0.0, 1.0); // Get second lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler3, v_textureCoordinates).xyz * u_mixture3, 0.0, 1.0); // Get third lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler4, v_textureCoordinates).xyz * u_mixture4, 0.0, 1.0); // Get fourth lightning
             
             gl_FragColor = vec4(finalColor, 1.0); // The color of the texture mapped to the current point
         }
@@ -257,9 +275,11 @@ let skyBoxShader = {
             uSampler1: ctx.getUniformLocation(this.program, "u_sampler1"),
             uSampler2: ctx.getUniformLocation(this.program, "u_sampler2"),
             uSampler3: ctx.getUniformLocation(this.program, "u_sampler3"),
+            uSampler4: ctx.getUniformLocation(this.program, "u_sampler4"),
             mixture1: ctx.getUniformLocation(this.program, "u_mixture1"),
             mixture2: ctx.getUniformLocation(this.program, "u_mixture2"),
             mixture3: ctx.getUniformLocation(this.program, "u_mixture3"),
+            mixture4: ctx.getUniformLocation(this.program, "u_mixture4"),
         };
     },
 };
@@ -1002,6 +1022,13 @@ function main()
     lightning3Falloff = document.getElementById("lightning3Falloff");
     lightning3End = document.getElementById("lightning3End");
 
+    lightning4ColorInput = document.getElementById("lightning4ColorInput");
+    lightning4XInput = document.getElementById("lightning4XInput");
+    lightning4YInput = document.getElementById("lightning4YInput");
+    lightning4ZInput = document.getElementById("lightning4ZInput");
+    lightning4Falloff = document.getElementById("lightning4Falloff");
+    lightning4End = document.getElementById("lightning4End");
+
     // Add event listeners for lightning settings
     lightning1ColorInput.addEventListener("change", inputChangeHandler);
     lightning1XInput.addEventListener("change", inputChangeHandler);
@@ -1023,6 +1050,13 @@ function main()
     lightning3ZInput.addEventListener("change", inputChangeHandler);
     lightning3Falloff.addEventListener("change", inputChangeHandler);
     lightning3End.addEventListener("change", inputChangeHandler);
+
+    lightning4ColorInput.addEventListener("change", inputChangeHandler);
+    lightning4XInput.addEventListener("change", inputChangeHandler);
+    lightning4YInput.addEventListener("change", inputChangeHandler);
+    lightning4ZInput.addEventListener("change", inputChangeHandler);
+    lightning4Falloff.addEventListener("change", inputChangeHandler);
+    lightning4End.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -1385,6 +1419,7 @@ function renderFrame()
     ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightningSettings[0].mixture);
     ctx.uniform1f(skyBoxShader.uniforms.mixture2, lightningSettings[1].mixture);
     ctx.uniform1f(skyBoxShader.uniforms.mixture3, lightningSettings[2].mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture4, lightningSettings[3].mixture);
     
     // For each panel of the skybox
     for (panel in skyBoxModels)
@@ -1418,6 +1453,11 @@ function renderFrame()
         ctx.activeTexture(ctx.TEXTURE3);
         ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[3]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler3, 3);
+
+        //Get lighting4 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE4);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[4]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler4, 4);
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
@@ -1640,7 +1680,7 @@ function renderPanelTexture(xIndex, yIndex, panel, lightningIndex)
  */
 function processLightningFlicker(deltaT)
 {
-    for (let i=0; i<3; i++)
+    for (let i=0; i<4; i++)
     {
         let flicker = lightningSettings[i].flicker;
 
@@ -2002,6 +2042,22 @@ function fetchSettings()
     lightningSettings[2].fallEnd[1] = Number(lightning3End.value);
     console.log("Lightning 3 End:");
     console.log(lightningSettings[2].fallEnd[1]);
+
+    // Lightning 4 settings
+    hexToColor(lightning4ColorInput.value, lightningSettings[3].color);
+    console.log("Lightning 4 color:");
+    console.log(lightningSettings[3].color);
+    lightningSettings[3].source[0] = Number(lightning4XInput.value);
+    lightningSettings[3].source[1] = Number(lightning4YInput.value);
+    lightningSettings[3].source[2] = Number(lightning4ZInput.value);
+    console.log("Lightning 4 Source:");
+    console.log(lightningSettings[3].source);
+    lightningSettings[3].fallEnd[0] = Number(lightning4Falloff.value);
+    console.log("Lightning 4 Falloff Start:");
+    console.log(lightningSettings[3].fallEnd[0]);
+    lightningSettings[3].fallEnd[1] = Number(lightning4End.value);
+    console.log("Lightning 4 End:");
+    console.log(lightningSettings[3].fallEnd[1]);
 }
 
 window.onload = main;
