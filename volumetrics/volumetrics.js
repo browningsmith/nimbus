@@ -467,6 +467,12 @@ let cloudShader = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
+                    // If doing lightning stage, recalculate light direction based on lightning source
+                    if (u_isLightningStage > 0.0)
+                    {
+                        lightDir = normalize(currentPos - u_lightningSource);
+                    }
+
                     for (int j=0; j<5; j++)
                     {
                         vec3 newPos = currentPos + -1.0*lightDir*tsun;
@@ -499,8 +505,41 @@ let cloudShader = {
                         }
                     }
 
-                    float brightness = exp(-1.0 * lightAbsorption * densityToSun);
-                    vec4 pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
+                    float brightness;
+                    
+                    if (u_isLightningStage > 0.0)
+                    {
+                        brightness = exp(-1.0 * lightAbsorption * densityToSun * 0.2);
+                    }
+                    else
+                    {
+                        brightness = exp(-1.0 * lightAbsorption * densityToSun);
+                    }
+
+
+                    // If doing a lightning stage, brightness needs to be mixed with lightning falloff
+                    if (u_isLightningStage > 0.0)
+                    {
+                        float distanceFromSource = length(currentPos - u_lightningSource);
+                        if (distanceFromSource >= u_lightningFallEnd.y)
+                        {
+                            brightness = 0.0;
+                        }
+                        else if (distanceFromSource >= u_lightningFallEnd.x)
+                        {
+                            brightness = mix(brightness, 0.0, (distanceFromSource - u_lightningFallEnd.x) / (u_lightningFallEnd.y - u_lightningFallEnd.x));
+                        }
+                    }
+                    vec4 pointColor;
+                    // If doing a lightning stage, pointColor is black mixed with lightning color
+                    if (u_isLightningStage > 0.0)
+                    {
+                        pointColor = vec4(mix(vec3(0.0), u_lightningColor, brightness), density);
+                    }
+                    else
+                    {
+                        pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
+                    }
 
                     // Fog
                     pointColor.rgb = mix(skyColor, pointColor.rgb, exp(-1.0*fog*t));
@@ -541,9 +580,14 @@ let cloudShader = {
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            // Compute overall background sky color by putting in the sun
-            float sunIntensityAtPoint = clamp(dot(lightDir * -1.0, rd), 0.0, 1.0);
-            vec3 finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
+            vec3 finalColor = vec3(0.0);
+
+            // If not doing a lightning stage, Compute overall background sky color by putting in the sun
+            if (u_isLightningStage < 0.0)
+            {
+                float sunIntensityAtPoint = clamp(dot(lightDir * -1.0, rd), 0.0, 1.0);
+                vec3 finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
+            }
 
             vec4 cloudColoring = raymarching(ro, rd, lightDir, finalColor);
 
