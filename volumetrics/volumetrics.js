@@ -30,6 +30,7 @@ let noiseOffsetInput = null;
 
 let displayStageInput = null;
 
+let lightning1MixtureInput = null;
 let lightning1ColorInput = null;
 let lightning1XInput = null;
 let lightning1YInput = null;
@@ -91,6 +92,8 @@ const noiseOutputSettings = vec2.create();
 
 // Flag whether this is a lightning render or regular sky render
 let isLightningStage = -1.0;
+
+let lightning1Mixture = 1.0;
 
 //Lightning position and brightness uniforms
 const lightningSettings = [
@@ -923,6 +926,7 @@ function main()
     displayStageInput.addEventListener("change", switchDisplayStage);
 
     // Get lightning settings inputs
+    lightning1MixtureInput = document.getElementById("lightning1MixtureInput");
     lightning1ColorInput = document.getElementById("lightning1ColorInput");
     lightning1XInput = document.getElementById("lightning1XInput");
     lightning1YInput = document.getElementById("lightning1YInput");
@@ -931,6 +935,7 @@ function main()
     lightning1End = document.getElementById("lightning1End");
 
     // Add event listeners for lightning settings
+    lightning1MixtureInput.addEventListener("input", fetchLightningMixture);
     lightning1ColorInput.addEventListener("change", inputChangeHandler);
     lightning1XInput.addEventListener("change", inputChangeHandler);
     lightning1YInput.addEventListener("change", inputChangeHandler);
@@ -1737,6 +1742,12 @@ function switchDisplayStage(event)
 {
     displayStage = Number(displayStageInput.value);
     console.log("Displaying lighting stage: " + displayStage);
+}
+
+function fetchLightningMixture(event)
+{
+    lightning1Mixture = Number(lightning1MixtureInput.value);
+    console.log("Lightning 1 mixture: " + lightning1Mixture);
 }
 
 /**
