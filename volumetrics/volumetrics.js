@@ -38,6 +38,14 @@ let lightning1ZInput = null;
 let lightning1Falloff = null;
 let lightning1End = null;
 
+let lightning2MixtureInput = null;
+let lightning2ColorInput = null;
+let lightning2XInput = null;
+let lightning2YInput = null;
+let lightning2ZInput = null;
+let lightning2Falloff = null;
+let lightning2End = null;
+
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
 let noiseBaseDimension = 16; // 16x16 pixel tiles
@@ -105,7 +113,15 @@ const lightningSettings = [
             max: 1.0,
         },
     },
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+    
+        flicker: {
+
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
 ];
@@ -189,14 +205,16 @@ let skyBoxShader = {
 
         uniform sampler2D u_sampler0;
         uniform sampler2D u_sampler1;
+        uniform sampler2D u_sampler2;
 
         uniform highp float u_mixture1;
+        uniform highp float u_mixture2;
 
         void main(void)
         {
             vec3 finalColor = texture2D(u_sampler0, v_textureCoordinates).xyz; // Get sunlit clouds (stage 0)
-            finalColor += clamp(texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0);
-
+            finalColor = clamp(finalColor + texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0); // Get first lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler2, v_textureCoordinates).xyz * u_mixture2, 0.0, 1.0); // Get second lightning*/
             
             gl_FragColor = vec4(finalColor, 1.0); // The color of the texture mapped to the current point
         }
@@ -221,7 +239,9 @@ let skyBoxShader = {
             worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
             uSampler0: ctx.getUniformLocation(this.program, "u_sampler0"),
             uSampler1: ctx.getUniformLocation(this.program, "u_sampler1"),
+            uSampler2: ctx.getUniformLocation(this.program, "u_sampler2"),
             mixture1: ctx.getUniformLocation(this.program, "u_mixture1"),
+            mixture2: ctx.getUniformLocation(this.program, "u_mixture2"),
         };
     },
 };
@@ -951,6 +971,14 @@ function main()
     lightning1Falloff = document.getElementById("lightning1Falloff");
     lightning1End = document.getElementById("lightning1End");
 
+    lightning2MixtureInput = document.getElementById("lightning2MixtureInput");
+    lightning2ColorInput = document.getElementById("lightning2ColorInput");
+    lightning2XInput = document.getElementById("lightning2XInput");
+    lightning2YInput = document.getElementById("lightning2YInput");
+    lightning2ZInput = document.getElementById("lightning2ZInput");
+    lightning2Falloff = document.getElementById("lightning2Falloff");
+    lightning2End = document.getElementById("lightning2End");
+
     // Add event listeners for lightning settings
     lightning1MixtureInput.addEventListener("input", fetchLightningMixture);
     lightning1ColorInput.addEventListener("change", inputChangeHandler);
@@ -959,6 +987,14 @@ function main()
     lightning1ZInput.addEventListener("change", inputChangeHandler);
     lightning1Falloff.addEventListener("change", inputChangeHandler);
     lightning1End.addEventListener("change", inputChangeHandler);
+
+    lightning2MixtureInput.addEventListener("input", fetchLightningMixture);
+    lightning2ColorInput.addEventListener("change", inputChangeHandler);
+    lightning2XInput.addEventListener("change", inputChangeHandler);
+    lightning2YInput.addEventListener("change", inputChangeHandler);
+    lightning2ZInput.addEventListener("change", inputChangeHandler);
+    lightning2Falloff.addEventListener("change", inputChangeHandler);
+    lightning2End.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -1010,31 +1046,8 @@ function main()
         // Update skybox rotation
         skyboxRotation += skyboxRotationSpeed * deltaT;
 
-        // Process flicker pattern of lightning1
-        /*currentTime: 0.0,
-        sleep: 2.0,
-        max: 1.0,*/
-        {
-            let flicker = lightningSettings[0].flicker;
-
-            // Increment currentTime by deltaT
-            flicker.currentTime += deltaT;
-
-            // If full duration is passed, set a new pattern
-            if (flicker.currentTime >= flicker.sleep + 1.0)
-            {
-                flicker.currentTime = 0.0;
-                flicker.sleep = Math.random() * 10.0;
-                flicker.max = Math.random();
-                lightningSettings[0].mixture = 0.0;
-            }
-
-            // If outside of sleep segment, calculate a mixture for lightning1
-            if (flicker.currentTime >= flicker.sleep)
-            {
-                lightningSettings[0].mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
-            }
-        }
+        // Process flicker pattern of lightning
+        processLightningFlicker(deltaT);
         
         renderFrame();
 
@@ -1340,9 +1353,10 @@ function renderFrame()
     // Set world view uniform
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
-    // Get lightning1 mixture
+    // Get lightning mixtures
     ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightningSettings[0].mixture);
-
+    ctx.uniform1f(skyBoxShader.uniforms.mixture2, lightningSettings[1].mixture);
+    
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
@@ -1365,6 +1379,11 @@ function renderFrame()
         ctx.activeTexture(ctx.TEXTURE1);
         ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[1]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler1, 1);
+
+        //Get lighting2 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE2);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[2]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler2, 2);
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
@@ -1574,6 +1593,41 @@ function renderPanelTexture(xIndex, yIndex, panel, lightningIndex)
 
     // Draw triangles
     ctx.drawElements(ctx.TRIANGLES, skyBoxModels.nzPlane.elementCount, ctx.UNSIGNED_SHORT, 0);
+}
+
+/**
+ * Function: processLightningFlicker
+ * 
+ * Input: deltaT
+ * Output: None
+ * 
+ * Description: Updates the mixture level of each lightning image based on the defined flicker
+ * pattern and current deltaT since last frame
+ */
+function processLightningFlicker(deltaT)
+{
+    for (let i=0; i<2; i++)
+    {
+        let flicker = lightningSettings[i].flicker;
+
+        // Increment currentTime by deltaT
+        flicker.currentTime += deltaT;
+
+        // If full duration is passed, set a new pattern
+        if (flicker.currentTime >= flicker.sleep + 1.0)
+        {
+            flicker.currentTime = 0.0;
+            flicker.sleep = Math.random() * 5.0;
+            flicker.max = Math.random();
+            lightningSettings[i].mixture = 0.0;
+        }
+
+        // If outside of sleep segment, calculate a mixture for lightning1
+        if (flicker.currentTime >= flicker.sleep)
+        {
+            lightningSettings[i].mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
+        }
+    }
 }
 
 /**
@@ -1792,6 +1846,9 @@ function fetchLightningMixture(event)
 {
     lightningSettings[0].mixture = Number(lightning1MixtureInput.value);
     console.log("Lightning 1 mixture: " + lightningSettings[0].mixture);
+
+    lightningSettings[1].mixture = Number(lightning2MixtureInput.value);
+    console.log("Lightning 2 mixture: " + lightningSettings[1].mixture);
 }
 
 /**
@@ -1888,6 +1945,22 @@ function fetchSettings()
     lightningSettings[0].fallEnd[1] = Number(lightning1End.value);
     console.log("Lightning 1 End:");
     console.log(lightningSettings[0].fallEnd[1]);
+
+    // Lightning 2 settings
+    hexToColor(lightning2ColorInput.value, lightningSettings[1].color);
+    console.log("Lightning 2 color:");
+    console.log(lightningSettings[1].color);
+    lightningSettings[1].source[0] = Number(lightning2XInput.value);
+    lightningSettings[1].source[1] = Number(lightning2YInput.value);
+    lightningSettings[1].source[2] = Number(lightning2ZInput.value);
+    console.log("Lightning 2 Source:");
+    console.log(lightningSettings[1].source);
+    lightningSettings[1].fallEnd[0] = Number(lightning2Falloff.value);
+    console.log("Lightning 2 Falloff Start:");
+    console.log(lightningSettings[1].fallEnd[0]);
+    lightningSettings[1].fallEnd[1] = Number(lightning2End.value);
+    console.log("Lightning 2 End:");
+    console.log(lightningSettings[1].fallEnd[1]);
 }
 
 window.onload = main;
