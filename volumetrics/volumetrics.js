@@ -93,7 +93,7 @@ const noiseOutputSettings = vec2.create();
 // Flag whether this is a lightning render or regular sky render
 let isLightningStage = -1.0;
 
-let lightning1Mixture = 1.0;
+let lightning1Mixture = 0.0;
 
 //Lightning position and brightness uniforms
 const lightningSettings = [
@@ -177,13 +177,22 @@ let skyBoxShader = {
 
     fragmentShaderCode: `
     
+        precision highp float;
+    
         varying highp vec2 v_textureCoordinates;
 
-        uniform sampler2D u_sampler;
+        uniform sampler2D u_sampler0;
+        uniform sampler2D u_sampler1;
+
+        uniform highp float u_mixture1;
 
         void main(void)
         {
-            gl_FragColor = texture2D(u_sampler, v_textureCoordinates); // The color of the texture mapped to the current point
+            vec3 finalColor = texture2D(u_sampler0, v_textureCoordinates).xyz; // Get sunlit clouds (stage 0)
+            finalColor += clamp(texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0);
+
+            
+            gl_FragColor = vec4(finalColor, 1.0); // The color of the texture mapped to the current point
         }
     `,
 
@@ -204,7 +213,9 @@ let skyBoxShader = {
 
             projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
             worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-            uSampler: ctx.getUniformLocation(this.program, "u_sampler"),
+            uSampler0: ctx.getUniformLocation(this.program, "u_sampler0"),
+            uSampler1: ctx.getUniformLocation(this.program, "u_sampler1"),
+            mixture1: ctx.getUniformLocation(this.program, "u_mixture1"),
         };
     },
 };
@@ -589,7 +600,7 @@ let cloudShader = {
             if (u_isLightningStage < 0.0)
             {
                 float sunIntensityAtPoint = clamp(dot(lightDir * -1.0, rd), 0.0, 1.0);
-                vec3 finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
+                finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
             }
 
             vec4 cloudColoring = raymarching(ro, rd, lightDir, finalColor);
@@ -1304,6 +1315,9 @@ function renderFrame()
     // Set world view uniform
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
+    // Get lightning1 mixture
+    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightning1Mixture*(Math.random() - 0.01));
+
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
@@ -1317,10 +1331,15 @@ function renderFrame()
         ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
 
-        //Instruct WebGL on which texture to use
+        //Get sunlit clouds texture unit
         ctx.activeTexture(ctx.TEXTURE0);
         ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[displayStage]);
-        ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler0, 0);
+
+        //Get lighting1 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE1);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[1]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler1, 1);
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);

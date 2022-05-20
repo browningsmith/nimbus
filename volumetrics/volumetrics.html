@@ -38,6 +38,11 @@
         <canvas id="canvas" width="500" height="500"></canvas>
 
         <br>
+        <label for="lightning1MixtureInput">Lightning 1 Mixture:</label>
+        <input type="range" id="lightning1MixtureInput" value = "0.0" min ="0.0" max="1.0" step="0.01">
+        <br>
+
+        <br>
         <label for="tminInput">tmin (0.0, inf):</label>
         <input type="number" id="tminInput" value="0.2" min="0.0" step="0.001">
         <label for="densityFalloffInput">density falloff start (0.0, inf):</label>
@@ -100,9 +105,6 @@
         <input type="number" id="displayStageInput" value="0.0" min="0.0" max="4.0" step="1.0">
         <br>
 
-        <label for="lightning1MixtureInput">Lightning 1 Mixture:</label>
-        <input type="range" id="lightning1MixtureInput" value = "1.0" min ="0.0" max="1.0" step="0.01">
-        <br>
         <label for="lightning1ColorInput">Lightning 1 Color:</label>
         <input type="color" id="lightning1ColorInput" value="#ffffff">
         <label for="lightning1XInput">Lightning 1 source (x) (-inf, inf):</label>
@@ -110,11 +112,11 @@
         <label for="lightning1YInput">Lightning 1 source (y) (-inf, inf):</label>
         <input type="number" id="lightning1YInput" value="0.0" step="0.01">
         <label for="lightning1ZInput">Lightning 1 source (z) (-inf, inf):</label>
-        <input type="number" id="lightning1ZInput" value="-0.25" step="0.01">
+        <input type="number" id="lightning1ZInput" value="-0.2" step="0.01">
         <br>
         
         <label for="lightning1Falloff">Lightning 1 Falloff start (0.0, inf):</label>
-        <input type="number" id="lightning1Falloff" value="0.0" min="0.0" step="0.01">
+        <input type="number" id="lightning1Falloff" value="0.1" min="0.0" step="0.01">
         <label for="lightning1End">Lightning 1 end (0.0, inf):</label>
         <input type="number" id="lightning1End" value="0.3" min="0.0" step="0.01">
     </body>
