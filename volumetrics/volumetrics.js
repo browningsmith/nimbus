@@ -30,7 +30,6 @@ let noiseOffsetInput = null;
 
 let displayStageInput = null;
 
-let lightning1MixtureInput = null;
 let lightning1ColorInput = null;
 let lightning1XInput = null;
 let lightning1YInput = null;
@@ -38,13 +37,19 @@ let lightning1ZInput = null;
 let lightning1Falloff = null;
 let lightning1End = null;
 
-let lightning2MixtureInput = null;
 let lightning2ColorInput = null;
 let lightning2XInput = null;
 let lightning2YInput = null;
 let lightning2ZInput = null;
 let lightning2Falloff = null;
 let lightning2End = null;
+
+let lightning3ColorInput = null;
+let lightning3XInput = null;
+let lightning3YInput = null;
+let lightning3ZInput = null;
+let lightning3Falloff = null;
+let lightning3End = null;
 
 // Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
@@ -122,7 +127,15 @@ const lightningSettings = [
             max: 1.0,
         },
     },
-    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+        
+        flicker: {
+
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
     {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(),},
 ];
 
@@ -206,15 +219,18 @@ let skyBoxShader = {
         uniform sampler2D u_sampler0;
         uniform sampler2D u_sampler1;
         uniform sampler2D u_sampler2;
+        uniform sampler2D u_sampler3;
 
         uniform highp float u_mixture1;
         uniform highp float u_mixture2;
+        uniform highp float u_mixture3;
 
         void main(void)
         {
             vec3 finalColor = texture2D(u_sampler0, v_textureCoordinates).xyz; // Get sunlit clouds (stage 0)
             finalColor = clamp(finalColor + texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0); // Get first lightning
-            finalColor = clamp(finalColor + texture2D(u_sampler2, v_textureCoordinates).xyz * u_mixture2, 0.0, 1.0); // Get second lightning*/
+            finalColor = clamp(finalColor + texture2D(u_sampler2, v_textureCoordinates).xyz * u_mixture2, 0.0, 1.0); // Get second lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler3, v_textureCoordinates).xyz * u_mixture3, 0.0, 1.0); // Get second lightning
             
             gl_FragColor = vec4(finalColor, 1.0); // The color of the texture mapped to the current point
         }
@@ -240,8 +256,10 @@ let skyBoxShader = {
             uSampler0: ctx.getUniformLocation(this.program, "u_sampler0"),
             uSampler1: ctx.getUniformLocation(this.program, "u_sampler1"),
             uSampler2: ctx.getUniformLocation(this.program, "u_sampler2"),
+            uSampler3: ctx.getUniformLocation(this.program, "u_sampler3"),
             mixture1: ctx.getUniformLocation(this.program, "u_mixture1"),
             mixture2: ctx.getUniformLocation(this.program, "u_mixture2"),
+            mixture3: ctx.getUniformLocation(this.program, "u_mixture3"),
         };
     },
 };
@@ -963,7 +981,6 @@ function main()
     displayStageInput.addEventListener("change", switchDisplayStage);
 
     // Get lightning settings inputs
-    lightning1MixtureInput = document.getElementById("lightning1MixtureInput");
     lightning1ColorInput = document.getElementById("lightning1ColorInput");
     lightning1XInput = document.getElementById("lightning1XInput");
     lightning1YInput = document.getElementById("lightning1YInput");
@@ -971,7 +988,6 @@ function main()
     lightning1Falloff = document.getElementById("lightning1Falloff");
     lightning1End = document.getElementById("lightning1End");
 
-    lightning2MixtureInput = document.getElementById("lightning2MixtureInput");
     lightning2ColorInput = document.getElementById("lightning2ColorInput");
     lightning2XInput = document.getElementById("lightning2XInput");
     lightning2YInput = document.getElementById("lightning2YInput");
@@ -979,8 +995,14 @@ function main()
     lightning2Falloff = document.getElementById("lightning2Falloff");
     lightning2End = document.getElementById("lightning2End");
 
+    lightning3ColorInput = document.getElementById("lightning3ColorInput");
+    lightning3XInput = document.getElementById("lightning3XInput");
+    lightning3YInput = document.getElementById("lightning3YInput");
+    lightning3ZInput = document.getElementById("lightning3ZInput");
+    lightning3Falloff = document.getElementById("lightning3Falloff");
+    lightning3End = document.getElementById("lightning3End");
+
     // Add event listeners for lightning settings
-    lightning1MixtureInput.addEventListener("input", fetchLightningMixture);
     lightning1ColorInput.addEventListener("change", inputChangeHandler);
     lightning1XInput.addEventListener("change", inputChangeHandler);
     lightning1YInput.addEventListener("change", inputChangeHandler);
@@ -988,13 +1010,19 @@ function main()
     lightning1Falloff.addEventListener("change", inputChangeHandler);
     lightning1End.addEventListener("change", inputChangeHandler);
 
-    lightning2MixtureInput.addEventListener("input", fetchLightningMixture);
     lightning2ColorInput.addEventListener("change", inputChangeHandler);
     lightning2XInput.addEventListener("change", inputChangeHandler);
     lightning2YInput.addEventListener("change", inputChangeHandler);
     lightning2ZInput.addEventListener("change", inputChangeHandler);
     lightning2Falloff.addEventListener("change", inputChangeHandler);
     lightning2End.addEventListener("change", inputChangeHandler);
+
+    lightning3ColorInput.addEventListener("change", inputChangeHandler);
+    lightning3XInput.addEventListener("change", inputChangeHandler);
+    lightning3YInput.addEventListener("change", inputChangeHandler);
+    lightning3ZInput.addEventListener("change", inputChangeHandler);
+    lightning3Falloff.addEventListener("change", inputChangeHandler);
+    lightning3End.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -1356,6 +1384,7 @@ function renderFrame()
     // Get lightning mixtures
     ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightningSettings[0].mixture);
     ctx.uniform1f(skyBoxShader.uniforms.mixture2, lightningSettings[1].mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture3, lightningSettings[2].mixture);
     
     // For each panel of the skybox
     for (panel in skyBoxModels)
@@ -1384,6 +1413,11 @@ function renderFrame()
         ctx.activeTexture(ctx.TEXTURE2);
         ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[2]);
         ctx.uniform1i(skyBoxShader.uniforms.uSampler2, 2);
+
+        //Get lighting3 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE3);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[3]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler3, 3);
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
@@ -1606,7 +1640,7 @@ function renderPanelTexture(xIndex, yIndex, panel, lightningIndex)
  */
 function processLightningFlicker(deltaT)
 {
-    for (let i=0; i<2; i++)
+    for (let i=0; i<3; i++)
     {
         let flicker = lightningSettings[i].flicker;
 
@@ -1842,15 +1876,6 @@ function switchDisplayStage(event)
     console.log("Displaying lighting stage: " + displayStage);
 }
 
-function fetchLightningMixture(event)
-{
-    lightningSettings[0].mixture = Number(lightning1MixtureInput.value);
-    console.log("Lightning 1 mixture: " + lightningSettings[0].mixture);
-
-    lightningSettings[1].mixture = Number(lightning2MixtureInput.value);
-    console.log("Lightning 2 mixture: " + lightningSettings[1].mixture);
-}
-
 /**
  * Function: fetchSettings
  * 
@@ -1961,6 +1986,22 @@ function fetchSettings()
     lightningSettings[1].fallEnd[1] = Number(lightning2End.value);
     console.log("Lightning 2 End:");
     console.log(lightningSettings[1].fallEnd[1]);
+
+    // Lightning 3 settings
+    hexToColor(lightning3ColorInput.value, lightningSettings[2].color);
+    console.log("Lightning 3 color:");
+    console.log(lightningSettings[2].color);
+    lightningSettings[2].source[0] = Number(lightning3XInput.value);
+    lightningSettings[2].source[1] = Number(lightning3YInput.value);
+    lightningSettings[2].source[2] = Number(lightning3ZInput.value);
+    console.log("Lightning 3 Source:");
+    console.log(lightningSettings[2].source);
+    lightningSettings[2].fallEnd[0] = Number(lightning3Falloff.value);
+    console.log("Lightning 3 Falloff Start:");
+    console.log(lightningSettings[2].fallEnd[0]);
+    lightningSettings[2].fallEnd[1] = Number(lightning3End.value);
+    console.log("Lightning 3 End:");
+    console.log(lightningSettings[2].fallEnd[1]);
 }
 
 window.onload = main;
