@@ -9,6 +9,8 @@ let stepSizeInput = null;
 let skyColorInput = null;
 let darkColorInput = null;
 let lightColorInput = null;
+let sunColorInput = null;
+let sunIntensityInput = null;
 let sunXInput = null;
 let sunYInput = null;
 let sunZInput = null;
@@ -19,47 +21,48 @@ let fogInput = null;
 
 let resetNoiseInput = null;
 
-let noise1ScaleInput = null;
-let noise1XInput = null;
-let noise1YInput = null;
-let noise1ZInput = null;
-let noise1SlopeInput = null;
-let noise1OffsetInput = null;
+let noiseScaleInput = null;
+let noiseXInput = null;
+let noiseYInput = null;
+let noiseZInput = null;
+let noiseSlopeInput = null;
+let noiseOffsetInput = null;
 
-let noise2ScaleInput = null;
-let noise2XInput = null;
-let noise2YInput = null;
-let noise2ZInput = null;
-let noise2SlopeInput = null;
-let noise2OffsetInput = null;
+let displayStageInput = null;
 
-let noise3ScaleInput = null;
-let noise3XInput = null;
-let noise3YInput = null;
-let noise3ZInput = null;
-let noise3SlopeInput = null;
-let noise3OffsetInput = null;
+let lightning1ColorInput = null;
+let lightning1XInput = null;
+let lightning1YInput = null;
+let lightning1ZInput = null;
+let lightning1Falloff = null;
+let lightning1End = null;
 
-let noise4ScaleInput = null;
-let noise4XInput = null;
-let noise4YInput = null;
-let noise4ZInput = null;
-let noise4SlopeInput = null;
-let noise4OffsetInput = null;
+let lightning2ColorInput = null;
+let lightning2XInput = null;
+let lightning2YInput = null;
+let lightning2ZInput = null;
+let lightning2Falloff = null;
+let lightning2End = null;
 
-let noise5ScaleInput = null;
-let noise5XInput = null;
-let noise5YInput = null;
-let noise5ZInput = null;
-let noise5SlopeInput = null;
-let noise5OffsetInput = null;
+let lightning3ColorInput = null;
+let lightning3XInput = null;
+let lightning3YInput = null;
+let lightning3ZInput = null;
+let lightning3Falloff = null;
+let lightning3End = null;
 
-let po2 = 4;
-let dimension = Math.pow(2, po2);
-let rowLength = 0.0;
-let animationDuration = dimension * 1.0;
+let lightning4ColorInput = null;
+let lightning4XInput = null;
+let lightning4YInput = null;
+let lightning4ZInput = null;
+let lightning4Falloff = null;
+let lightning4End = null;
+
+// Dimensions representing the 16x16x16 pixel volume used as base for perlin noise
 let noiseBase = null;
-let textureDimension = 0;
+let noiseBaseDimension = 16; // 16x16 pixel tiles
+let noiseBaseRowLength = 4; // Laid out in a 4x4 grid of 16x16 pixel tiles
+let textureDimension = 64; //2D Dimension of full noiseBase texture (noiseBaseDimension * noiseBaseRowLength)
 
 const piOver2 = Math.PI / 2.0;
 
@@ -84,6 +87,10 @@ const stepSettings = vec4.create();
 const skyColor = vec3.create();
 const darkColor = vec3.create();
 const lightColor = vec3.create();
+const sunColor = vec3.create();
+
+// sun intensity (inversed due to pow function)
+let sunIntensity = 4.0;
 
 // sun direction
 const sunDir = vec3.create();
@@ -97,35 +104,76 @@ let lightAbsorption = 1.0;
 // Fog
 let fog = 1.0;
 
-//noise1 scale and translation settings
-const noise1InputSettings = vec4.create();
+//noise scale and translation settings
+const noiseInputSettings = vec4.create();
 
-//noise1 slope and offset
-const noise1OutputSettings = vec2.create();
+//noise slope and offset
+const noiseOutputSettings = vec2.create();
 
-//noise2 scale and translation settings
-const noise2InputSettings = vec4.create();
+// Flag whether this is a lightning render or regular sky render
+let isLightningStage = -1.0;
 
-//noise2 slope and offset
-const noise2OutputSettings = vec2.create();
+//Lightning position and brightness uniforms, as well as flicker patterns
+const lightningSettings = [
 
-//noise3 scale and translation settings
-const noise3InputSettings = vec4.create();
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+    
+        flicker: {
 
-//noise3 slope and offset
-const noise3OutputSettings = vec2.create();
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+    
+        flicker: {
 
-//noise4 scale and translation settings
-const noise4InputSettings = vec4.create();
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+        
+        flicker: {
 
-//noise4 slope and offset
-const noise4OutputSettings = vec2.create();
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
+    {color: vec3.create(), source: vec3.create(), fallEnd: vec2.create(), mixture: 0.0,
+    
+        flicker: {
 
-//noise5 scale and translation settings
-const noise5InputSettings = vec4.create();
+            currentTime: 0.0,
+            sleep: 2.0,
+            max: 1.0,
+        },
+    },
+];
 
-//noise5 slope and offset
-const noise5OutputSettings = vec2.create();
+//tile coordinates uniform
+const tileCoordinates = vec4.create();
+
+// Maximums and defaults for skybox rendering stages
+const SKYBOX_TILE_SIZE = 128;
+const MAX_LIGHTNING_STAGES = 5;
+const MAX_Y_TILES = 8;
+const MAX_X_TILES = 8;
+
+// Variables to keep track of which stage the skybox rendering is in
+let skyboxRenderingStage = {
+
+    newSkyboxRequested: false,
+    lightning: MAX_LIGHTNING_STAGES,
+    panel: 6,
+    y: MAX_Y_TILES,
+    x: MAX_X_TILES,
+};
+
+let displayStage = 0.0;
 
 // Player (camera)
 let player = {
@@ -138,6 +186,9 @@ let player = {
     rightVec: vec3.fromValues(1.0, 0.0, 0.0),
     forwardVec: vec3.fromValues(0.0, 0.0, -1.0),
 };
+
+let skyboxRotation = 0.0; // Angle of rotation around y axis before camera angle is applied, to mimic clouds moving in a circle
+let skyboxRotationSpeed = 0.02; // Angle skybox should rotate every frame/second/etc
 
 /**
  * Object: lastMousePosition
@@ -176,13 +227,30 @@ let skyBoxShader = {
 
     fragmentShaderCode: `
     
+        precision highp float;
+    
         varying highp vec2 v_textureCoordinates;
 
-        uniform sampler2D u_sampler;
+        uniform sampler2D u_sampler0;
+        uniform sampler2D u_sampler1;
+        uniform sampler2D u_sampler2;
+        uniform sampler2D u_sampler3;
+        uniform sampler2D u_sampler4;
+
+        uniform highp float u_mixture1;
+        uniform highp float u_mixture2;
+        uniform highp float u_mixture3;
+        uniform highp float u_mixture4;
 
         void main(void)
         {
-            gl_FragColor = texture2D(u_sampler, v_textureCoordinates); // The color of the texture mapped to the current point
+            vec3 finalColor = texture2D(u_sampler0, v_textureCoordinates).xyz; // Get sunlit clouds (stage 0)
+            finalColor = clamp(finalColor + texture2D(u_sampler1, v_textureCoordinates).xyz * u_mixture1, 0.0, 1.0); // Get first lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler2, v_textureCoordinates).xyz * u_mixture2, 0.0, 1.0); // Get second lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler3, v_textureCoordinates).xyz * u_mixture3, 0.0, 1.0); // Get third lightning
+            finalColor = clamp(finalColor + texture2D(u_sampler4, v_textureCoordinates).xyz * u_mixture4, 0.0, 1.0); // Get fourth lightning
+            
+            gl_FragColor = vec4(finalColor, 1.0); // The color of the texture mapped to the current point
         }
     `,
 
@@ -203,7 +271,15 @@ let skyBoxShader = {
 
             projectionMatrix: ctx.getUniformLocation(this.program, "u_projectionMatrix"),
             worldViewMatrix: ctx.getUniformLocation(this.program, "u_worldViewMatrix"),
-            uSampler: ctx.getUniformLocation(this.program, "u_sampler"),
+            uSampler0: ctx.getUniformLocation(this.program, "u_sampler0"),
+            uSampler1: ctx.getUniformLocation(this.program, "u_sampler1"),
+            uSampler2: ctx.getUniformLocation(this.program, "u_sampler2"),
+            uSampler3: ctx.getUniformLocation(this.program, "u_sampler3"),
+            uSampler4: ctx.getUniformLocation(this.program, "u_sampler4"),
+            mixture1: ctx.getUniformLocation(this.program, "u_mixture1"),
+            mixture2: ctx.getUniformLocation(this.program, "u_mixture2"),
+            mixture3: ctx.getUniformLocation(this.program, "u_mixture3"),
+            mixture4: ctx.getUniformLocation(this.program, "u_mixture4"),
         };
     },
 };
@@ -213,13 +289,33 @@ let cloudShader = {
     vertexShaderCode: `
     
         attribute vec4 a_viewportVertexPosition; // Position to render to the viewport/framebuffer
-        attribute vec4 a_panelVertexPosition; // Position in space of the skybox panel
+
+        uniform vec4 u_tileCoordinates; // Uniform representing the pixel coordinates of the tile to be rendered
+                                        // .x: lower x coordinate
+                                        // .y: lower y coordinate
+                                        // .z: upper x coordinate
+                                        // .w: upper y coordinate
+        uniform mat4 u_rotationMatrix; // Matrix rotate v_vertexPosition to point to the correct skybox panel
 
         varying highp vec4 v_vertexPosition;
 
         void main(void)
         {
-            v_vertexPosition = a_panelVertexPosition;
+            // Map x and y values of u_tileCoordinates to x and y values of a_viewportVertexPosition
+            v_vertexPosition = vec4(0.0, 0.0, -1.0, 1.0);
+            if (a_viewportVertexPosition.x < 0.0) { v_vertexPosition.x = u_tileCoordinates.x; }
+            else { v_vertexPosition.x = u_tileCoordinates.z; }
+            if (a_viewportVertexPosition.y < 0.0) { v_vertexPosition.y = u_tileCoordinates.y; }
+            else { v_vertexPosition.y = u_tileCoordinates.w; }
+
+            // Transform x and y coordinates to clip space
+            v_vertexPosition.x = clamp((v_vertexPosition.x / 1024.0) * 2.0 - 1.0, -1.0, 1.0);
+            v_vertexPosition.y = clamp((v_vertexPosition.y / 1024.0) * 2.0 - 1.0, -1.0, 1.0);
+
+            // Rotate to face correct panel
+            v_vertexPosition = u_rotationMatrix * v_vertexPosition;
+            
+
             gl_Position = a_viewportVertexPosition;
         }
     `,
@@ -236,35 +332,11 @@ let cloudShader = {
         uniform float u_rowLength;
         uniform sampler2D u_sampler;
 
-        // noise1 input settings
-        uniform vec4 u_noise1InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
+        // noise input settings
+        uniform vec4 u_noiseInputSettings; // .x x translation, .y y translation, .z z translation, .w scale
 
-        // noise1 output settings
-        uniform vec2 u_noise1OutputSettings; // .x slope, .y offset
-
-        // noise2 input settings
-        uniform vec4 u_noise2InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
-
-        // noise2 output settings
-        uniform vec2 u_noise2OutputSettings; // .x slope, .y offset
-
-        // noise3 input settings
-        uniform vec4 u_noise3InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
-
-        // noise3 output settings
-        uniform vec2 u_noise3OutputSettings; // .x slope, .y offset
-
-        // noise4 input settings
-        uniform vec4 u_noise4InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
-
-        // noise4 output settings
-        uniform vec2 u_noise4OutputSettings; // .x slope, .y offset
-
-        // noise5 input settings
-        uniform vec4 u_noise5InputSettings; // .x x translation, .y y translation, .z z translation, .w scale
-
-        // noise5 output settings
-        uniform vec2 u_noise5OutputSettings; // .x slope, .y offset
+        // noise output settings
+        uniform vec2 u_noiseOutputSettings; // .x slope, .y offset
 
         uniform vec4 u_stepSettings; // .x tmin, .y densityFalloff, .z tmax, .w stepSize
 
@@ -272,6 +344,8 @@ let cloudShader = {
         uniform vec3 u_darkColor;
         uniform vec3 u_lightColor;
 
+        uniform vec3 u_sunColor;
+        uniform float u_sunIntensityFactor;
         uniform vec3 u_sunDir;
 
         uniform vec2 u_sunStepSettings; // .x sun tmax, .y stepSize
@@ -279,6 +353,11 @@ let cloudShader = {
         uniform float u_lightAbsorption;
 
         uniform float u_fog;
+
+        uniform float u_isLightningStage; // Whether we are doing a lighting stage, > 0.0 for true, < 0.0 for false
+        uniform vec3 u_lightningColor;
+        uniform vec3 u_lightningSource;
+        uniform vec2 u_lightningFallEnd; // .x lightning falloff start, .y lightning end
 
         vec4 vol3D(sampler2D sampler, vec3 coord, float tileDimension, float rowLength)
         { 
@@ -312,34 +391,34 @@ let cloudShader = {
             vec3 i111 = stu_i + vec3(1.0, 1.0, 1.0); if (i111.x >= u_dimension) { i111.x -= u_dimension; } if (i111.y >= u_dimension) { i111.y -= u_dimension; } if (i111.z >= u_dimension) { i111.z -= u_dimension; }
 
             // Get the values of the eight corners
-            vec3 f000 = vol3D(u_sampler, i000 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f100 = vol3D(u_sampler, i100 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f010 = vol3D(u_sampler, i010 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f110 = vol3D(u_sampler, i110 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f001 = vol3D(u_sampler, i001 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f101 = vol3D(u_sampler, i101 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f011 = vol3D(u_sampler, i011 / u_dimension, u_dimension, u_rowLength).xyz;
-            vec3 f111 = vol3D(u_sampler, i111 / u_dimension, u_dimension, u_rowLength).xyz;
+            i000 = vol3D(u_sampler, i000 / u_dimension, u_dimension, u_rowLength).xyz;
+            i100 = vol3D(u_sampler, i100 / u_dimension, u_dimension, u_rowLength).xyz;
+            i010 = vol3D(u_sampler, i010 / u_dimension, u_dimension, u_rowLength).xyz;
+            i110 = vol3D(u_sampler, i110 / u_dimension, u_dimension, u_rowLength).xyz;
+            i001 = vol3D(u_sampler, i001 / u_dimension, u_dimension, u_rowLength).xyz;
+            i101 = vol3D(u_sampler, i101 / u_dimension, u_dimension, u_rowLength).xyz;
+            i011 = vol3D(u_sampler, i011 / u_dimension, u_dimension, u_rowLength).xyz;
+            i111 = vol3D(u_sampler, i111 / u_dimension, u_dimension, u_rowLength).xyz;
 
             // Calculate unit vectors
-            vec3 c000 = normalize(f000 * 2.0 - 1.0);
-            vec3 c100 = normalize(f100 * 2.0 - 1.0);
-            vec3 c010 = normalize(f010 * 2.0 - 1.0);
-            vec3 c110 = normalize(f110 * 2.0 - 1.0);
-            vec3 c001 = normalize(f001 * 2.0 - 1.0);
-            vec3 c101 = normalize(f101 * 2.0 - 1.0);
-            vec3 c011 = normalize(f011 * 2.0 - 1.0);
-            vec3 c111 = normalize(f111 * 2.0 - 1.0);
+            i000 = normalize(i000 * 2.0 - 1.0);
+            i100 = normalize(i100 * 2.0 - 1.0);
+            i010 = normalize(i010 * 2.0 - 1.0);
+            i110 = normalize(i110 * 2.0 - 1.0);
+            i001 = normalize(i001 * 2.0 - 1.0);
+            i101 = normalize(i101 * 2.0 - 1.0);
+            i011 = normalize(i011 * 2.0 - 1.0);
+            i111 = normalize(i111 * 2.0 - 1.0);
 
             // Calculate dot products
-            float d000 = dot(c000, stu_f - vec3(0.0, 0.0, 0.0));
-            float d100 = dot(c100, stu_f - vec3(1.0, 0.0, 0.0));
-            float d010 = dot(c010, stu_f - vec3(0.0, 1.0, 0.0));
-            float d110 = dot(c110, stu_f - vec3(1.0, 1.0, 0.0));
-            float d001 = dot(c001, stu_f - vec3(0.0, 0.0, 1.0));
-            float d101 = dot(c101, stu_f - vec3(1.0, 0.0, 1.0));
-            float d011 = dot(c011, stu_f - vec3(0.0, 1.0, 1.0));
-            float d111 = dot(c111, stu_f - vec3(1.0, 1.0, 1.0));
+            float d000 = dot(i000, stu_f - vec3(0.0, 0.0, 0.0));
+            float d100 = dot(i100, stu_f - vec3(1.0, 0.0, 0.0));
+            float d010 = dot(i010, stu_f - vec3(0.0, 1.0, 0.0));
+            float d110 = dot(i110, stu_f - vec3(1.0, 1.0, 0.0));
+            float d001 = dot(i001, stu_f - vec3(0.0, 0.0, 1.0));
+            float d101 = dot(i101, stu_f - vec3(1.0, 0.0, 1.0));
+            float d011 = dot(i011, stu_f - vec3(0.0, 1.0, 1.0));
+            float d111 = dot(i111, stu_f - vec3(1.0, 1.0, 1.0));
 
             // Mix it all together based on smoothstep
             return mix(
@@ -393,9 +472,9 @@ let cloudShader = {
             return coord;
         }
 
-        float sampleDensity(vec3 stu, float scale, vec3 translation, float slope, float offset)
+        float sampleDensity(vec3 stu, float scale, vec3 translation, float slope)
         {
-            return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope + offset, 0.0, 1.0);
+            return clamp(noise3D(wrapVolumeCoords(stu*scale + translation))*slope, 0.0, 1.0);
         }
 
         float sampleLayeredDensity(vec3 stu)
@@ -403,25 +482,33 @@ let cloudShader = {
             float density;
 
             // Sample layer 1
-            density = sampleDensity(stu, u_noise1InputSettings.w, u_noise1InputSettings.xyz, u_noise1OutputSettings.x, u_noise1OutputSettings.y);
+            density = sampleDensity(stu, 1.0, vec3(0.0), 1.0);
 
             // Sample layer 2
-            density += sampleDensity(stu, u_noise2InputSettings.w, u_noise2InputSettings.xyz, u_noise2OutputSettings.x, u_noise2OutputSettings.y);
+            density += sampleDensity(stu, 2.0, vec3(0.15), 0.5);
 
             // Sample layer 3
-            density += sampleDensity(stu, u_noise3InputSettings.w, u_noise3InputSettings.xyz, u_noise3OutputSettings.x, u_noise3OutputSettings.y);
+            density += sampleDensity(stu, 4.0, vec3(0.3), 0.25);
 
             // Sample layer 4
-            density += sampleDensity(stu, u_noise4InputSettings.w, u_noise4InputSettings.xyz, u_noise4OutputSettings.x, u_noise4OutputSettings.y);
+            density += sampleDensity(stu, 8.0, vec3(0.45), 0.125);
 
             // Sample layer 5
-            density += sampleDensity(stu, u_noise5InputSettings.w, u_noise5InputSettings.xyz, u_noise5OutputSettings.x, u_noise5OutputSettings.y);
+            density += sampleDensity(stu, 16.0, vec3(0.6), 0.0625);
+
+            // Sample layer 6
+            density += sampleDensity(stu, 32.0, vec3(0.22), 0.03125);
 
             return clamp(density, 0.0, 1.0);
         }
 
-        vec4 raymarching(vec3 ro, vec3 rd, vec3 sunDir, vec3 skyColor)
+        vec4 raymarching(vec3 ro, vec3 rd, vec3 lightDir, vec3 skyColor)
         {
+            float noiseScale = u_noiseInputSettings.w;
+            vec3 noiseTranslation = u_noiseInputSettings.xyz;
+            float noiseSlope = u_noiseOutputSettings.x;
+            float noiseOffset = u_noiseOutputSettings.y;
+            
             float tmin = u_stepSettings.x;
             float tdensityFalloff = u_stepSettings.y;
             float tmax = u_stepSettings.z;
@@ -445,7 +532,7 @@ let cloudShader = {
                 float sampleDistance = length(currentPos);
                 
                 
-                float density = sampleLayeredDensity(currentPos);
+                float density = clamp(sampleLayeredDensity(currentPos*noiseScale + noiseTranslation)*noiseSlope + noiseOffset, 0.0, 1.0);
                 // If within density falloff area
                 if (sampleDistance < densityFalloffStart)
                 {
@@ -458,14 +545,20 @@ let cloudShader = {
                     float tsun = 0.0;
                     float densityToSun = density;
 
-                    for (int j=0; j<200; j++)
+                    // If doing lightning stage, recalculate light direction based on lightning source
+                    if (u_isLightningStage > 0.0)
                     {
-                        vec3 newPos = currentPos + -1.0*sunDir*tsun;
+                        lightDir = normalize(currentPos - u_lightningSource);
+                    }
+
+                    for (int j=0; j<5; j++)
+                    {
+                        vec3 newPos = currentPos + -1.0*lightDir*tsun;
                         sampleDistance = length(newPos);
                         // If sample is further than falloff end, then there is a density
                         if (sampleDistance >= densityFalloffEnd)
                         {
-                            float newDensity = sampleLayeredDensity(newPos);
+                            float newDensity = clamp(sampleLayeredDensity(newPos*noiseScale + noiseTranslation)*noiseSlope + noiseOffset, 0.0, 1.0);
                             // If within density falloff area
                             if (sampleDistance < densityFalloffStart)
                             {
@@ -490,8 +583,41 @@ let cloudShader = {
                         }
                     }
 
-                    float brightness = exp(-1.0 * lightAbsorption * densityToSun);
-                    vec4 pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
+                    float brightness;
+                    
+                    if (u_isLightningStage > 0.0)
+                    {
+                        brightness = exp(-1.0 * lightAbsorption * densityToSun * 0.2);
+                    }
+                    else
+                    {
+                        brightness = exp(-1.0 * lightAbsorption * densityToSun);
+                    }
+
+
+                    // If doing a lightning stage, brightness needs to be mixed with lightning falloff
+                    if (u_isLightningStage > 0.0)
+                    {
+                        float distanceFromSource = length(currentPos - u_lightningSource);
+                        if (distanceFromSource >= u_lightningFallEnd.y)
+                        {
+                            brightness = 0.0;
+                        }
+                        else if (distanceFromSource >= u_lightningFallEnd.x)
+                        {
+                            brightness = mix(brightness, 0.0, (distanceFromSource - u_lightningFallEnd.x) / (u_lightningFallEnd.y - u_lightningFallEnd.x));
+                        }
+                    }
+                    vec4 pointColor;
+                    // If doing a lightning stage, pointColor is black mixed with lightning color
+                    if (u_isLightningStage > 0.0)
+                    {
+                        pointColor = vec4(mix(vec3(0.0), u_lightningColor, brightness), density);
+                    }
+                    else
+                    {
+                        pointColor = vec4(mix(u_darkColor, u_lightColor, brightness), density);
+                    }
 
                     // Fog
                     pointColor.rgb = mix(skyColor, pointColor.rgb, exp(-1.0*fog*t));
@@ -519,22 +645,29 @@ let cloudShader = {
         }
         
         void main()
-        {
-            vec3 sunDir = normalize(u_sunDir);
+        {   
+            vec3 lightDir = normalize(u_sunDir); // Set lightDir as direction of the sunlight if not doing a lightning stage
             
             // Direction of ray is origin to vertex coordinates
             vec3 rd = normalize(v_vertexPosition.xyz);
 
-            // This prevents a strange cross artifact forming in the center
+            // This prevents a strange cross artifact forming in the center due to rounding error
             if ((rd.x > -0.0001) && (rd.x < 0.0001)) {rd.x = 0.0;}
             if ((rd.y > -0.0001) && (rd.y < 0.0001)) {rd.y = 0.0;}
 
             // Ray origin
             vec3 ro = vec3(0.0, 0.0, 0.0);
 
-            vec3 finalColor = u_skyColor;
+            vec3 finalColor = vec3(0.0);
 
-            vec4 cloudColoring = raymarching(ro, rd, sunDir, finalColor);
+            // If not doing a lightning stage, Compute overall background sky color by putting in the sun
+            if (u_isLightningStage < 0.0)
+            {
+                float sunIntensityAtPoint = clamp(dot(lightDir * -1.0, rd), 0.0, 1.0);
+                finalColor = u_skyColor + u_sunColor * pow(sunIntensityAtPoint, u_sunIntensityFactor);
+            }
+
+            vec4 cloudColoring = raymarching(ro, rd, lightDir, finalColor);
 
             finalColor = clamp(cloudColoring.rgb + finalColor*(1.0 - cloudColoring.a), 0.0, 1.0);
             
@@ -553,53 +686,33 @@ let cloudShader = {
         this.attributes = {
 
             viewportVertexPosition: ctx.getAttribLocation(this.program, "a_viewportVertexPosition"),
-            panelVertexPosition: ctx.getAttribLocation(this.program, "a_panelVertexPosition"),
         };
         this.uniforms = {
 
+            tileCoordinates: ctx.getUniformLocation(this.program, "u_tileCoordinates"),
+            rotationMatrix: ctx.getUniformLocation(this.program, "u_rotationMatrix"),
             dimension: ctx.getUniformLocation(this.program, "u_dimension"),
             rowLength: ctx.getUniformLocation(this.program, "u_rowLength"),
             sampler: ctx.getUniformLocation(this.program, "u_sampler"),
-            noise1InputSettings: ctx.getUniformLocation(this.program, "u_noise1InputSettings"),
-            noise1OutputSettings: ctx.getUniformLocation(this.program, "u_noise1OutputSettings"),
-            noise2InputSettings: ctx.getUniformLocation(this.program, "u_noise2InputSettings"),
-            noise2OutputSettings: ctx.getUniformLocation(this.program, "u_noise2OutputSettings"),
-            noise3InputSettings: ctx.getUniformLocation(this.program, "u_noise3InputSettings"),
-            noise3OutputSettings: ctx.getUniformLocation(this.program, "u_noise3OutputSettings"),
-            noise4InputSettings: ctx.getUniformLocation(this.program, "u_noise4InputSettings"),
-            noise4OutputSettings: ctx.getUniformLocation(this.program, "u_noise4OutputSettings"),
-            noise5InputSettings: ctx.getUniformLocation(this.program, "u_noise5InputSettings"),
-            noise5OutputSettings: ctx.getUniformLocation(this.program, "u_noise5OutputSettings"),
+            noiseInputSettings: ctx.getUniformLocation(this.program, "u_noiseInputSettings"),
+            noiseOutputSettings: ctx.getUniformLocation(this.program, "u_noiseOutputSettings"),
             stepSettings: ctx.getUniformLocation(this.program, "u_stepSettings"),
             skyColor: ctx.getUniformLocation(this.program, "u_skyColor"),
             darkColor: ctx.getUniformLocation(this.program, "u_darkColor"),
             lightColor: ctx.getUniformLocation(this.program, "u_lightColor"),
+            sunColor: ctx.getUniformLocation(this.program, "u_sunColor"),
+            sunIntensity: ctx.getUniformLocation(this.program, "u_sunIntensityFactor"),
             sunDir: ctx.getUniformLocation(this.program, "u_sunDir"),
             sunStepSettings: ctx.getUniformLocation(this.program, "u_sunStepSettings"),
             lightAbsorption: ctx.getUniformLocation(this.program, "u_lightAbsorption"),
-            fog: ctx.getUniformLocation(this.program, "u_fog")
+            fog: ctx.getUniformLocation(this.program, "u_fog"),
+            isLightningStage: ctx.getUniformLocation(this.program, "u_isLightningStage"),
+            lightningColor: ctx.getUniformLocation(this.program, "u_lightningColor"),
+            lightningSource: ctx.getUniformLocation(this.program, "u_lightningSource"),
+            lightningFallEnd: ctx.getUniformLocation(this.program, "u_lightningFallEnd"),
         }
         
     },
-};
-
-let frameBufferModel = {
-
-    vertexCoordinates: [
-
-        -1.0, -1.0, 0.0,
-        1.0, -1.0, 0.0,
-        1.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0,
-    ],
-
-    elementIndices: [
-
-        0, 2, 3,
-        0, 1, 2,
-    ],
-
-    elementCount: 6,
 };
 
 let skyBoxModels = {
@@ -782,12 +895,12 @@ let skyBoxModels = {
 
 let skyBoxTextures = {
 
-    nzPlane: null,
-    pxPlane: null,
-    pzPlane: null,
-    nxPlane: null,
-    pyPlane: null,
-    nyPlane: null,
+    nzPlane: [null],
+    pxPlane: [null],
+    pzPlane: [null],
+    nxPlane: [null],
+    pyPlane: [null],
+    nyPlane: [null],
 };
 
 function main()
@@ -809,7 +922,7 @@ function main()
     canvas.addEventListener("mousemove", updateMouse);
     canvas.addEventListener("mouseleave", mouseLeave);
 
-    //Get tmin densityfalloff tmax and set size inputs
+    //Get tmin densityfalloff tmax and step size inputs
     tminInput = document.getElementById("tminInput");
     densityFalloffInput = document.getElementById("densityFalloffInput");
     tmaxInput = document.getElementById("tmaxInput");
@@ -831,12 +944,16 @@ function main()
     darkColorInput.addEventListener("change", inputChangeHandler);
     lightColorInput.addEventListener("change", inputChangeHandler);
 
-    // Get sun direction inputs
+    // Get sun settings inputs
+    sunColorInput = document.getElementById("sunColorInput");
+    sunIntensityInput = document.getElementById("sunIntensityInput");
     sunXInput = document.getElementById("sunXInput");
     sunYInput = document.getElementById("sunYInput");
     sunZInput = document.getElementById("sunZInput");
     
-    // Add event listeners for sun direction
+    // Add event listeners for sun settings
+    sunColorInput.addEventListener("change", inputChangeHandler);
+    sunIntensityInput.addEventListener("change", inputChangeHandler);
     sunXInput.addEventListener("change", inputChangeHandler);
     sunYInput.addEventListener("change", inputChangeHandler);
     sunZInput.addEventListener("change", inputChangeHandler);
@@ -863,69 +980,83 @@ function main()
 
     //Get noise settings inputs
     resetNoiseInput = document.getElementById("resetNoiseInput");
-    noise1ScaleInput = document.getElementById("noise1ScaleInput");
-    noise1XInput = document.getElementById("noise1XInput");
-    noise1YInput = document.getElementById("noise1YInput");
-    noise1ZInput = document.getElementById("noise1ZInput");
-    noise1SlopeInput = document.getElementById("noise1SlopeInput");
-    noise1OffsetInput = document.getElementById("noise1OffsetInput");
-    noise2ScaleInput = document.getElementById("noise2ScaleInput");
-    noise2XInput = document.getElementById("noise2XInput");
-    noise2YInput = document.getElementById("noise2YInput");
-    noise2ZInput = document.getElementById("noise2ZInput");
-    noise2SlopeInput = document.getElementById("noise2SlopeInput");
-    noise2OffsetInput = document.getElementById("noise2OffsetInput");
-    noise3ScaleInput = document.getElementById("noise3ScaleInput");
-    noise3XInput = document.getElementById("noise3XInput");
-    noise3YInput = document.getElementById("noise3YInput");
-    noise3ZInput = document.getElementById("noise3ZInput");
-    noise3SlopeInput = document.getElementById("noise3SlopeInput");
-    noise3OffsetInput = document.getElementById("noise3OffsetInput");
-    noise4ScaleInput = document.getElementById("noise4ScaleInput");
-    noise4XInput = document.getElementById("noise4XInput");
-    noise4YInput = document.getElementById("noise4YInput");
-    noise4ZInput = document.getElementById("noise4ZInput");
-    noise4SlopeInput = document.getElementById("noise4SlopeInput");
-    noise4OffsetInput = document.getElementById("noise4OffsetInput");
-    noise5ScaleInput = document.getElementById("noise5ScaleInput");
-    noise5XInput = document.getElementById("noise5XInput");
-    noise5YInput = document.getElementById("noise5YInput");
-    noise5ZInput = document.getElementById("noise5ZInput");
-    noise5SlopeInput = document.getElementById("noise5SlopeInput");
-    noise5OffsetInput = document.getElementById("noise5OffsetInput");
-
+    noiseScaleInput = document.getElementById("noiseScaleInput");
+    noiseXInput = document.getElementById("noiseXInput");
+    noiseYInput = document.getElementById("noiseYInput");
+    noiseZInput = document.getElementById("noiseZInput");
+    noiseSlopeInput = document.getElementById("noiseSlopeInput");
+    noiseOffsetInput = document.getElementById("noiseOffsetInput");
+    
     //Add event listeners for noise settings
     resetNoiseInput.addEventListener("click", resetNoiseHandler);
-    noise1ScaleInput.addEventListener("change", inputChangeHandler);
-    noise1XInput.addEventListener("change", inputChangeHandler);
-    noise1YInput.addEventListener("change", inputChangeHandler);
-    noise1ZInput.addEventListener("change", inputChangeHandler);
-    noise1SlopeInput.addEventListener("change", inputChangeHandler);
-    noise1OffsetInput.addEventListener("change", inputChangeHandler);
-    noise2ScaleInput.addEventListener("change", inputChangeHandler);
-    noise2XInput.addEventListener("change", inputChangeHandler);
-    noise2YInput.addEventListener("change", inputChangeHandler);
-    noise2ZInput.addEventListener("change", inputChangeHandler);
-    noise2SlopeInput.addEventListener("change", inputChangeHandler);
-    noise2OffsetInput.addEventListener("change", inputChangeHandler);
-    noise3ScaleInput.addEventListener("change", inputChangeHandler);
-    noise3XInput.addEventListener("change", inputChangeHandler);
-    noise3YInput.addEventListener("change", inputChangeHandler);
-    noise3ZInput.addEventListener("change", inputChangeHandler);
-    noise3SlopeInput.addEventListener("change", inputChangeHandler);
-    noise3OffsetInput.addEventListener("change", inputChangeHandler);
-    noise4ScaleInput.addEventListener("change", inputChangeHandler);
-    noise4XInput.addEventListener("change", inputChangeHandler);
-    noise4YInput.addEventListener("change", inputChangeHandler);
-    noise4ZInput.addEventListener("change", inputChangeHandler);
-    noise4SlopeInput.addEventListener("change", inputChangeHandler);
-    noise4OffsetInput.addEventListener("change", inputChangeHandler);
-    noise5ScaleInput.addEventListener("change", inputChangeHandler);
-    noise5XInput.addEventListener("change", inputChangeHandler);
-    noise5YInput.addEventListener("change", inputChangeHandler);
-    noise5ZInput.addEventListener("change", inputChangeHandler);
-    noise5SlopeInput.addEventListener("change", inputChangeHandler);
-    noise5OffsetInput.addEventListener("change", inputChangeHandler);
+    noiseScaleInput.addEventListener("change", inputChangeHandler);
+    noiseXInput.addEventListener("change", inputChangeHandler);
+    noiseYInput.addEventListener("change", inputChangeHandler);
+    noiseZInput.addEventListener("change", inputChangeHandler);
+    noiseSlopeInput.addEventListener("change", inputChangeHandler);
+    noiseOffsetInput.addEventListener("change", inputChangeHandler);
+
+    // Get display stage input and add event listener
+    displayStageInput = document.getElementById("displayStageInput");
+    displayStageInput.addEventListener("change", switchDisplayStage);
+
+    // Get lightning settings inputs
+    lightning1ColorInput = document.getElementById("lightning1ColorInput");
+    lightning1XInput = document.getElementById("lightning1XInput");
+    lightning1YInput = document.getElementById("lightning1YInput");
+    lightning1ZInput = document.getElementById("lightning1ZInput");
+    lightning1Falloff = document.getElementById("lightning1Falloff");
+    lightning1End = document.getElementById("lightning1End");
+
+    lightning2ColorInput = document.getElementById("lightning2ColorInput");
+    lightning2XInput = document.getElementById("lightning2XInput");
+    lightning2YInput = document.getElementById("lightning2YInput");
+    lightning2ZInput = document.getElementById("lightning2ZInput");
+    lightning2Falloff = document.getElementById("lightning2Falloff");
+    lightning2End = document.getElementById("lightning2End");
+
+    lightning3ColorInput = document.getElementById("lightning3ColorInput");
+    lightning3XInput = document.getElementById("lightning3XInput");
+    lightning3YInput = document.getElementById("lightning3YInput");
+    lightning3ZInput = document.getElementById("lightning3ZInput");
+    lightning3Falloff = document.getElementById("lightning3Falloff");
+    lightning3End = document.getElementById("lightning3End");
+
+    lightning4ColorInput = document.getElementById("lightning4ColorInput");
+    lightning4XInput = document.getElementById("lightning4XInput");
+    lightning4YInput = document.getElementById("lightning4YInput");
+    lightning4ZInput = document.getElementById("lightning4ZInput");
+    lightning4Falloff = document.getElementById("lightning4Falloff");
+    lightning4End = document.getElementById("lightning4End");
+
+    // Add event listeners for lightning settings
+    lightning1ColorInput.addEventListener("change", inputChangeHandler);
+    lightning1XInput.addEventListener("change", inputChangeHandler);
+    lightning1YInput.addEventListener("change", inputChangeHandler);
+    lightning1ZInput.addEventListener("change", inputChangeHandler);
+    lightning1Falloff.addEventListener("change", inputChangeHandler);
+    lightning1End.addEventListener("change", inputChangeHandler);
+
+    lightning2ColorInput.addEventListener("change", inputChangeHandler);
+    lightning2XInput.addEventListener("change", inputChangeHandler);
+    lightning2YInput.addEventListener("change", inputChangeHandler);
+    lightning2ZInput.addEventListener("change", inputChangeHandler);
+    lightning2Falloff.addEventListener("change", inputChangeHandler);
+    lightning2End.addEventListener("change", inputChangeHandler);
+
+    lightning3ColorInput.addEventListener("change", inputChangeHandler);
+    lightning3XInput.addEventListener("change", inputChangeHandler);
+    lightning3YInput.addEventListener("change", inputChangeHandler);
+    lightning3ZInput.addEventListener("change", inputChangeHandler);
+    lightning3Falloff.addEventListener("change", inputChangeHandler);
+    lightning3End.addEventListener("change", inputChangeHandler);
+
+    lightning4ColorInput.addEventListener("change", inputChangeHandler);
+    lightning4XInput.addEventListener("change", inputChangeHandler);
+    lightning4YInput.addEventListener("change", inputChangeHandler);
+    lightning4ZInput.addEventListener("change", inputChangeHandler);
+    lightning4Falloff.addEventListener("change", inputChangeHandler);
+    lightning4End.addEventListener("change", inputChangeHandler);
 
     createShaderProgram(skyBoxShader);
     createShaderProgram(cloudShader);
@@ -933,16 +1064,13 @@ function main()
     // Create the framebuffer
     frameBuffer = ctx.createFramebuffer();
 
-    // Load the framebuffer model
-    loadFrameBufferModel();
-
     // Load skybox panels
     for (panel in skyBoxModels)
     {
         loadModel(skyBoxModels[panel]);
     }
 
-    // Load skybox textures
+    // Load space for skybox textures
     loadSkyboxTextures();
 
     // Attach textures to the proper models
@@ -953,27 +1081,36 @@ function main()
     skyBoxModels.pyPlane.texture = skyBoxTextures.pyPlane;
     skyBoxModels.nyPlane.texture = skyBoxTextures.nyPlane;
     
-
-    // Compute rowLength and textureDimension
-    if (po2 % 2 == 0)
-    {
-        rowLength = Math.pow(2, po2 / 2);
-    }
-    else
-    {
-        rowLength = Math.pow(2, (po2+1) / 2);
-    }
-    textureDimension = rowLength * dimension;
-    console.log("po2: " + po2);
-    console.log("volume dimension: " + dimension);
-    console.log("tile layout in rows of: " + rowLength);
-    console.log("texture dimension: " + textureDimension);
     
+    // Load the noiseBase texture
     loadNoiseTexture();
+    
+    // Fetch other settings from webpage
+    fetchSettings();
+
+    requestNewSkybox();
+
+    let previousTimeStamp = 0.0;
+    let deltaT = 0.0;
+
+    // Whether or not we are on the first animation frame, see below
+    //let firstFrame = true;
 
     // Animation loop
     function newFrame(now)
     {
+        //Get change in time
+        now *= 0.001; //Convert to seconds
+
+        deltaT = now - previousTimeStamp;
+        previousTimeStamp = now;
+
+        // Update skybox rotation
+        skyboxRotation += skyboxRotationSpeed * deltaT;
+
+        // Process flicker pattern of lightning
+        processLightningFlicker(deltaT);
+        
         renderFrame();
 
         requestAnimationFrame(newFrame);
@@ -1056,43 +1193,6 @@ function main()
     }
 
     return newShader;
-}
-
-/**
- * Function: loadFrameBufferModel
- * 
- * Input: None,
- * Output: None
- * 
- * Description: This function creates buffers for the frameBufferModel vertices and
- *              element indices
- */
-
-function loadFrameBufferModel()
-{
-    //Create pointer to a new buffer
-    let vertexBuffer = ctx.createBuffer();
-
-    //Bind buffer to array buffer
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
-
-    //Pass in the vertex data
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(frameBufferModel.vertexCoordinates), ctx.STATIC_DRAW);
-
-    //Create pointer to a new buffer
-    let elementIndicesBuffer = ctx.createBuffer();
-
-    //Bind the buffer to element buffer
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elementIndicesBuffer);
-
-    //Pass in element index data
-    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(frameBufferModel.elementIndices), ctx.STATIC_DRAW);
-
-    frameBufferModel.buffers = {
-
-        vertex: vertexBuffer,
-        elementIndices: elementIndicesBuffer,
-    };
 }
 
 /**
@@ -1211,12 +1311,22 @@ function loadNewNoise()
  */
 function loadSkyboxTextures()
 {
-    skyBoxTextures.nzPlane = loadSingleSkyboxTexture(255, 0, 0); // Forward red
-    skyBoxTextures.pxPlane = loadSingleSkyboxTexture(0, 255, 0); // right green
-    skyBoxTextures.pzPlane = loadSingleSkyboxTexture(0, 0, 255); // back blue
-    skyBoxTextures.nxPlane = loadSingleSkyboxTexture(255, 0, 255); // left purple
-    skyBoxTextures.pyPlane = loadSingleSkyboxTexture(255, 255, 0); // up yellow
-    skyBoxTextures.nyPlane = loadSingleSkyboxTexture(0, 255, 255); // down cyan  
+    //skyBoxTextures.nzPlane = loadSingleSkyboxTexture(255, 0, 0); // Forward red
+    //skyBoxTextures.pxPlane = loadSingleSkyboxTexture(0, 255, 0); // right green
+    //skyBoxTextures.pzPlane = loadSingleSkyboxTexture(0, 0, 255); // back blue
+    //skyBoxTextures.nxPlane = loadSingleSkyboxTexture(255, 0, 255); // left purple
+    //skyBoxTextures.pyPlane = loadSingleSkyboxTexture(255, 255, 0); // up yellow
+    //skyBoxTextures.nyPlane = loadSingleSkyboxTexture(0, 255, 255); // down cyan
+
+    for (let i=0; i<MAX_LIGHTNING_STAGES; i++)
+    {
+        skyBoxTextures.nzPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pxPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pzPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.nxPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.pyPlane[i] = loadSingleSkyboxTexture();
+        skyBoxTextures.nyPlane[i] = loadSingleSkyboxTexture();
+    }
 }
 
 /**
@@ -1227,7 +1337,7 @@ function loadSkyboxTextures()
  * 
  * Description: allocates space on the GPU for one skybox texture of the given color
  */
-function loadSingleSkyboxTexture(red, green, blue)
+function loadSingleSkyboxTexture()
 {
     let texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, texture);
@@ -1252,8 +1362,25 @@ function loadSingleSkyboxTexture(red, green, blue)
     return texture;
 }
 
+/**
+ * Function: requestNewSkybox
+ * 
+ * Input: None
+ * Output: None
+ * 
+ * Description: Resets newSkyboxRequested to true so that the animation loop can begin
+ * rendering a new skybox with presumably a new configuration of settings
+ */
+
+function requestNewSkybox()
+{
+    skyboxRenderingStage.newSkyboxRequested = true;
+}
+
 function renderFrame()
 {   
+    renderNewSkybox(); // This will render a portion of new clouds to the skybox if an update was requested
+    
     ctx.canvas.width = ctx.canvas.clientWidth;   //Resize canvas to fit CSS styling
     ctx.canvas.height = ctx.canvas.clientHeight;
 
@@ -1281,12 +1408,19 @@ function renderFrame()
 
     // Compute skyBoxRotationMatrix
     mat4.identity(skyBoxRotationMatrix);
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Second transform, rotate the whole world around x axis (in the opposite direction the player is facing)
-    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // First transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.pitchAngle * -1.0, XAXIS); // Third transform, rotate the whole world around x axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, player.yawAngle * -1.0, YAXIS); // Second transform, rotate the whole world around y axis (in the opposite direction the player is facing)
+    mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, skyboxRotation * -1.0, YAXIS); // First transform, rotate the skybox around y axis based on skyboxRotation
 
     // Set world view uniform
     ctx.uniformMatrix4fv(skyBoxShader.uniforms.worldViewMatrix, false, skyBoxRotationMatrix);
 
+    // Get lightning mixtures
+    ctx.uniform1f(skyBoxShader.uniforms.mixture1, lightningSettings[0].mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture2, lightningSettings[1].mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture3, lightningSettings[2].mixture);
+    ctx.uniform1f(skyBoxShader.uniforms.mixture4, lightningSettings[3].mixture);
+    
     // For each panel of the skybox
     for (panel in skyBoxModels)
     {
@@ -1300,10 +1434,30 @@ function renderFrame()
         ctx.vertexAttribPointer(skyBoxShader.attributes.textureCoordinates, 2, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(skyBoxShader.attributes.textureCoordinates);
 
-        //Instruct WebGL on which texture to use
+        //Get sunlit clouds texture unit
         ctx.activeTexture(ctx.TEXTURE0);
-        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture);
-        ctx.uniform1i(skyBoxShader.uniforms.uSampler, 0);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[displayStage]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler0, 0);
+
+        //Get lighting1 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE1);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[1]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler1, 1);
+
+        //Get lighting2 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE2);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[2]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler2, 2);
+
+        //Get lighting3 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE3);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[3]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler3, 3);
+
+        //Get lighting4 clouds texture unit
+        ctx.activeTexture(ctx.TEXTURE4);
+        ctx.bindTexture(ctx.TEXTURE_2D, skyBoxModels[panel].texture[4]);
+        ctx.uniform1i(skyBoxShader.uniforms.uSampler4, 4);
 
         //Give WebGL the element array
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels[panel].buffers.elementIndices);
@@ -1313,8 +1467,115 @@ function renderFrame()
     }
 }
 
-function renderClouds()
+function renderNewSkybox()
 {
+    // If new skybox was requested, reset all rendering stages to 0
+    if (skyboxRenderingStage.newSkyboxRequested)
+    {
+        isLightningStage = -1.0;
+        skyboxRenderingStage.lightning = 0;
+        skyboxRenderingStage.panel = 0;
+        skyboxRenderingStage.y = 0;
+        skyboxRenderingStage.x = 0;
+        skyboxRenderingStage.newSkyboxRequested = false;
+    }
+
+    // If last lightning stage was already rendered, early exit
+    if (skyboxRenderingStage.lightning >= MAX_LIGHTNING_STAGES)
+    {
+        return;
+    }
+
+    // Error checking:
+
+    // If x is below 0, reset to 0 and warn console
+    if (skyboxRenderingStage.x < 0)
+    {
+        console.error("The x index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.x);
+        skyboxRenderingStage.x = 0;
+        console.log("x index reset to 0");
+    }
+    if (skyboxRenderingStage.y < 0)
+    {
+        console.error("The y index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.y);
+        skyboxRenderingStage.y = 0;
+        console.log("y index reset to 0");
+    }
+    if (skyboxRenderingStage.panel < 0)
+    {
+        console.error("The panel index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.panel);
+        skyboxRenderingStage.panel = 0;
+        console.log("panel index reset to 0");
+    }
+    if (skyboxRenderingStage.lightning < 0)
+    {
+        console.error("The lightning index in the current skybox rendering stage was found to be less than zero: " + skyboxRenderingStage.lightning);
+        skyboxRenderingStage.lightning = 0;
+        console.log("lightning index reset to 0");
+    }
+
+    // Incrementing:
+
+    // If x index is at maximum, reset to 0 and increment y index
+    if (skyboxRenderingStage.x >= MAX_X_TILES)
+    {
+        skyboxRenderingStage.y++;
+        skyboxRenderingStage.x = 0;
+    }
+    // If y index is at maximum, reset to 0 and increment panel index
+    if (skyboxRenderingStage.y >= MAX_Y_TILES)
+    {
+        skyboxRenderingStage.panel++;
+        skyboxRenderingStage.y = 0;
+    }
+    // If panel index is at maximum, reset to 0 and increment lightning index, also set isLightingStage to 1.0
+    if (skyboxRenderingStage.panel >= 6)
+    {
+        skyboxRenderingStage.lightning++;
+        isLightningStage = 1.0;
+        skyboxRenderingStage.panel = 0;
+    }
+    // If lightning index is at maximum, exit the rendering function
+    if (skyboxRenderingStage.lightning >= MAX_LIGHTNING_STAGES)
+    {
+        return;
+    }
+
+    
+    // select skybox panel to render to and set rotation matrix
+    let panelToRender = null;
+    mat4.identity(skyBoxRotationMatrix);
+    switch (skyboxRenderingStage.panel)
+    {
+        case 0:
+            panelToRender = skyBoxModels.nzPlane;
+            // No rotation
+            break;
+        case 1:
+            panelToRender = skyBoxModels.nxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, YAXIS);
+            break;
+        case 2:
+            panelToRender = skyBoxModels.pzPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, Math.PI, YAXIS);
+            break;
+        case 3:
+            panelToRender = skyBoxModels.pxPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, YAXIS);
+            break;
+        case 4:
+            panelToRender = skyBoxModels.pyPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2, XAXIS);
+            break;
+        case 5:
+            panelToRender = skyBoxModels.nyPlane;
+            mat4.rotate(skyBoxRotationMatrix, skyBoxRotationMatrix, piOver2 * -1.0, XAXIS);
+            break;
+        default:      //Any other number, exit the function
+            return;
+    }
+    
+    
     //Tell WebGL to use the cloud shader program
     ctx.useProgram(cloudShader.program);
 
@@ -1323,41 +1584,20 @@ function renderClouds()
     ctx.bindTexture(ctx.TEXTURE_2D, noiseBase);
     ctx.uniform1i(cloudShader.uniforms.sampler, 0);
 
+    // Set rotation uniform
+    ctx.uniformMatrix4fv(cloudShader.uniforms.rotationMatrix, false, skyBoxRotationMatrix);
+
     // Set dimension uniform
-    ctx.uniform1f(cloudShader.uniforms.dimension, dimension);
+    ctx.uniform1f(cloudShader.uniforms.dimension, noiseBaseDimension);
 
     // Set tile layout dimension
-    ctx.uniform1f(cloudShader.uniforms.rowLength, rowLength);
+    ctx.uniform1f(cloudShader.uniforms.rowLength, noiseBaseRowLength);
 
-    // Set noise1 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise1InputSettings, noise1InputSettings);
+    // Set noise inputs uniform
+    ctx.uniform4fv(cloudShader.uniforms.noiseInputSettings, noiseInputSettings);
 
-    // Set noise1 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise1OutputSettings, noise1OutputSettings);
-
-    // Set noise2 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise2InputSettings, noise2InputSettings);
-
-    // Set noise2 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise2OutputSettings, noise2OutputSettings);
-
-    // Set noise3 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise3InputSettings, noise3InputSettings);
-
-    // Set noise3 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise3OutputSettings, noise3OutputSettings);
-
-    // Set noise4 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise4InputSettings, noise4InputSettings);
-
-    // Set noise4 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise4OutputSettings, noise4OutputSettings);
-
-    // Set noise5 inputs uniform
-    ctx.uniform4fv(cloudShader.uniforms.noise5InputSettings, noise5InputSettings);
-
-    // Set noise5 outputs uniform
-    ctx.uniform2fv(cloudShader.uniforms.noise5OutputSettings, noise5OutputSettings);
+    // Set noise outputs uniform
+    ctx.uniform2fv(cloudShader.uniforms.noiseOutputSettings, noiseOutputSettings);
 
     // Set step settings uniform
     ctx.uniform4fv(cloudShader.uniforms.stepSettings, stepSettings);
@@ -1366,6 +1606,10 @@ function renderClouds()
     ctx.uniform3fv(cloudShader.uniforms.skyColor, skyColor);
     ctx.uniform3fv(cloudShader.uniforms.darkColor, darkColor);
     ctx.uniform3fv(cloudShader.uniforms.lightColor, lightColor);
+    ctx.uniform3fv(cloudShader.uniforms.sunColor, sunColor);
+
+    // Set sun intensity uniform
+    ctx.uniform1f(cloudShader.uniforms.sunIntensity, sunIntensity);
 
     // Set sun direction uniform
     ctx.uniform3fv(cloudShader.uniforms.sunDir, sunDir);
@@ -1379,46 +1623,85 @@ function renderClouds()
     // Set fog level uniform
     ctx.uniform1f(cloudShader.uniforms.fog, fog);
 
-    ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
+    // Set isLightningStage uniform
+    ctx.uniform1f(cloudShader.uniforms.isLightningStage, isLightningStage);
 
-    // For each panel of the skybox render the clouds
-    for (panel in skyBoxModels)
+    // If doing a lightning stage, Set lightning uniforms
+    if (isLightningStage > 0.0)
     {
-        renderPanelTexture(skyBoxModels[panel]);
+        ctx.uniform3fv(cloudShader.uniforms.lightningColor, lightningSettings[skyboxRenderingStage.lightning - 1].color);
+        ctx.uniform3fv(cloudShader.uniforms.lightningSource, lightningSettings[skyboxRenderingStage.lightning - 1].source);
+        ctx.uniform2fv(cloudShader.uniforms.lightningFallEnd, lightningSettings[skyboxRenderingStage.lightning - 1].fallEnd);
     }
 
-    //renderPanelTexture(skyBoxModels.nzPlane);
-    //renderPanelTexture(skyBoxModels.pxPlane);
+    ctx.bindFramebuffer(ctx.FRAMEBUFFER, frameBuffer);
+
+    // Render the selected panel
+    renderPanelTexture(skyboxRenderingStage.x, skyboxRenderingStage.y, panelToRender, skyboxRenderingStage.lightning);
+    skyboxRenderingStage.x++;
 }
 
-function renderPanelTexture(panel)
+function renderPanelTexture(xIndex, yIndex, panel, lightningIndex)
 {
     // Attach correct texture to frame buffer
-    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture, 0);
+    ctx.framebufferTexture2D(ctx.FRAMEBUFFER, ctx.COLOR_ATTACHMENT0, ctx.TEXTURE_2D, panel.texture[lightningIndex], 0);
 
-    // Resize viewport to 1024 x 1024
-    ctx.viewport(0, 0, 1024, 1024);
+    // Resize viewport to the current tile we are rendering to
+    ctx.viewport(xIndex * SKYBOX_TILE_SIZE, yIndex * SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE, SKYBOX_TILE_SIZE);
 
-    // Clear frame buffer
-    ctx.clearColor(1.0, 1.0, 1.0, 1.0); //set clear color to white
-    ctx.clearDepth(1.0); //set clear depth to 1.0
-    ctx.clear(ctx.COLOR_BUFFER_BIT, ctx.DEPTH_BUFFER_BIT);
-
-    // Set camera direction uniform
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, panel.buffers.vertex);
-    ctx.vertexAttribPointer(cloudShader.attributes.panelVertexPosition, 3, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(skyBoxShader.attributes.panelVertexPosition);
+    // Set tileCoordinates uniform
+    tileCoordinates[0] = xIndex * SKYBOX_TILE_SIZE;
+    tileCoordinates[1] = yIndex * SKYBOX_TILE_SIZE;
+    tileCoordinates[2] = (xIndex + 1.0) * SKYBOX_TILE_SIZE;
+    tileCoordinates[3] = (yIndex + 1.0) * SKYBOX_TILE_SIZE;
+    ctx.uniform4fv(cloudShader.uniforms.tileCoordinates, tileCoordinates);
+    
 
     // Instruct WebGL how to pull out vertices
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, frameBufferModel.buffers.vertex);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, skyBoxModels.nzPlane.buffers.vertex);
     ctx.vertexAttribPointer(cloudShader.attributes.viewportVertexPosition, 3, ctx.FLOAT, false, 0, 0);
-    ctx.enableVertexAttribArray(skyBoxShader.attributes.viewportVertexPosition);
+    ctx.enableVertexAttribArray(cloudShader.attributes.viewportVertexPosition);
 
     // Give WebGL the element array
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, frameBufferModel.buffers.elementIndices);
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, skyBoxModels.nzPlane.buffers.elementIndices);
 
     // Draw triangles
-    ctx.drawElements(ctx.TRIANGLES, frameBufferModel.elementCount, ctx.UNSIGNED_SHORT, 0);
+    ctx.drawElements(ctx.TRIANGLES, skyBoxModels.nzPlane.elementCount, ctx.UNSIGNED_SHORT, 0);
+}
+
+/**
+ * Function: processLightningFlicker
+ * 
+ * Input: deltaT
+ * Output: None
+ * 
+ * Description: Updates the mixture level of each lightning image based on the defined flicker
+ * pattern and current deltaT since last frame
+ */
+function processLightningFlicker(deltaT)
+{
+    for (let i=0; i<4; i++)
+    {
+        let flicker = lightningSettings[i].flicker;
+
+        // Increment currentTime by deltaT
+        flicker.currentTime += deltaT;
+
+        // If full duration is passed, set a new pattern
+        if (flicker.currentTime >= flicker.sleep + 1.0)
+        {
+            flicker.currentTime = 0.0;
+            flicker.sleep = Math.random() * 5.0;
+            flicker.max = Math.random();
+            lightningSettings[i].mixture = 0.0;
+        }
+
+        // If outside of sleep segment, calculate a mixture for lightning1
+        if (flicker.currentTime >= flicker.sleep)
+        {
+            lightningSettings[i].mixture = (((Math.sin((flicker.currentTime - flicker.sleep) * Math.PI))+1.0)/2.0)*flicker.max*Math.random();
+        }
+    }
 }
 
 /**
@@ -1614,17 +1897,23 @@ function hexToColor(hex, colorVec) {
 
 function inputChangeHandler(event)
 {
-    console.clear();
+    //console.clear();
     fetchSettings();
-    renderClouds();
+    requestNewSkybox();
 }
 
 function resetNoiseHandler(event)
 {
-    console.clear();
+    //console.clear();
     loadNewNoise();
     fetchSettings();
-    renderClouds();
+    requestNewSkybox();
+}
+
+function switchDisplayStage(event)
+{
+    displayStage = Number(displayStageInput.value);
+    console.log("Displaying lighting stage: " + displayStage);
 }
 
 /**
@@ -1650,10 +1939,17 @@ function fetchSettings()
     hexToColor(skyColorInput.value, skyColor);
     hexToColor(darkColorInput.value, darkColor);
     hexToColor(lightColorInput.value, lightColor);
+    hexToColor(sunColorInput.value, sunColor);
     console.log("Color Settings:");
     console.log(skyColor);
     console.log(darkColor);
     console.log(lightColor);
+    console.log(sunColor);
+
+    // Sun intensity
+    sunIntensity = Number(sunIntensityInput.value);
+    console.log("Sun Intensity Factor:");
+    console.log(sunIntensity);
 
     // Sun direction
     sunDir[0] = Number(sunXInput.value);
@@ -1678,75 +1974,90 @@ function fetchSettings()
     console.log("Fog:");
     console.log(fog);
 
-    // Noise1 input settings
-    noise1InputSettings[0] = Number(noise1XInput.value);
-    noise1InputSettings[1] = Number(noise1YInput.value);
-    noise1InputSettings[2] = Number(noise1ZInput.value);
-    noise1InputSettings[3] = Number(noise1ScaleInput.value);
-    console.log("Noise1 Input Settings:");
-    console.log(noise1InputSettings);
+    // Noise input settings
+    noiseInputSettings[0] = Number(noiseXInput.value);
+    noiseInputSettings[1] = Number(noiseYInput.value);
+    noiseInputSettings[2] = Number(noiseZInput.value);
+    noiseInputSettings[3] = Number(noiseScaleInput.value);
+    console.log("Noise Input Settings:");
+    console.log(noiseInputSettings);
     
-    // Noise1 output settings
-    noise1OutputSettings[0] = Number(noise1SlopeInput.value);
-    noise1OutputSettings[1] = Number(noise1OffsetInput.value);
-    console.log("Noise1 Output Settings:");
-    console.log(noise1OutputSettings);
+    // Noise output settings
+    noiseOutputSettings[0] = Number(noiseSlopeInput.value);
+    noiseOutputSettings[1] = Number(noiseOffsetInput.value);
+    console.log("Noise Output Settings:");
+    console.log(noiseOutputSettings);
 
-    // Noise2 input settings
-    noise2InputSettings[0] = Number(noise2XInput.value);
-    noise2InputSettings[1] = Number(noise2YInput.value);
-    noise2InputSettings[2] = Number(noise2ZInput.value);
-    noise2InputSettings[3] = Number(noise2ScaleInput.value);
-    console.log("Noise2 Input Settings:");
-    console.log(noise2InputSettings);
-    
-    // Noise2 output settings
-    noise2OutputSettings[0] = Number(noise2SlopeInput.value);
-    noise2OutputSettings[1] = Number(noise2OffsetInput.value);
-    console.log("Noise2 Output Settings:");
-    console.log(noise2OutputSettings);
+    /*let lightning1ColorInput = null;
+    let lightning1XInput = null;
+    let lightning1YInput = null;
+    let lightning1ZInput = null;
+    let lightning1Falloff = null;
+    let lightning1End = null;*/
 
-    // Noise3 input settings
-    noise3InputSettings[0] = Number(noise3XInput.value);
-    noise3InputSettings[1] = Number(noise3YInput.value);
-    noise3InputSettings[2] = Number(noise3ZInput.value);
-    noise3InputSettings[3] = Number(noise3ScaleInput.value);
-    console.log("Noise3 Input Settings:");
-    console.log(noise3InputSettings);
-    
-    // Noise3 output settings
-    noise3OutputSettings[0] = Number(noise3SlopeInput.value);
-    noise3OutputSettings[1] = Number(noise3OffsetInput.value);
-    console.log("Noise3 Output Settings:");
-    console.log(noise3OutputSettings);
+    // Lightning 1 settings
+    hexToColor(lightning1ColorInput.value, lightningSettings[0].color);
+    console.log("Lightning 1 color:");
+    console.log(lightningSettings[0].color);
+    lightningSettings[0].source[0] = Number(lightning1XInput.value);
+    lightningSettings[0].source[1] = Number(lightning1YInput.value);
+    lightningSettings[0].source[2] = Number(lightning1ZInput.value);
+    console.log("Lightning 1 Source:");
+    console.log(lightningSettings[0].source);
+    lightningSettings[0].fallEnd[0] = Number(lightning1Falloff.value);
+    console.log("Lightning 1 Falloff Start:");
+    console.log(lightningSettings[0].fallEnd[0]);
+    lightningSettings[0].fallEnd[1] = Number(lightning1End.value);
+    console.log("Lightning 1 End:");
+    console.log(lightningSettings[0].fallEnd[1]);
 
-    // Noise4 input settings
-    noise4InputSettings[0] = Number(noise4XInput.value);
-    noise4InputSettings[1] = Number(noise4YInput.value);
-    noise4InputSettings[2] = Number(noise4ZInput.value);
-    noise4InputSettings[3] = Number(noise4ScaleInput.value);
-    console.log("Noise4 Input Settings:");
-    console.log(noise4InputSettings);
-    
-    // Noise4 output settings
-    noise4OutputSettings[0] = Number(noise4SlopeInput.value);
-    noise4OutputSettings[1] = Number(noise4OffsetInput.value);
-    console.log("Noise4 Output Settings:");
-    console.log(noise4OutputSettings);
+    // Lightning 2 settings
+    hexToColor(lightning2ColorInput.value, lightningSettings[1].color);
+    console.log("Lightning 2 color:");
+    console.log(lightningSettings[1].color);
+    lightningSettings[1].source[0] = Number(lightning2XInput.value);
+    lightningSettings[1].source[1] = Number(lightning2YInput.value);
+    lightningSettings[1].source[2] = Number(lightning2ZInput.value);
+    console.log("Lightning 2 Source:");
+    console.log(lightningSettings[1].source);
+    lightningSettings[1].fallEnd[0] = Number(lightning2Falloff.value);
+    console.log("Lightning 2 Falloff Start:");
+    console.log(lightningSettings[1].fallEnd[0]);
+    lightningSettings[1].fallEnd[1] = Number(lightning2End.value);
+    console.log("Lightning 2 End:");
+    console.log(lightningSettings[1].fallEnd[1]);
 
-    // Noise5 input settings
-    noise5InputSettings[0] = Number(noise5XInput.value);
-    noise5InputSettings[1] = Number(noise5YInput.value);
-    noise5InputSettings[2] = Number(noise5ZInput.value);
-    noise5InputSettings[3] = Number(noise5ScaleInput.value);
-    console.log("Noise5 Input Settings:");
-    console.log(noise5InputSettings);
-    
-    // Noise5 output settings
-    noise5OutputSettings[0] = Number(noise5SlopeInput.value);
-    noise5OutputSettings[1] = Number(noise5OffsetInput.value);
-    console.log("Noise5 Output Settings:");
-    console.log(noise5OutputSettings);
+    // Lightning 3 settings
+    hexToColor(lightning3ColorInput.value, lightningSettings[2].color);
+    console.log("Lightning 3 color:");
+    console.log(lightningSettings[2].color);
+    lightningSettings[2].source[0] = Number(lightning3XInput.value);
+    lightningSettings[2].source[1] = Number(lightning3YInput.value);
+    lightningSettings[2].source[2] = Number(lightning3ZInput.value);
+    console.log("Lightning 3 Source:");
+    console.log(lightningSettings[2].source);
+    lightningSettings[2].fallEnd[0] = Number(lightning3Falloff.value);
+    console.log("Lightning 3 Falloff Start:");
+    console.log(lightningSettings[2].fallEnd[0]);
+    lightningSettings[2].fallEnd[1] = Number(lightning3End.value);
+    console.log("Lightning 3 End:");
+    console.log(lightningSettings[2].fallEnd[1]);
+
+    // Lightning 4 settings
+    hexToColor(lightning4ColorInput.value, lightningSettings[3].color);
+    console.log("Lightning 4 color:");
+    console.log(lightningSettings[3].color);
+    lightningSettings[3].source[0] = Number(lightning4XInput.value);
+    lightningSettings[3].source[1] = Number(lightning4YInput.value);
+    lightningSettings[3].source[2] = Number(lightning4ZInput.value);
+    console.log("Lightning 4 Source:");
+    console.log(lightningSettings[3].source);
+    lightningSettings[3].fallEnd[0] = Number(lightning4Falloff.value);
+    console.log("Lightning 4 Falloff Start:");
+    console.log(lightningSettings[3].fallEnd[0]);
+    lightningSettings[3].fallEnd[1] = Number(lightning4End.value);
+    console.log("Lightning 4 End:");
+    console.log(lightningSettings[3].fallEnd[1]);
 }
 
 window.onload = main;
