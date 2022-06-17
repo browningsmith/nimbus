@@ -104,13 +104,13 @@ let shipInteriorShader = {
             highp vec3 ambientLight = vec3(0.3, 0.3, 0.3); //Set ambientLight to 0.3 rgb
             highp vec3 directionalLightColor = vec3(1.0, 1.0, 1.0); //Set directional light color to white
 
-            highp vec3 lightPosition = vec3(0.0, 2.4, 0.0);
+            highp vec3 lightPosition = vec3(0.0, 1.0, 0.0);
 
             highp vec3 lightDirection = normalize(lightPosition - v_currentPosition.xyz); //Set light direction vector
 
             highp float directional = max(dot(v_currentNormal.xyz, lightDirection),0.0); //Compute directional based on transformed normal and direction of light
 
-            highp vec3 currentLighting = ambientLight + (directionalLightColor * directional); //Compute lighting of current vertex as ambient light plus directional light times the directional
+            highp vec3 currentLighting = ambientLight + (directionalLightColor * directional *0.8); //Compute lighting of current vertex as ambient light plus directional light times the directional
             
             gl_FragColor = vec4(v_currentColor.rgb * currentLighting, 1.0); //Each fragment is the color multiplied by the light level
         }
